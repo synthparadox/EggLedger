@@ -211,6 +211,7 @@ func main() {
 	}
 
 	args := []string{}
+	args = append(args, "--remote-allow-origins=*")
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
