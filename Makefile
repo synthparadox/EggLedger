@@ -17,4 +17,5 @@ dev-css:
 
 dist: css protobuf
 	./build-macos.sh
+	./build-macos-arm.sh
 	./build-windows.sh
