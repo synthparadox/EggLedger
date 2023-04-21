@@ -15,7 +15,14 @@ dev-app: build
 dev-css:
 	yarn dev:css
 
-dist: css protobuf
+dist: css protobuf dist-windows dist-mac dist-linux
+
+dist-windows: css protobuf
+	./build-windows.sh
+
+dist-linux: css protobuf
+	./build-linux.sh
+
+dist-mac: css protobuf
 	./build-macos.sh
 	./build-macos-arm.sh
-	./build-windows.sh
