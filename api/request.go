@@ -28,7 +28,7 @@ const (
 	Platform       = ei.Platform_IOS
 )
 
-const _apiPrefix = "https://www.auxbrain.com"
+const _apiPrefix = "https://ctx-dot-auxbrainhome.appspot.com"
 
 var _client *http.Client
 
