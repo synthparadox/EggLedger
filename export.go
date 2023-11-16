@@ -36,6 +36,20 @@ type mission struct {
 	TargetArtifact   ei.ArtifactSpec_Name
 }
 
+func CustomGetTargetArtifact(x *ei.MissionInfo) ei.ArtifactSpec_Name {
+	if x != nil && x.TargetArtifact != nil && *x.StartTimeDerived >= float64(1686260700) {
+		return *x.TargetArtifact
+	}
+	return ei.ArtifactSpec_UNKNOWN
+}
+
+func GetNamedTarget(x *ei.ArtifactSpec_Name) string {
+	if x != nil && *x != ei.ArtifactSpec_UNKNOWN {
+		return x.CasedName()
+	}
+	return ""
+}
+
 func newMission(r *ei.CompleteMissionResponse) *mission {
 	info := r.GetInfo()
 	ship := info.GetShip()
@@ -44,7 +58,7 @@ func newMission(r *ei.CompleteMissionResponse) *mission {
 	durationSeconds := info.GetDurationSeconds()
 	duration := time.Duration(durationSeconds) * time.Second
 	returnedAt := launchedAt.Add(duration)
-	target := info.GetTargetArtifact()
+	target := CustomGetTargetArtifact(info)
 	var artifacts []*ei.ArtifactSpec
 	var artifactNames []string
 	for _, a := range r.Artifacts {
@@ -99,7 +113,7 @@ func exportMissionsToCsv(missions []*mission, path string) error {
 			m.ReturnedAtStr,
 			fmt.Sprint(m.DurationDays),
 			fmt.Sprint(m.Capacity),
-			fmt.Sprint(m.TargetArtifact.CasedName()),
+			fmt.Sprint(GetNamedTarget(&m.TargetArtifact)),
 		}
 		count := len(m.ArtifactNames)
 		for i := 0; i < maxArtifactCount; i++ {
@@ -212,7 +226,7 @@ func exportMissionsToXlsx(missions []*mission, path string) error {
 			&excelize.Cell{Value: m.ReturnedAt, StyleID: datetimeStyle},
 			&excelize.Cell{Value: m.DurationDays, StyleID: durationStyle},
 			m.Capacity,
-			m.TargetArtifact.CasedName(),
+			GetNamedTarget(&m.TargetArtifact),
 		}
 		for _, name := range m.ArtifactNames {
 			row = append(row, name)
