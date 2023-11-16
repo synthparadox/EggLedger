@@ -49,9 +49,21 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install protoc linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get isntall protobuf-compiler
+
       - name: Run Linux Build
         if: matrix.target == 'linux'
         run: make dist-linux
+
+      - name: Install protoc macos
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install protobuf
       
       - name: Run Mac x86 Build
         if: matrix.target == 'mac'
@@ -60,6 +72,11 @@ jobs:
       - name: Run Mac ARM Build
         if: matrix.target == 'mac-arm64'
         run: make dist-mac-arm
+
+      - name: Install protoc windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install protoc
 
       - name: Run Windows Build
         if: matrix.target == 'windows'
