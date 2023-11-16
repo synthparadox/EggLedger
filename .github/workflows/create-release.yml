@@ -26,7 +26,7 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        target: [linux, mac, mac-arm64, windows]
+        target: [linux, mac, mac-arm64] #, windows]
         include:
           - target: linux
             os: ubuntu-latest
@@ -34,8 +34,8 @@ jobs:
             os: macos-latest
           - target: mac-arm64
             os: macos-latest
-          - target: windows
-            os: windows-latest
+              #          - target: windows
+              #            os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -53,7 +53,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install protobuf-compiler
+          sudo apt-get install protobuf-compiler protoc-gen-go
 
       - name: Run Linux Build
         if: matrix.target == 'linux'
@@ -63,7 +63,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           brew update
-          brew install protobuf
+          brew install protobuf protoc-gen-go
       
       - name: Run Mac x86 Build
         if: matrix.target == 'mac'
@@ -73,15 +73,15 @@ jobs:
         if: matrix.target == 'mac-arm64'
         run: make dist-mac-arm
 
-      - name: Install protoc windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          choco install protoc
-
-      - name: Run Windows Build
-        if: matrix.target == 'windows'
-        shell: bash
-        run: make dist-windows
+          #      - name: Install protoc windows
+          #        if: matrix.os == 'windows-latest'
+          #        run: |
+          #          choco install protoc
+          #
+          #      - name: Run Windows Build
+          #        if: matrix.target == 'windows'
+          #        shell: bash
+          #        run: make dist-windows
 
       - name: Release
         uses: softprops/action-gh-release@v1
