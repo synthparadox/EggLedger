@@ -44,23 +44,27 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: 'stable'
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
       - name: Run Linux Build
         if: matrix.target == 'linux'
-        run: ./build-linux.sh
+        run: make dist-linux
       
       - name: Run Mac x86 Build
         if: matrix.target == 'mac'
-        run: ./build-macos.sh
+        run: make dist-mac
 
       - name: Run Mac ARM Build
         if: matrix.target == 'mac-arm64'
-        run: ./build-macos-arm.sh
+        run: make dist-mac-arm
 
       - name: Run Windows Build
         if: matrix.target == 'windows'
         shell: bash
-        run: ./build-windows.sh
+        run: make dist-windows
 
       - name: Release
         uses: softprops/action-gh-release@v1

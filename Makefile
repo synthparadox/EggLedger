@@ -3,6 +3,9 @@
 build:
 	go build .
 
+init:
+	yarn install
+
 css:
 	yarn build:css
 
@@ -17,12 +20,14 @@ dev-css:
 
 dist: css protobuf dist-windows dist-mac dist-linux
 
-dist-windows: css protobuf
+dist-windows: init css protobuf
 	./build-windows.sh
 
-dist-linux: css protobuf
+dist-linux: init css protobuf
 	./build-linux.sh
 
-dist-mac: css protobuf
+dist-mac: init css protobuf
 	./build-macos.sh
+
+dist-mac-arm: init css protobuf
 	./build-macos-arm.sh
