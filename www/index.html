@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>EggLedger</title>
     <link rel="icon" href="images/icon-64.png" />
@@ -165,13 +165,6 @@
             </template>
             <template v-else-if="currentState === AppState.Failed">
               Data fetching failed. Please try again.<br />
-              <a
-                v-external-link
-                href="https://wasmegg.netlify.app/#/contact"
-                target="_blank"
-                class="text-blue-500 hover:text-blue-600 underline"
-                >Get help</a
-              >
             </template>
             <template v-else-if="currentState === AppState.Interrupted">Interrupted.</template>
           </div>
@@ -197,31 +190,17 @@
             <p class="space-x-3">
               <a
                 v-external-link
-                href="https://github.com/fanaticscripter/EggLedger/releases"
+                href="https://github.com/DavidArthurCole/EggLedger/releases"
                 target="_blank"
                 class="text-green-500 hover:text-green-600 underline"
                 >Check for updates</a
               >
               <a
                 v-external-link
-                href="https://wasmegg.netlify.app/#/contact"
-                target="_blank"
-                class="text-green-500 hover:text-green-600 underline"
-                >Get help</a
-              >
-              <a
-                v-external-link
-                href="https://wasmegg.netlify.app/"
+                href="https://wasmegg-carpet.netlify.app/"
                 target="_blank"
                 class="text-green-500 hover:text-green-600 underline"
                 >More tools</a
-              >
-              <a
-                v-external-link
-                href="https://wasmegg.netlify.app/#/donate"
-                target="_blank"
-                class="text-green-500 hover:text-green-600 underline"
-                >Donate</a
               >
             </p>
 
@@ -233,7 +212,7 @@
                 to the
                 <a
                   v-external-link
-                  href="https://wasmegg.netlify.app/rockets-tracker/"
+                  href="https://wasmegg-carpet.netlify.app/rockets-tracker/"
                   target="_blank"
                   class="text-blue-500 hover:text-blue-600 underline"
                   >rockets tracker</a
@@ -276,7 +255,7 @@
                 I'm not aware of any negative effects, and
                 <a
                   v-external-link
-                  href="https://wasmegg.netlify.app/rockets-tracker/"
+                  href="https://wasmegg-carpet.netlify.app/rockets-tracker/"
                   target="_blank"
                   class="text-blue-500 hover:text-blue-600 underline"
                   >rockets tracker</a
@@ -294,11 +273,13 @@
                 Open the game menu
                 <img
                   src="images/icon_menu.webp"
+                  alt="Menu Icon"
                   class="inline h-5 w-5 p-0.5 relative -top-px border border-gray-300 rounded-full"
                 />
                 (lower left corner), choose Settings
                 <img
                   src="images/icon_settings.webp"
+                  alt="Settings Icon"
                   class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />, then click on "Privacy & Data". Your ID is at the bottom.
                 <span class="underline">It should look like EI1234567890123456</span>; that's the
@@ -308,6 +289,7 @@
                 Alternatively, if you choose Help
                 <img
                   src="images/icon_help.webp"
+                  alt="Help Icon"
                   class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />
                 in the main menu and click on "Data Loss Issue", the game will auto-compose an email
@@ -383,18 +365,25 @@
         <footer class="text-center text-sm text-gray-500">
           <a
             v-external-link
-            href="https://github.com/fanaticscripter/EggLedger"
+            href="https://github.com/DavidArthurCole/EggLedger"
             target="_blank"
             class="text-gray-500 hover:text-gray-600 underline"
             >EggLedger</a
           >
           v{{ appVersion }} by @<a
             v-external-link
-            href="https://wasmegg.netlify.app/"
+            href="https://wasmegg-carpet.netlify.app/"
             target="_blank"
             class="text-gray-500 hover:text-gray-600 underline"
             >mk2</a
-          ><span v-if="appHasUpdate" class="text-red-700">
+          >, & @<a
+            v-external-link
+            href="https://github.com/DavidArthurCole"
+            target="_blank"
+            class="text-gray-500 hover:text-gray-600 underline"
+            >DavidArthurCole</a
+          >
+          <span v-if="appHasUpdate" class="text-red-700">
             (<a
               v-external-link
               href="https://github.com/fanaticscripter/EggLedger/releases"
@@ -530,7 +519,7 @@
             });
 
             const fetchPlayerData = async () => {
-              normalizedId = normalizePlayerId(playerId.value);
+              const normalizedId = normalizePlayerId(playerId.value);
               if (normalizedId !== '') {
                 await window.fetchPlayerData(normalizedId);
               }

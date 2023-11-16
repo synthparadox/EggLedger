@@ -31,3 +31,4 @@ dist-mac: init css protobuf
 
 dist-mac-arm: init css protobuf
 	./build-macos-arm.sh
+
