@@ -1,5 +1,4 @@
-#!/usr/bin/env zsh
-setopt nounset errexit
+#!/bin/bash -eu
 bin=dist/eggledger-linux
 GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o $bin
 echo "generated $bin"
