@@ -99,7 +99,7 @@ func exportMissionsToCsv(missions []*mission, path string) error {
 			m.ReturnedAtStr,
 			fmt.Sprint(m.DurationDays),
 			fmt.Sprint(m.Capacity),
-			fmt.Sprint(m.TargetArtifact.ArtifactType().Display()),
+			fmt.Sprint(m.TargetArtifact.CasedName()),
 		}
 		count := len(m.ArtifactNames)
 		for i := 0; i < maxArtifactCount; i++ {
@@ -193,7 +193,7 @@ func exportMissionsToXlsx(missions []*mission, path string) error {
 		}
 	}
 
-	header := []interface{}{"ID", "Ship", "Type", "Level", "Launched at", "Returned at", "Duration", "Capacity"}
+	header := []interface{}{"ID", "Ship", "Type", "Level", "Launched at", "Returned at", "Duration", "Capacity", "Target"}
 	for i := 1; i <= maxArtifactCount; i++ {
 		header = append(header, fmt.Sprintf("Artifact %d", i))
 	}
@@ -212,7 +212,7 @@ func exportMissionsToXlsx(missions []*mission, path string) error {
 			&excelize.Cell{Value: m.ReturnedAt, StyleID: datetimeStyle},
 			&excelize.Cell{Value: m.DurationDays, StyleID: durationStyle},
 			m.Capacity,
-			m.TargetArtifact.ArtifactType().Display(),
+			m.TargetArtifact.CasedName(),
 		}
 		for _, name := range m.ArtifactNames {
 			row = append(row, name)
