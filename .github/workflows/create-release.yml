@@ -59,6 +59,7 @@ jobs:
 
       - name: Run Windows Build
         if: matrix.target == 'windows'
+        shell: bash
         run: ./build-windows.sh
 
       - name: Release
