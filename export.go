@@ -33,6 +33,7 @@ type mission struct {
 	Capacity         uint32
 	Artifacts        []*ei.ArtifactSpec
 	ArtifactNames    []string
+	TargetArtifact   ei.ArtifactSpec_Name
 }
 
 func newMission(r *ei.CompleteMissionResponse) *mission {
@@ -43,6 +44,7 @@ func newMission(r *ei.CompleteMissionResponse) *mission {
 	durationSeconds := info.GetDurationSeconds()
 	duration := time.Duration(durationSeconds) * time.Second
 	returnedAt := launchedAt.Add(duration)
+	target := info.GetTargetArtifact()
 	var artifacts []*ei.ArtifactSpec
 	var artifactNames []string
 	for _, a := range r.Artifacts {
@@ -65,6 +67,7 @@ func newMission(r *ei.CompleteMissionResponse) *mission {
 		Capacity:         info.GetCapacity(),
 		Artifacts:        artifacts,
 		ArtifactNames:    artifactNames,
+		TargetArtifact:   target,
 	}
 }
 
@@ -81,7 +84,7 @@ func exportMissionsToCsv(missions []*mission, path string) error {
 			maxArtifactCount = count
 		}
 	}
-	header := []string{"ID", "Ship", "Type", "Level", "Launched at", "Returned at", "Duration days", "Capacity"}
+	header := []string{"ID", "Ship", "Type", "Level", "Launched at", "Returned at", "Duration days", "Capacity", "Target"}
 	for i := 1; i <= maxArtifactCount; i++ {
 		header = append(header, fmt.Sprintf("Artifact %d", i))
 	}
@@ -96,6 +99,7 @@ func exportMissionsToCsv(missions []*mission, path string) error {
 			m.ReturnedAtStr,
 			fmt.Sprint(m.DurationDays),
 			fmt.Sprint(m.Capacity),
+			fmt.Sprint(m.TargetArtifact.ArtifactType().Display()),
 		}
 		count := len(m.ArtifactNames)
 		for i := 0; i < maxArtifactCount; i++ {
@@ -208,6 +212,7 @@ func exportMissionsToXlsx(missions []*mission, path string) error {
 			&excelize.Cell{Value: m.ReturnedAt, StyleID: datetimeStyle},
 			&excelize.Cell{Value: m.DurationDays, StyleID: durationStyle},
 			m.Capacity,
+			m.TargetArtifact.ArtifactType().Display(),
 		}
 		for _, name := range m.ArtifactNames {
 			row = append(row, name)
