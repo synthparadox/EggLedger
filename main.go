@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/DavidArthurCole/EggLedger/db"
 	humanize "github.com/dustin/go-humanize"
-	"github.com/fanaticscripter/EggLedger/db"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"

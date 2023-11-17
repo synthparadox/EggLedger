@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	_githubRepo          = "davidarthurcole/EggLedger"
+	_githubRepo          = "DavidArthurCole/EggLedger"
 	_updateCheckInterval = time.Hour * 23
 )
 

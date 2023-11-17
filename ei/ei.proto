@@ -2,7 +2,7 @@ syntax = "proto2";
 
 package ei;
 
-option go_package = "github.com/fanaticscripter/EggLedger/ei";
+option go_package = "github.com/DavidArthurCole/EggLedger/ei";
 
 enum Platform {
     UNKNOWN_PLATFORM = 0;

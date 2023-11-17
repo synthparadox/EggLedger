@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/fanaticscripter/EggLedger/ei"
+	"github.com/DavidArthurCole/EggLedger/ei"
 )
 
 type mission struct {
@@ -36,16 +36,22 @@ type mission struct {
 	TargetArtifact   ei.ArtifactSpec_Name
 }
 
-func CustomGetTargetArtifact(x *ei.MissionInfo) ei.ArtifactSpec_Name {
-	if x != nil && x.TargetArtifact != nil && *x.StartTimeDerived >= float64(1686260700) {
-		return *x.TargetArtifact
+/*
+These two were reated to cope with the fact that kevin can't count
+
+This replaces the GetTargetArtifact() method, which for a nil value,
+returns LUNAR_TOTEM, million dollar game devlopment right there
+*/
+func CustomGetTargetArtifact(mission *ei.MissionInfo) ei.ArtifactSpec_Name {
+	if mission != nil && mission.TargetArtifact != nil && *mission.StartTimeDerived >= float64(1686260700) {
+		return *mission.TargetArtifact
 	}
 	return ei.ArtifactSpec_UNKNOWN
 }
 
-func GetNamedTarget(x *ei.ArtifactSpec_Name) string {
-	if x != nil && *x != ei.ArtifactSpec_UNKNOWN {
-		return x.CasedName()
+func GetNamedTarget(aspecN *ei.ArtifactSpec_Name) string {
+	if aspecN != nil && *aspecN != ei.ArtifactSpec_UNKNOWN {
+		return aspecN.CasedName()
 	}
 	return ""
 }
