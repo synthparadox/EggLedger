@@ -9,9 +9,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/fanaticscripter/EggLedger/api"
-	"github.com/fanaticscripter/EggLedger/db"
-	"github.com/fanaticscripter/EggLedger/ei"
+	"github.com/DavidArthurCole/EggLedger/api"
+	"github.com/DavidArthurCole/EggLedger/db"
+	"github.com/DavidArthurCole/EggLedger/ei"
 )
 
 var _dbPath string

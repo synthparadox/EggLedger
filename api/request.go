@@ -17,13 +17,13 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/fanaticscripter/EggLedger/ei"
+	"github.com/DavidArthurCole/EggLedger/ei"
 )
 
 const (
-	AppVersion     = "1.22.9"
-	AppBuild       = "1.22.9.0"
-	ClientVersion  = 37
+	AppVersion     = "1.27.6"
+	AppBuild       = "1.27.6.1"
+	ClientVersion  = 60
 	PlatformString = "IOS"
 	Platform       = ei.Platform_IOS
 )

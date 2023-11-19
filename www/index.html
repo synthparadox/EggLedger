@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <title>EggLedger</title>
     <link rel="icon" href="images/icon-64.png" />
@@ -16,7 +16,7 @@
             class="h-full flex items-end max-w-7xl w-full mx-auto px-4 space-x-1.5 border-b border-gray-300"
           >
             <div
-              v-for="tab in [UITab.Ledger, UITab.About]"
+              v-for="tab in [UITab.Ledger, UITab.About, UITab.ViewData]"
               v-bind:key="tab"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-700 border border-gray-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-white border-b-transparent' : 'bg-gray-100 hover:bg-gray-50 cursor-pointer'"
@@ -165,13 +165,6 @@
             </template>
             <template v-else-if="currentState === AppState.Failed">
               Data fetching failed. Please try again.<br />
-              <a
-                v-external-link
-                href="https://wasmegg.netlify.app/#/contact"
-                target="_blank"
-                class="text-blue-500 hover:text-blue-600 underline"
-                >Get help</a
-              >
             </template>
             <template v-else-if="currentState === AppState.Interrupted">Interrupted.</template>
           </div>
@@ -197,31 +190,17 @@
             <p class="space-x-3">
               <a
                 v-external-link
-                href="https://github.com/fanaticscripter/EggLedger/releases"
+                href="https://github.com/DavidArthurCole/EggLedger/releases"
                 target="_blank"
                 class="text-green-500 hover:text-green-600 underline"
                 >Check for updates</a
               >
               <a
                 v-external-link
-                href="https://wasmegg.netlify.app/#/contact"
-                target="_blank"
-                class="text-green-500 hover:text-green-600 underline"
-                >Get help</a
-              >
-              <a
-                v-external-link
-                href="https://wasmegg.netlify.app/"
+                href="https://wasmegg-carpet.netlify.app/"
                 target="_blank"
                 class="text-green-500 hover:text-green-600 underline"
                 >More tools</a
-              >
-              <a
-                v-external-link
-                href="https://wasmegg.netlify.app/#/donate"
-                target="_blank"
-                class="text-green-500 hover:text-green-600 underline"
-                >Donate</a
               >
             </p>
 
@@ -233,7 +212,7 @@
                 to the
                 <a
                   v-external-link
-                  href="https://wasmegg.netlify.app/rockets-tracker/"
+                  href="https://wasmegg-carpet.netlify.app/rockets-tracker/"
                   target="_blank"
                   class="text-blue-500 hover:text-blue-600 underline"
                   >rockets tracker</a
@@ -276,7 +255,7 @@
                 I'm not aware of any negative effects, and
                 <a
                   v-external-link
-                  href="https://wasmegg.netlify.app/rockets-tracker/"
+                  href="https://wasmegg-carpet.netlify.app/rockets-tracker/"
                   target="_blank"
                   class="text-blue-500 hover:text-blue-600 underline"
                   >rockets tracker</a
@@ -294,11 +273,13 @@
                 Open the game menu
                 <img
                   src="images/icon_menu.webp"
+                  alt="Menu Icon"
                   class="inline h-5 w-5 p-0.5 relative -top-px border border-gray-300 rounded-full"
                 />
                 (lower left corner), choose Settings
                 <img
                   src="images/icon_settings.webp"
+                  alt="Settings Icon"
                   class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />, then click on "Privacy & Data". Your ID is at the bottom.
                 <span class="underline">It should look like EI1234567890123456</span>; that's the
@@ -308,6 +289,7 @@
                 Alternatively, if you choose Help
                 <img
                   src="images/icon_help.webp"
+                  alt="Help Icon"
                   class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />
                 in the main menu and click on "Data Loss Issue", the game will auto-compose an email
@@ -380,24 +362,70 @@
           </div>
         </div>
 
+        <div
+          v-show="activeTab === UITab.ViewData"
+          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-hidden"
+        >
+          <div ref="selectViewFileForm" v-if="doesExportExist">
+            <form
+              class="mt-1 flex rounded-md shadow-sm"
+              v-on:submit="event => {
+              event.preventDefault();
+
+              //TODO: View the file
+            }"
+            >
+              <div class="relative flex-grow focus-within:z-10">
+                <label for="view-file-sel" class="sr-only">Choose a file</label>
+                <select ref="view-file-sel" 
+                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-transparent tabular-nums"
+                  v-model="selectedFile">
+                  <option v-bind:key="file" v-bind:value="null" >Choose a file</option>
+                  <option v-for="file in readableXlsxFiles" v-bind:key="file" v-bind:value="file">
+                    {{ file.nickname }}   {{ file.datetime }}   ({{ file.count }} missions)
+                </select>
+              </div>
+              <button
+                v-if="idle"
+                ref="viewFileSubmitRef"
+                type="submit"
+                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-gray-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                v-bind:disabled="selectedFile === null"
+              >
+                View
+              </button>
+            </form>
+          </div>
+          <div ref="noDataToView" v-else>
+            <span class="text-red-gray"> No mission data has been exported yet.<br>Please '<span class="font-bold">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-gray"> and then come back here.</span>
+          </div>
+        </div>
+
         <footer class="text-center text-sm text-gray-500">
           <a
             v-external-link
-            href="https://github.com/fanaticscripter/EggLedger"
+            href="https://github.com/DavidArthurCole/EggLedger"
             target="_blank"
             class="text-gray-500 hover:text-gray-600 underline"
             >EggLedger</a
           >
           v{{ appVersion }} by @<a
             v-external-link
-            href="https://wasmegg.netlify.app/"
+            href="https://github.com/fanaticscripter"
             target="_blank"
             class="text-gray-500 hover:text-gray-600 underline"
             >mk2</a
-          ><span v-if="appHasUpdate" class="text-red-700">
+          >, & @<a
+            v-external-link
+            href="https://github.com/DavidArthurCole"
+            target="_blank"
+            class="text-gray-500 hover:text-gray-600 underline"
+            >DavidArthurCole</a
+          >
+          <span v-if="appHasUpdate" class="text-red-700">
             (<a
               v-external-link
-              href="https://github.com/fanaticscripter/EggLedger/releases"
+              href="https://github.com/DavidArthurCole/EggLedger/releases"
               target="_blank"
               class="text-red-700 hover:text-red-800 underline"
               >new version available!</a
@@ -421,6 +449,10 @@
       // - openURL(url string)
       // - checkForUpdates()
 
+      //Daveed additions :^)
+      // - doesExportExist(): bool
+      // - getExistingExports(): []string
+
       // Interrupt worker if the page is reloaded or closed.
       window.addEventListener('beforeunload', async () => {
         await window.stopFetchingPlayerData();
@@ -436,6 +468,7 @@
         const UITab = {
           Ledger: 'Ledger',
           About: 'About',
+          ViewData: 'View Mission Data',
         };
 
         const AppState = {
@@ -530,7 +563,7 @@
             });
 
             const fetchPlayerData = async () => {
-              normalizedId = normalizePlayerId(playerId.value);
+              const normalizedId = normalizePlayerId(playerId.value);
               if (normalizedId !== '') {
                 await window.fetchPlayerData(normalizedId);
               }
@@ -631,6 +664,32 @@
               });
             };
 
+            // ===== Setup for 'View Mission Data' Tab =====
+            const xlsxFiles = Vue.ref([]); //Empty array of strings
+            const readableXlsxFiles = Vue.computed(() => {
+              return xlsxFiles.value.map(file => {
+                return {
+                  nickname: knownAccounts?.value?.find(account => account.id === file.eid) ?? "Unknown Player",
+                  datetime: file.datetime,
+                  count: file.count
+                }
+              });
+            });
+            const doesExportExist = Vue.ref(false);
+            Vue.onMounted(async () => {
+              doesExportExist.value = await window.doesExportExist();
+            });
+            Vue.watch(exportedFiles, async () => {
+              doesExportExist.value = await window.doesExportExist();
+              if(doesExportExist.value) {
+                xlsxFiles.value = await window.findExistingExports();
+              }
+            });
+            const selectedFile = Vue.ref(null);
+            window.switchToLedger = () => {
+              activeTab.value = UITab.Ledger;
+            };
+
             return {
               appVersion,
               appDirectory,
@@ -665,6 +724,12 @@
               hhmmss,
 
               appHasUpdate,
+
+              //Daveed additions :^)
+              doesExportExist,
+              xlsxFiles,
+              readableXlsxFiles,
+              selectedFile,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,

@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/fanaticscripter/EggLedger/ei"
+	"github.com/DavidArthurCole/EggLedger/ei"
 )
 
 func RequestFirstContactRawPayloadWithContext(ctx context.Context, playerId string) ([]byte, error) {
