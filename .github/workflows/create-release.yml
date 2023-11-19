@@ -26,7 +26,7 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        target: [linux, mac, mac-arm64] #, windows]
+        target: [linux, mac, mac-arm64 , windows]
         include:
           - target: linux
             os: ubuntu-latest
@@ -34,8 +34,8 @@ jobs:
             os: macos-latest
           - target: mac-arm64
             os: macos-latest
-              #          - target: windows
-              #            os: windows-latest
+          - target: windows
+            os: ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -49,17 +49,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install protoc linux
-        if: matrix.os == 'ubuntu-latest'
+      - name: Install Linux build dependencies
+        if: matrix.target == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install protobuf-compiler protoc-gen-go
+          sudo apt-get install -y protobuf-compiler protoc-gen-go
 
       - name: Run Linux Build
         if: matrix.target == 'linux'
         run: make dist-linux
 
-      - name: Install protoc macos
+      - name: Install Macos build dependencies
         if: matrix.os == 'macos-latest'
         run: |
           brew update
@@ -73,15 +73,15 @@ jobs:
         if: matrix.target == 'mac-arm64'
         run: make dist-mac-arm
 
-          #      - name: Install protoc windows
-          #        if: matrix.os == 'windows-latest'
-          #        run: |
-          #          choco install protoc
-          #
-          #      - name: Run Windows Build
-          #        if: matrix.target == 'windows'
-          #        shell: bash
-          #        run: make dist-windows
+      - name: Install Windows build dependencies
+        if: matrix.target == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler protoc-gen-go gcc-mingw-w64
+
+      - name: Run Windows Build
+        if: matrix.target == 'windows'
+        run: make dist-windows
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -92,4 +92,5 @@ jobs:
             dist/EggLedger-mac-arm64.zip
             dist/EggLedger-linux.tar.gz
             dist/EggLedger-windows.zip
+            dist/EggLedger.exe
 
