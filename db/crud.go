@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/fanaticscripter/EggLedger/api"
-	"github.com/fanaticscripter/EggLedger/ei"
+	"github.com/DavidArthurCole/EggLedger/api"
+	"github.com/DavidArthurCole/EggLedger/ei"
 )
 
 func InsertBackup(playerId string, timestamp float64, payload []byte, minimumTimeSinceLastEntry time.Duration) error {

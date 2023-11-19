@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 )
 
 const (
-	_githubRepo          = "davidarthurcole/EggLedger"
+	_githubRepo          = "DavidArthurCole/EggLedger"
 	_updateCheckInterval = time.Hour * 23
 )
 
@@ -66,31 +68,42 @@ func checkForUpdates() (newVersion string, err error) {
 }
 
 func getLatestTag() (string, error) {
-	client := &http.Client{
-		Timeout: time.Second * 10,
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", _githubRepo)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return "", errors.Wrapf(err, "creating request for %s", url)
 	}
-	url := "https://api.github.com/repos/" + _githubRepo + "/releases/latest"
-	resp, err := client.Get(url)
+
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", errors.Wrapf(err, "GET %s", url)
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", errors.Wrapf(err, "GET %s: %#v", url, string(body))
+		return "", errors.Wrapf(err, "reading response body for %s: %#v", url, string(body))
 	}
-	if resp.StatusCode != 200 {
+
+	if resp.StatusCode != http.StatusOK {
 		return "", errors.Errorf("GET %s: HTTP %d: %#v", url, resp.StatusCode, string(body))
 	}
+
 	var release struct {
 		TagName string `json:"tag_name"`
 	}
 	err = json.Unmarshal(body, &release)
 	if err != nil {
-		return "", errors.Wrapf(err, "GET %s: %#v", url, string(body))
+		return "", errors.Wrapf(err, "parsing JSON for %s: %#v", url, string(body))
 	}
+
 	if release.TagName == "" {
 		return "", errors.Errorf("GET %s: tag_name is empty: %#v", url, string(body))
 	}
+
 	return release.TagName, nil
 }

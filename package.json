@@ -10,5 +10,6 @@
   "scripts": {
     "build:css": "tailwindcss -i www/index.pcss -o www/index.css",
     "dev:css": "tailwindcss -i www/index.pcss -o www/index.css --watch"
-  }
+  },
+  "dependencies": {}
 }

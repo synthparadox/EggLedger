@@ -13,16 +13,19 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/DavidArthurCole/EggLedger/db"
+	"github.com/DavidArthurCole/EggLedger/ei"
 	humanize "github.com/dustin/go-humanize"
-	"github.com/fanaticscripter/EggLedger/db"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/tealeg/xlsx"
 	"github.com/zserge/lorca"
 	"golang.org/x/sync/semaphore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -73,7 +76,6 @@ func (u UI) MustBind(name string, f interface{}) {
 
 type AppState string
 
-//nolint:deadcode
 const (
 	AppState_AWAITING_INPUT    AppState = "AwaitingInput"
 	AppState_FETCHING_SAVE     AppState = "FetchingSave"
@@ -96,6 +98,35 @@ type worker struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	ctxlock sync.Mutex
+}
+
+type ExportedFile struct {
+	File     string `json:"file"`
+	Count    int    `json:"count"`
+	DateTime string `json:"datetime"`
+	EID      string `json:"eid"`
+}
+
+type FileMission struct {
+	MissiondId   string                       `json:"missionId"`
+	Ship         *ei.MissionInfo_Spaceship    `json:"ship"`
+	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
+	Level        int32                        `json:"level"`
+	LaunchDate   string                       `json:"launchDate"`
+	ReturnDate   string                       `json:"returnDate"`
+	Capacity     int32                        `json:"capacity"`
+	Target       *ei.ArtifactSpec_Name        `json:"target"`
+}
+
+type FileMissionMonth struct {
+	Month    time.Month    `json:"month"`
+	Year     int           `json:"year"`
+	Missions []FileMission `json:"missions"`
+}
+
+type FileMissionYear struct {
+	Year   int                `json:"year"`
+	Months []FileMissionMonth `json:"months"`
 }
 
 func init() {
@@ -196,6 +227,131 @@ func init() {
 
 	storageInit()
 	dataInit()
+}
+
+func countRows(filePath string) (int, error) {
+	xlFile, err := xlsx.OpenFile(filePath)
+	if err != nil {
+		return 0, err
+	}
+	sheet := xlFile.Sheets[0]
+	rowsCount := len(sheet.Rows)
+	return rowsCount, nil
+}
+
+// Convert YYYYMMDD_HHMMSS to YYYY-MM-DD HH:MM:SS
+func dateReadable(date string) string {
+	return date[0:4] + "-" + date[4:6] + "-" + date[6:8] + " " + date[9:11] + ":" + date[11:13] + ":" + date[13:15]
+}
+
+func viewFile(filePath string) ([]FileMissionYear, error) {
+	if err := open.Start(filePath); err != nil {
+		return nil, err
+	}
+
+	yearArr := []FileMissionYear{}
+	monthArr := []FileMissionMonth{}
+	xlFile, err := xlsx.OpenFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	//Assume sheet 0 is the only sheet
+	sheet := xlFile.Sheets[0]
+	rowsCount := len(sheet.Rows)
+	//Skip the first row
+	for i := 1; i < rowsCount; i++ {
+		/*Row is ordered as;
+		Mission ID 	Ship 			Duration Type
+		Level 		Launch Date		Return Date
+		(Duration)	Capacity		Target
+		*/
+		missionId := sheet.Rows[i].Cells[0].String() //Raw data is usable
+		ship := sheet.Rows[i].Cells[1].String()
+		durationType := sheet.Rows[i].Cells[2].String()
+		level, levelerr := strconv.Atoi(sheet.Rows[i].Cells[3].String())       //Raw data is usable after conversion
+		launchDate := sheet.Rows[i].Cells[4].String()                          //Raw data is usable
+		returnDate := sheet.Rows[i].Cells[5].String()                          //Raw data is usable
+		capacity, capacityerr := strconv.Atoi(sheet.Rows[i].Cells[7].String()) //Raw data is usable after conversion
+		target := sheet.Rows[i].Cells[8].String()
+
+		if levelerr != nil || capacityerr != nil {
+			log.Error("Error converting level or capacity to int at row " + strconv.Itoa(i) + " skipping...")
+			continue
+		}
+
+		//Convert ship to enum
+		shipEnum := ei.MissionInfo_Spaceship.Enum(ei.MissionInfo_Spaceship(ei.MissionInfo_Spaceship_value[strings.ToUpper(strings.ReplaceAll(ship, " ", "_"))]))
+		//Convert duration type to enum - I fucking hate Kevin for naming things this way
+		durationTypeEnum := ei.MissionInfo_DurationType.Enum(ei.MissionInfo_DurationType(ei.MissionInfo_DurationType_value[strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(durationType, "Extended", "Epic"), "Standard", "Long"))]))
+		//Convert target to enum
+		//Pre-processor replacements
+		target = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ToUpper(target), "MERCURY'S", "MERCURCY"), "GUSSET", "ORNATE GUSSET"), "VIAL OF MARTIAN DUST", "VIAL MARTIAN DUST")
+		targetEnum := ei.ArtifactSpec_Name.Enum(ei.ArtifactSpec_Name(ei.ArtifactSpec_Name_value[strings.ReplaceAll(strings.TrimSpace(target), " ", "_")]))
+
+		//Parse time from ship (month and year checking & extract)
+		parsedTime, timeParseErr := time.Parse("2006-01-02 15:04:05", launchDate)
+		if timeParseErr != nil {
+			log.Error("Error parsing Date/Time of ship launch at row " + strconv.Itoa(i) + " skipping...")
+			continue
+		}
+
+		year := parsedTime.Year()
+		month := parsedTime.Month()
+
+		missionInst := FileMission{
+			MissiondId:   missionId,
+			Ship:         shipEnum,
+			DurationType: durationTypeEnum,
+			Level:        int32(level),
+			LaunchDate:   launchDate,
+			ReturnDate:   returnDate,
+			Capacity:     int32(capacity),
+			Target:       targetEnum,
+		}
+		//Look for the month in the year
+		monthFound := false
+		monthObj := FileMissionMonth{
+			Month:    month,
+			Year:     year,
+			Missions: []FileMission{},
+		}
+		for i := 0; i < len(monthArr); i++ {
+			if monthArr[i].Month == month && monthArr[i].Year == year {
+				monthFound = true
+				monthObj = monthArr[i]
+				break
+			}
+		}
+		monthObj.Missions = append(monthObj.Missions, missionInst)
+
+		if !monthFound {
+			monthArr = append(monthArr, monthObj)
+		}
+	}
+
+	//Loop through months and add to year
+	for i := 0; i < len(monthArr); i++ {
+		//Look for the year
+		yearFound := false
+		yearObj := FileMissionYear{
+			Year:   monthArr[i].Year,
+			Months: []FileMissionMonth{},
+		}
+		for j := 0; j < len(yearArr); j++ {
+			if yearArr[j].Year == monthArr[i].Year {
+				yearFound = true
+				yearObj = yearArr[j]
+				break
+			}
+		}
+		yearObj.Months = append(yearObj.Months, monthArr[i])
+
+		if !yearFound {
+			yearArr = append(yearArr, yearObj)
+		}
+	}
+
+	return yearArr, nil
 }
 
 func main() {
@@ -541,6 +697,77 @@ func main() {
 		defer w.ctxlock.Unlock()
 		if w.cancel != nil {
 			w.cancel()
+		}
+	})
+
+	ui.MustBind("doesExportExist", func() bool {
+		path := filepath.Join(_rootDir, "exports", "missions")
+		//Check if the path exists
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			return false
+		}
+
+		// Check if any XLSX files exist in the export directory
+		files, err := os.ReadDir(path)
+		if err != nil {
+			log.Error(err)
+			return false
+		}
+		for _, file := range files {
+			if strings.HasSuffix(file.Name(), ".xlsx") {
+				return true
+			}
+		}
+		return false
+	})
+
+	ui.MustBind("findExistingExports", func() []ExportedFile {
+		path := filepath.Join(_rootDir, "exports", "missions")
+		//Get all files in the export directory
+		files, err := os.ReadDir(path)
+		if err != nil {
+			log.Error(err)
+			return nil
+		}
+		var xlsxFiles []ExportedFile
+		for _, file := range files {
+			var fileName = file.Name()
+			if strings.HasSuffix(file.Name(), ".xlsx") {
+				eiRegex := regexp.MustCompile(`EI\d+`)
+				dateRegex := regexp.MustCompile(`\d{8}_\d{6}`)
+
+				eiMatch := eiRegex.FindString(fileName)
+				dateMatch := dateRegex.FindString(fileName)
+
+				if eiMatch == "" || dateMatch == "" {
+					log.Error("Error parsing file name: `" + fileName + "` skipping...")
+					continue
+				}
+
+				rowsCount, xlsxErr := countRows(filepath.Join(_rootDir, "exports", "missions", fileName))
+				if xlsxErr != nil {
+					log.Error(xlsxErr)
+					continue
+				}
+
+				xlsxFiles = append(xlsxFiles, ExportedFile{
+					File:     fileName,
+					Count:    rowsCount,
+					DateTime: dateReadable(dateMatch),
+					EID:      eiMatch,
+				})
+			}
+		}
+		return xlsxFiles
+	})
+
+	ui.MustBind("viewFile", func(file string) []FileMissionYear {
+		path := filepath.Join(_rootDir, "exports", "missions", file)
+		if fileMissionYears, err := viewFile(path); err != nil {
+			log.Error(err)
+			return nil
+		} else {
+			return fileMissionYears
 		}
 	})
 

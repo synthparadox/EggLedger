@@ -892,16 +892,8 @@ func (a *ArtifactSpec) TierName() string {
 			return "MEGGNIFICENT"
 		}
 	// Stones
-	case ArtifactSpec_TACHYON_STONE:
-		switch *a.Level {
-		case ArtifactSpec_INFERIOR:
-			return "REGULAR"
-		case ArtifactSpec_LESSER:
-			return "EGGSQUISITE"
-		case ArtifactSpec_NORMAL:
-			return "BRILLIANT"
-		}
 	case ArtifactSpec_DILITHIUM_STONE:
+	case ArtifactSpec_TACHYON_STONE:
 		switch *a.Level {
 		case ArtifactSpec_INFERIOR:
 			return "REGULAR"
@@ -928,16 +920,8 @@ func (a *ArtifactSpec) TierName() string {
 		case ArtifactSpec_NORMAL:
 			return "MEGGNIFICENT"
 		}
-	case ArtifactSpec_SOUL_STONE:
-		switch *a.Level {
-		case ArtifactSpec_INFERIOR:
-			return "REGULAR"
-		case ArtifactSpec_LESSER:
-			return "EGGSQUISITE"
-		case ArtifactSpec_NORMAL:
-			return "RADIANT"
-		}
 	case ArtifactSpec_PROPHECY_STONE:
+	case ArtifactSpec_SOUL_STONE:
 		switch *a.Level {
 		case ArtifactSpec_INFERIOR:
 			return "REGULAR"
