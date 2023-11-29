@@ -11,17 +11,99 @@
 
 /* Scrollbar dark mode */
 ::-webkit-scrollbar {
-    width: 12px;
+    width: 14px;
+    height: 14px;
 }
 ::-webkit-scrollbar-thumb {
     background-color: #4c4f52;
 }
 ::-webkit-scrollbar-track {
-    background-color: #333537;
+    background: #303030;
+    border: solid 2px rgba(33,33,33,0.5);
 }
 ::-webkit-scrollbar-thumb:hover {
     background-color: #6b6e71;
 }
 ::-webkit-scrollbar-corner {
-    background-color: #333537;
+    background: transparent;
+}
+
+/* Buttons */
+::-webkit-scrollbar-button
+{
+  border-style: solid;
+  height: 16px;
+  width: 16px;
+}
+
+/* Up */
+::-webkit-scrollbar-button:vertical:decrement
+{
+  border-width: 0 7px 14px 7px;
+  border-color: transparent transparent #404040 transparent;
+}
+
+::-webkit-scrollbar-button:vertical:decrement:hover
+{
+  border-color: transparent transparent #505050 transparent;
+}
+
+
+/* Down */
+::-webkit-scrollbar-button:vertical:increment
+{
+  border-width: 14px 7px 0 7px;
+  border-color: #404040 transparent transparent transparent;
+}
+
+::-webkit-scrollbar-button:vertical:increment:hover
+{
+  border-color: #505050 transparent transparent transparent;
+}
+
+
+/* Left */
+::-webkit-scrollbar-button:horizontal:decrement
+{
+  border-width: 7px 14px 7px 0;
+  border-color: transparent #404040 transparent transparent;
+}
+
+::-webkit-scrollbar-button:horizontal:decrement:hover
+{
+  border-color: transparent #505050 transparent transparent;
+}
+
+
+/* Right */
+::-webkit-scrollbar-button:horizontal:increment
+{
+  border-width: 7px 0 7px 14px;
+  border-color: transparent transparent transparent #404040;
+}
+
+::-webkit-scrollbar-button:horizontal:increment:hover
+{
+  border-color: transparent transparent transparent #505050;
+}
+
+.color-overlay {
+    position: relative;
+    display: inline-block;
+  }
+
+  .color-overlay img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #9ca3af;
+    mix-blend-mode: multiply;
   }

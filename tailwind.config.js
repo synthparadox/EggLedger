@@ -10,16 +10,24 @@ module.exports = {
         short: "rgb(69, 159, 246)",
         standard: "rgb(139, 93, 246)",
         extended: "rgb(246, 168, 35)",
-        tutorial: "rgb(115, 128, 140)"
+        tutorial: "rgb(115, 128, 140)",
+        weewoosiren: "rgb(234 88 12)"
       },
       height: {
         stretch: 'stretch',
       },
+      spacing: {
+        '05rem': '0.5rem',
+        '1rem': '1rem',
+        '2rem': '2rem',
+        '3rem': '3rem',
+      },
       backgroundColor: {
-        'dark': '#393b40', // dark mode background color
-        'darker': '#242629', // dark mode background color
-        'darkerer': "#1c1d1f", // dark mode background color
-        'darkest': '#151617', // dark mode background color
+        'white': '#ffffff',
+        'dark': '#393b40',
+        'darker': '#242629',
+        'darkerer': "#1c1d1f",
+        'darkest': '#151617',
 
         'dark_tab': "#323633",
         'darker_tab': "#262927",

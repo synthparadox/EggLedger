@@ -17,7 +17,7 @@
             class="h-full flex items-end max-w-7xl w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300"
           >
             <div
-              v-for="tab in [UITab.Ledger, UITab.About, UITab.ViewData]"
+              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About]"
               v-bind:key="tab"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
@@ -205,6 +205,24 @@
               >
             </p>
 
+            <hr />
+            <div class="space-y-1">
+              <h2 class="font-bold">Is mk2 back?</h2>
+              <span class="mt-1">No. This tool is now being developed independently of mk2 - the community has taken over his orphaned tools since he went AWOL in 2022. <i>For EggLedger</i>, <i>specfically</i>, I  (<a
+                v-external-link
+                href="https://github.com/DavidArthurCole"
+                target="_blank"
+                class="text-gray-500 hover:text-gray-600 underline"
+                >DavidArthurCole</a
+              >) am the active developer and maintainer. To report issues, ask for changes, and more generally, to reach me with any information, reach out on discord <span class="text-short">@davidarthurcole</span>, or <a 
+                v-external-link
+                href="https://github.com/DavidArthurCole/EggLedger/issues/new/choose"
+                target="_blank"
+                class="text-gray-500 hover:text-gray-600 underline"
+              >open an Issue on GitHub</a>.</span>
+            </div>
+            <hr />
+
             <div class="space-y-1">
               <h2 class="font-bold">What does EggLedger do?</h2>
               <p>
@@ -275,13 +293,13 @@
                 <img
                   src="images/icon_menu.webp"
                   alt="Menu Icon"
-                  class="inline h-5 w-5 p-0.5 relative -top-px border border-gray-300 rounded-full"
+                  class="bg-white inline h-5 w-5 p-0.5 relative -top-px border border-gray-300 rounded-full"
                 />
                 (lower left corner), choose Settings
                 <img
                   src="images/icon_settings.webp"
                   alt="Settings Icon"
-                  class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
+                  class="bg-white inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />, then click on "Privacy & Data". Your ID is at the bottom.
                 <span class="underline">It should look like EI1234567890123456</span>; that's the
                 letters "EI" followed by 16 digits.
@@ -291,7 +309,7 @@
                 <img
                   src="images/icon_help.webp"
                   alt="Help Icon"
-                  class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
+                  class="bg-white inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />
                 in the main menu and click on "Data Loss Issue", the game will auto-compose an email
                 with your ID in the subject.
@@ -365,7 +383,7 @@
 
         <div
           v-show="activeTab === UITab.ViewData"
-          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-scroll"
+          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-scroll shadow-sm block"
         >
           <div ref="selectViewAccountForm" v-if="doesExportExist">
             <form
@@ -396,36 +414,54 @@
               </button>
             </form>
           </div>
-          <div ref="noDataToView" v-else>
-            <span class="text-red-gray"> No mission data has been exported yet.<br>Please '<span class="font-bold">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-gray"> and then come back here.</span>
+          <div class="text-center mt-3rem" ref="noDataToView" v-else>
+            <span class="text-weewoosiren"> No mission data has been loaded yet.<br>Please '<span class="font-bold text-gray-400">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-weewoosiren"> and then come back here.</span>
           </div>
           <div v-if="loadedAccountMissions && Object.keys(loadedAccountMissions).length > 0">
-            <hr class="pb-5" style="border-bottom: 2px solid black; height: 15px;">
-            <div>
-              <!-- Todo: implement the filter-->
-              <span class="font-bold">Filter:</span>
+            <div ref="filterRef">
+              <span class="font-bold text-gray-400">Filter:</span>
+              <form class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
+              v-on:submit="event => {
+                event.preventDefault();
+                applyFilter();
+              }"
+              >
+                <!-- Todo: implement the filter-->
+                <button
+                  v-if="idle"
+                  ref="applyFilterToData"
+                  type="submit"
+                  class="-ml-px relative w-20 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  v-bind:disabled="(dataFilter === null || dataBeingFiltered || !filterHasChanged)"
+                >
+                  Apply
+                </button>
+              </form>
             </div>
-            <hr class="pb-5 pt-5" style="border-bottom: 2px solid black; height: 15px;">
-            <div v-for="(value, yIndex) in loadedAccountMissions" :key="yIndex">
-              <div>
-                <u>{{ yIndex }}</u> <button style="font-size: 0.8rem; color: #0398fc;" class="mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleYear($event, yIndex)">Hide</button>
-                <div :class="'mt-1 year-' + yIndex + '-child'" v-for="(subValue, mIndex) in value" :key="mIndex">
-                  <div style="margin-top: 1rem;" class="ml-10">
-                    <u>{{ yIndex }}-{{ mIndex }}</u> <button style="font-size: 0.8rem; color: #0398fc;" class="mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleMonth($event, yIndex, mIndex)">Hide</button>
-                    <div :class="'year-' + yIndex + '-child-' + mIndex" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
-                      <div style="margin-top: 1rem;" class="ml-20">
-                        <u>{{ yIndex }}-{{ mIndex }}-{{ dIndex }}</u> <button style="font-size: 0.8rem; color: #0398fc;" class="mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, yIndex, mIndex, dIndex)">Hide</button>
-                        <div style="margin-left: 7.5rem; margin-top:1rem;" class="mission-grid">
-                          <div style="font-size: 0.9rem;" :class="'ml-30 mission-item year-' + yIndex + '-child-' + mIndex + '-' + dIndex" v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
-                            <span v-html="mission.launchTime + '  ' + shipToName(mission.ship) + '  ' + durToSpan(mission.durationType) + '  ' + levelToStars(mission.level)"></span>
-                          </div>
-                        </div>                        
+            <hr class="mt-1rem invisible">
+            <div ref="resultsDiv">
+              <span class="font-bold text-gray-400">Missions:</span>
+              <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+                <div v-for="(value, yIndex) in loadedAccountMissions" :key="yIndex">
+                  <span class="text-lg font-bold underline">{{ yIndex }}</span> <button class="text-lg text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleYear($event, yIndex)">Hide</button>
+                  <div :class="'mt-1 year-' + yIndex + '-child'" v-for="(subValue, mIndex) in value" :key="mIndex">
+                    <div class="mt-1rem ml-2rem">
+                      <span class="text-base font-bold underline">{{ yIndex }}-{{ mIndex }}</span> <button class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleMonth($event, yIndex, mIndex)">Hide</button>
+                      <div :class="'year-' + yIndex + '-child-' + mIndex" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
+                        <div class="mt-1rem ml-2rem">
+                          <span class="text-sm font-bold underline">{{ yIndex }}-{{ mIndex }}-{{ dIndex }}</span> <button class="text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, yIndex, mIndex, dIndex)">Hide</button>
+                          <div class="mt-1rem mission-grid">
+                            <div :class="'text-sm mission-item year-' + yIndex + '-child-' + mIndex + '-' + dIndex" v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
+                              <span class="text-gray-300" v-html="mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level)"></span>
+                            </div>
+                          </div>                        
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <hr :class="'pt-3rem pb-3rem invisible mt-1 year-' + yIndex + '-child'">
                 </div>
               </div>
-              <hr class="pb-5 pt-5" style="border-bottom: 2px solid black; height: 15px;">
             </div>
           </div>
           
@@ -445,7 +481,7 @@
             target="_blank"
             class="text-gray-500 hover:text-gray-600 underline"
             >mk2</a
-          >, & @<a
+          > & @<a
             v-external-link
             href="https://github.com/DavidArthurCole"
             target="_blank"
@@ -497,8 +533,8 @@
 
         const UITab = {
           Ledger: 'Ledger',
-          About: 'About',
           ViewData: 'View Mission Data',
+          About: 'About',
         };
 
         const AppState = {
@@ -570,16 +606,16 @@
           }
         };
 
-        function durToSpan(duration){
+        function durToSpan(duration, shipName){
           if(duration === "" || duration === null || duration === undefined){
             return "";
           }else{
             switch(duration){
-              case 0: return `<span class="text-short">Short</span>`;
-              case 1: return `<span class="text-standard">Standard</span>`;
-              case 2: return `<span class="text-extended">Extended</span>`;
-              case 3: return `<span class="text-tutorial">Tutorial</span>`;
-              default: return `<span style="color: red">Unknown</span>`;
+              case 0: return `<span class="text-short">` + shipName + `</span>`;
+              case 1: return `<span class="text-standard">` + shipName + `</span>`;
+              case 2: return `<span class="text-extended">` + shipName + `</span>`;
+              case 3: return `<span class="text-tutorial">` + shipName + `</span>`;
+              default: return `<span style="color: red">` + shipName + `</span>`;
             }
           }
         }
@@ -829,6 +865,18 @@
               }
             };
 
+            const dataFilter = Vue.ref(null);
+            const filterHasChanged = Vue.ref(false);
+            const dataBeingFiltered = Vue.ref(false);
+            const applyFilter = async () => {
+              dataBeingFiltered.value = true;
+              filterHasChanged.value = false;
+              //Yeah this ain't doin shit yet
+            };
+            Vue.watch(dataFilter, async () => {
+              filterHasChanged.value = true;
+            });
+
             const getShipDrops = async (playerId, ship) => {
               const loadValue = await window.getShipDrops(playerId, ship);
               if (loadValue !== "") {
@@ -886,6 +934,11 @@
               levelToStars,
               shipToName,
               getShipDrops,
+
+              dataFilter,
+              filterHasChanged,
+              dataBeingFiltered,
+              applyFilter,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,
