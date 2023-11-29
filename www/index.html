@@ -1,25 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
   <head>
     <title>EggLedger</title>
     <link rel="icon" href="images/icon-64.png" />
     <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="custom.css" />
     <script src="vue.global.prod.js"></script>
     <script src="shortcuts.js"></script>
   </head>
   <body>
     <div id="app" class="h-stretch">
       <!-- Set display to none initially and reset it once mounted to avoid flash of unrendered template. -->
-      <div v-unhide class="h-stretch flex flex-col space-y-3 pb-3" style="display: none">
-        <div class="h-11 flex-shrink-0 bg-blue-50">
+      <div v-unhide class="h-stretch flex flex-col space-y-3 pb-3 bg-darker" style="display: none">
+        <div class="h-11 flex-shrink-0 bg-dark">
           <div
-            class="h-full flex items-end max-w-7xl w-full mx-auto px-4 space-x-1.5 border-b border-gray-300"
+            class="h-full flex items-end max-w-7xl w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300"
           >
             <div
               v-for="tab in [UITab.Ledger, UITab.About, UITab.ViewData]"
               v-bind:key="tab"
-              class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-700 border border-gray-300 rounded-t-md"
-              v-bind:class="tab === activeTab ? 'bg-white border-b-transparent' : 'bg-gray-100 hover:bg-gray-50 cursor-pointer'"
+              class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
+              v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
               v-on:click="activeTab = tab"
             >
               {{ tab }}
@@ -30,9 +31,9 @@
         <div
           v-if="appIsInForbiddenDirectory || appIsTranslocated"
           v-show="activeTab === UITab.Ledger"
-          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-y-scroll"
+          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-y-scroll bg-darker"
         >
-          <div class="text-sm text-gray-700 space-y-1">
+          <div class="text-sm text-gray-400 space-y-1">
             <template v-if="appIsTranslocated">
               <p class="text-red-700">
                 EggLedger.app was launched in a jailed environment due to a macOS security feature.
@@ -58,7 +59,7 @@
         <div
           v-else
           v-show="activeTab === UITab.Ledger"
-          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-hidden"
+          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
         >
           <div>
             <form
@@ -73,8 +74,8 @@
                 <!-- Overlay to tag the input with the corresponding nickname (if the playerId in the input is known). -->
                 <div
                   v-if="nicknameForSelectedPlayerId"
-                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-500 tabular-nums"
-                  style="z-index: -10"
+                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
+                  style="z-index: -20"
                 >
                   <span class="invisible whitespace-pre">{{ playerId }}</span> ({{
                   nicknameForSelectedPlayerId }})
@@ -83,7 +84,7 @@
                 <input
                   ref="playerIdInputRef"
                   type="text"
-                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-transparent tabular-nums"
+                  class="focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-darkerer tabular-nums"
                   placeholder="EI1234567890123456"
                   v-bind:value="playerId"
                   v-on:focus="openPlayerIdDropdown"
@@ -92,13 +93,13 @@
 
                 <ul
                   v-if="playerIdDropdownOpen && knownAccounts.length > 0"
-                  class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
+                  class="absolute z-10 mt-1 w-full bg-darkerer shadow-lg max-h-60 rounded-md py-1 text-gray-400 ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
                   tabindex="-1"
                 >
                   <li
                     v-for="account in knownAccounts"
                     v-bind:key="account.id"
-                    class="text-sm text-gray-900 hover:text-white hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums"
+                    class="text-sm text-gray-400 hover:text-gray-300 hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums"
                     v-on:click="selectPlayerId(account.id)"
                   >
                     {{ account.id }} ({{ account.nickname }})
@@ -109,7 +110,7 @@
                 v-if="idle"
                 ref="playerIdSubmitRef"
                 type="submit"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-gray-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-bind:disabled="playerId.trim() === ''"
               >
                 Fetch
@@ -117,7 +118,7 @@
               <button
                 v-else
                 type="button"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-gray-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-on:click="stopFetchingPlayerData()"
               >
                 Stop
@@ -125,7 +126,7 @@
             </form>
           </div>
 
-          <div class="h-14 px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-md tabular-nums">
+          <div class="h-14 px-2 py-1 text-xs text-gray-500 bg-darkest rounded-md tabular-nums">
             <template v-if="currentState === AppState.FetchingSave">Fetching save...</template>
             <template v-else-if="currentState === AppState.FetchingMissions">
               <div>
@@ -171,7 +172,7 @@
 
           <div
             ref="messagesRef"
-            class="flex-1 px-2 py-1 overflow-scroll shadow-sm block text-xs font-mono text-gray-700 bg-gray-50 rounded-md"
+            class="flex-1 px-2 py-1 overflow-scroll shadow-sm block text-xs font-mono text-gray-400 bg-darkest rounded-md"
           >
             <div v-for="(message, i) in messages" v-bind:key="i" class="whitespace-pre">
               <span v-bind:class="message.isError ? 'text-red-700' : 'text-green-700'"
@@ -186,7 +187,7 @@
           v-show="activeTab === UITab.About"
           class="flex-1 max-w-7xl w-full mx-auto px-4 overflow-y-scroll"
         >
-          <div class="text-sm text-gray-700 space-y-2">
+          <div class="text-sm text-gray-400 space-y-2">
             <p class="space-x-3">
               <a
                 v-external-link
@@ -364,33 +365,32 @@
 
         <div
           v-show="activeTab === UITab.ViewData"
-          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-hidden"
+          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-scroll"
         >
-          <div ref="selectViewFileForm" v-if="doesExportExist">
+          <div ref="selectViewAccountForm" v-if="doesExportExist">
             <form
               class="mt-1 flex rounded-md shadow-sm"
               v-on:submit="event => {
               event.preventDefault();
-
-              //TODO: View the file
+              viewEidGo();
             }"
             >
               <div class="relative flex-grow focus-within:z-10">
-                <label for="view-file-sel" class="sr-only">Choose a file</label>
+                <label for="view-file-sel" class="sr-only">Choose an account</label>
                 <select ref="view-file-sel" 
-                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-transparent tabular-nums"
-                  v-model="selectedFile">
-                  <option v-bind:key="file" v-bind:value="null" >Choose a file</option>
-                  <option v-for="file in readableXlsxFiles" v-bind:key="file" v-bind:value="file">
-                    {{ file.nickname }}   {{ file.datetime }}   ({{ file.count }} missions)
+                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none"
+                  v-model="selectedAccount">
+                  <option v-bind:key="account" v-bind:value="null" >Choose an account</option>
+                  <option v-for="account in readableExistingExports" v-bind:key="account" v-bind:value="account.id">
+                    {{ account.nickname }}  ({{ account.missionCount }} missions)
                 </select>
               </div>
               <button
                 v-if="idle"
-                ref="viewFileSubmitRef"
+                ref="viewAccountSubmitRef"
                 type="submit"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-gray-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                v-bind:disabled="selectedFile === null"
+                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                v-bind:disabled="(selectedAccount === null || eidBeingLoaded)"
               >
                 View
               </button>
@@ -399,6 +399,36 @@
           <div ref="noDataToView" v-else>
             <span class="text-red-gray"> No mission data has been exported yet.<br>Please '<span class="font-bold">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-gray"> and then come back here.</span>
           </div>
+          <div v-if="loadedAccountMissions && Object.keys(loadedAccountMissions).length > 0">
+            <hr class="pb-5" style="border-bottom: 2px solid black; height: 15px;">
+            <div>
+              <!-- Todo: implement the filter-->
+              <span class="font-bold">Filter:</span>
+            </div>
+            <hr class="pb-5 pt-5" style="border-bottom: 2px solid black; height: 15px;">
+            <div v-for="(value, yIndex) in loadedAccountMissions" :key="yIndex">
+              <div>
+                <u>{{ yIndex }}</u> <button style="font-size: 0.8rem; color: #0398fc;" class="mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleYear($event, yIndex)">Hide</button>
+                <div :class="'mt-1 year-' + yIndex + '-child'" v-for="(subValue, mIndex) in value" :key="mIndex">
+                  <div style="margin-top: 1rem;" class="ml-10">
+                    <u>{{ yIndex }}-{{ mIndex }}</u> <button style="font-size: 0.8rem; color: #0398fc;" class="mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleMonth($event, yIndex, mIndex)">Hide</button>
+                    <div :class="'year-' + yIndex + '-child-' + mIndex" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
+                      <div style="margin-top: 1rem;" class="ml-20">
+                        <u>{{ yIndex }}-{{ mIndex }}-{{ dIndex }}</u> <button style="font-size: 0.8rem; color: #0398fc;" class="mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, yIndex, mIndex, dIndex)">Hide</button>
+                        <div style="margin-left: 7.5rem; margin-top:1rem;" class="mission-grid">
+                          <div style="font-size: 0.9rem;" :class="'ml-30 mission-item year-' + yIndex + '-child-' + mIndex + '-' + dIndex" v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
+                            <span v-html="mission.launchTime + '  ' + shipToName(mission.ship) + '  ' + durToSpan(mission.durationType) + '  ' + levelToStars(mission.level)"></span>
+                          </div>
+                        </div>                        
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <hr class="pb-5 pt-5" style="border-bottom: 2px solid black; height: 15px;">
+            </div>
+          </div>
+          
         </div>
 
         <footer class="text-center text-sm text-gray-500">
@@ -502,6 +532,80 @@
           const mm = date.getMinutes().toString().padStart(2, '0');
           const ss = date.getSeconds().toString().padStart(2, '0');
           return `${hh}:${mm}:${ss}`;
+        }
+
+        function toggleYear(event, year) {
+          const self = event.target;
+          const newState = (self.innerHTML === "Hide") ? "none" : "block";
+          //Switch self to ▼ or ▶
+          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
+          //Hide or show all direct children (year-x-child)
+          const children = document.querySelectorAll(".year-" + year + "-child");
+          for (const child of children) {
+            child.style.display = newState;
+          }
+        };
+
+        function toggleMonth(event, year, month){
+          const self = event.target;
+          const newState = (self.innerHTML === "Hide") ? "none" : "block";
+          //Switch self to ▼ or ▶
+          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
+          //Hide or show all direct children (year-x-child)
+          const children = document.querySelectorAll(".year-" + year + "-child-" + month);
+          for (const child of children) {
+            child.style.display = newState;
+          }
+        };
+
+        function toggleDay(event, year, month, day){
+          const self = event.target;
+          const newState = (self.innerHTML === "Hide") ? "none" : "block";
+          //Switch self to ▼ or ▶
+          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
+          //Hide or show all direct children (year-x-child)
+          const children = document.querySelectorAll(".year-" + year + "-child-" + month + "-" + day);
+          for (const child of children) {
+            child.style.display = newState;
+          }
+        };
+
+        function durToSpan(duration){
+          if(duration === "" || duration === null || duration === undefined){
+            return "";
+          }else{
+            switch(duration){
+              case 0: return `<span class="text-short">Short</span>`;
+              case 1: return `<span class="text-standard">Standard</span>`;
+              case 2: return `<span class="text-extended">Extended</span>`;
+              case 3: return `<span class="text-tutorial">Tutorial</span>`;
+              default: return `<span style="color: red">Unknown</span>`;
+            }
+          }
+        }
+
+        function shipToName(ship){
+          if(ship === "" || ship === null || ship === undefined){
+            return "";
+          }else{
+            switch(ship){
+              case 0: return "Chicken One";
+              case 1: return "Chicken Nine";
+              case 2: return "Chicken Heavy";
+              case 3: return "BCR";
+              case 4: return "Quintillion Chicken";
+              case 5: return "Cornish-Hen Corvette";
+              case 6: return "Galeggtica";
+              case 7: return "Defihent";
+              case 8: return "Voyegger";
+              case 9: return "Henerprise";
+              default: return "Unknown";
+            }
+          }
+        }
+
+        function levelToStars(level){
+          return level <= 0 ? "" : `(` + level + `<span style="color: gold;">★</span>)`;
         }
 
         const app = Vue.createApp({
@@ -665,29 +769,71 @@
             };
 
             // ===== Setup for 'View Mission Data' Tab =====
-            const xlsxFiles = Vue.ref([]); //Empty array of strings
-            const readableXlsxFiles = Vue.computed(() => {
-              return xlsxFiles.value.map(file => {
+            const existingExports = Vue.ref([]); //Empty array of strings
+            const readableExistingExports = Vue.computed(() => {
+              return existingExports.value.map(account => {
                 return {
-                  nickname: knownAccounts?.value?.find(account => account.id === file.eid) ?? "Unknown Player",
-                  datetime: file.datetime,
-                  count: file.count
-                }
+                  id: account.id,
+                  nickname: account.nickname,
+                  missionCount: account.missionCount
+                };
               });
             });
             const doesExportExist = Vue.ref(false);
+            Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts), async () => {
+              doesExportExist.value = await window.doesExportExist();
+            });
             Vue.onMounted(async () => {
               doesExportExist.value = await window.doesExportExist();
             });
-            Vue.watch(exportedFiles, async () => {
-              doesExportExist.value = await window.doesExportExist();
+            Vue.watch(doesExportExist, async () => {
               if(doesExportExist.value) {
-                xlsxFiles.value = await window.findExistingExports();
+                existingExports.value = await window.findExistingExports();
               }
             });
-            const selectedFile = Vue.ref(null);
+            const selectedAccount = Vue.ref(null);
             window.switchToLedger = () => {
               activeTab.value = UITab.Ledger;
+            };
+
+            const eidBeingLoaded = Vue.ref(false);
+            const loadedAccountMissions = Vue.ref({});
+            const viewEidGo = async () => {
+              eidBeingLoaded.value = true;
+              const loadValue = await window.viewEidGo(selectedAccount.value.toString());
+              
+              if (loadValue !== "") {
+                // Group missions by year, then month, then by day
+                var groupedMissions = JSON.parse(loadValue).reduce((acc, obj) => {
+                  const year = obj.launchYear;
+                  const month = obj.launchMonth;
+                  const day = obj.launchDay;
+
+                  if (!acc[year]) {
+                    acc[year] = {};
+                  }
+                  if (!acc[year][month]) {
+                    acc[year][month] = {};
+                  }
+                  if (!acc[year][month][day]) {
+                    acc[year][month][day] = [];
+                  }
+
+                  // Add the new mission to the beginning of the array
+                  acc[year][month][day].unshift(obj);
+                  return acc;
+                }, {});
+
+                loadedAccountMissions.value = groupedMissions;
+                eidBeingLoaded.value = false;
+              }
+            };
+
+            const getShipDrops = async (playerId, ship) => {
+              const loadValue = await window.getShipDrops(playerId, ship);
+              if (loadValue !== "") {
+                return JSON.parse(loadValue);
+              }
             };
 
             return {
@@ -727,9 +873,19 @@
 
               //Daveed additions :^)
               doesExportExist,
-              xlsxFiles,
-              readableXlsxFiles,
-              selectedFile,
+              existingExports,
+              readableExistingExports,
+              selectedAccount,
+              loadedAccountMissions,
+              eidBeingLoaded,
+              viewEidGo,
+              toggleDay,
+              toggleMonth,
+              toggleYear,
+              durToSpan,
+              levelToStars,
+              shipToName,
+              getShipDrops,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,

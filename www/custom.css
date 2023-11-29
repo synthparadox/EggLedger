@@ -1,0 +1,27 @@
+.mission-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Adjust the gap between items as needed */
+}
+  
+.mission-item {
+    flex: 0 0 calc(33.33% - 20px); /* Set the width of each column */
+    box-sizing: border-box;
+}
+
+/* Scrollbar dark mode */
+::-webkit-scrollbar {
+    width: 12px;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #4c4f52;
+}
+::-webkit-scrollbar-track {
+    background-color: #333537;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: #6b6e71;
+}
+::-webkit-scrollbar-corner {
+    background-color: #333537;
+  }
