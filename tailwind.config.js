@@ -22,6 +22,13 @@ module.exports = {
         '2rem': '2rem',
         '3rem': '3rem',
       },
+      maxWidth: {
+        '8xl': '88rem',
+        '9xl': '96rem',
+        '10xl': '104rem',
+        '11xl': '112rem',
+        '12xl': '120rem',
+      },
       backgroundColor: {
         'white': '#ffffff',
         'dark': '#393b40',
