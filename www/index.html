@@ -386,6 +386,18 @@
           v-show="activeTab === UITab.ViewData"
           class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-scroll shadow-sm block"
         >
+          <div id="missionViewDiv" ref="missionView" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
+            <div style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
+              <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeOverlay()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              <div id="missionViewContentDiv" style="max-height: 70vh; max-width: 35vw;" class="text-gray-300 text-center overflow-scroll">
+                <!-- Content div that will be populated with mission info -->
+              </div>
+            </div>
+          </div>
           <div ref="selectViewAccountForm" v-if="doesExportExist">
             <form
               name="viewAccountForm"
@@ -455,7 +467,13 @@
                           <span class="text-sm font-bold underline">{{ yIndex }}-{{ mIndex }}-{{ dIndex }}</span> <button class="text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, yIndex, mIndex, dIndex)">Hide</button>
                           <div class="mt-1rem mission-grid">
                             <div :class="'text-sm mission-item year-' + yIndex + '-child-' + mIndex + '-' + dIndex" v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
-                              <span class="text-gray-300" v-html="mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level)"></span>
+                              <button 
+                                class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
+                                type="button"
+                                v-on:click="viewSpecificMission(mission.missionId)"
+                              >
+                                <span class="text-gray-300" v-html="mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
+                              </button>
                             </div>
                           </div>                        
                         </div>
@@ -647,6 +665,23 @@
           return level <= 0 ? "" : `(` + level + `<span style="color: gold;">★</span>)`;
         }
 
+        function closeOverlay() {
+          document.querySelector('.overlay').style.display = 'none';
+          document.getElementById('missionViewContentDiv').innerHTML = "";
+        }
+
+        function properCase(string){
+          string = string.toLowerCase();
+          //Capitalize the first letter of each word, unless it is 'of' or 'the'
+          const words = string.split(" ");
+          for (let i = 0; i < words.length; i++) {
+            if(words[i] !== "of" && words[i] !== "the"){
+              words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+            }
+          }
+          return words.join(" ");
+        }
+
         const app = Vue.createApp({
           setup() {
             // ===== Tab =====
@@ -836,12 +871,14 @@
             };
 
             const eidBeingLoaded = Vue.ref(false);
+            const loadedEid = Vue.ref(null);
             const loadedAccountMissions = Vue.ref({});
             const viewEidGo = async () => {
               eidBeingLoaded.value = true;
               const loadValue = await window.viewEidGo(selectedAccount.value.toString());
               
               if (loadValue !== "") {
+                loadedEid.value = selectedAccount.value.toString();
                 // Group missions by year, then month, then by day
                 var groupedMissions = JSON.parse(loadValue).reduce((acc, obj) => {
                   const year = obj.launchYear;
@@ -863,6 +900,7 @@
                   return acc;
                 }, {});
 
+                window.loadedAccountMissions = groupedMissions;
                 loadedAccountMissions.value = groupedMissions;
                 eidBeingLoaded.value = false;
               }
@@ -880,11 +918,171 @@
               filterHasChanged.value = true;
             });
 
-            const getShipDrops = async (playerId, ship) => {
-              const loadValue = await window.getShipDrops(playerId, ship);
-              if (loadValue !== "") {
-                return JSON.parse(loadValue);
+            const targetImage = (target) => {
+              if(target == null || target == "") return "";
+              else{
+                target = target.toUpperCase(); //Redundancy
+                var tier = 4;
+                if(target.indexOf('_FRAGMENT') > -1) {
+                  target = target.replace('_FRAGMENT', '');
+                  tier = 1;
+                }
+                if(target == 'GOLD_METEORITE' || target == 'TAU_CETI_GEODE' || target == 'SOLAR_TITANIUM') tier = 3;
+                const path = "images/artifacts/" + target + "/" + target + "_" + tier + ".png";
+                return `<img src="` + path + `" alt="` + target + `"ml-1rem class="inline h-6 w-6 p-0.5 relative -top-px">`;
               }
+            };
+
+            const viewSpecificMission = async (ship) => {
+              const shipInfoStr = await window.getShipInfo(loadedEid.value, ship);
+              if(shipInfoStr == "") return;
+              const shipInfo = JSON.parse(shipInfoStr);
+
+              const loadValue = await window.getShipDrops(loadedEid.value, ship);
+              if(loadValue == "") return;
+              const allDrops = JSON.parse(loadValue);
+
+              const artifacts = allDrops.filter(drop => drop.specType == "Artifact"); const artifactCount = artifacts.length; 
+              const stones = allDrops.filter(drop => drop.specType == "Stone"); const stoneCount = stones.length;
+              const stoneFragments = allDrops.filter(drop => drop.specType == "StoneFragment"); const stoneFragmentCount = stoneFragments.length;
+              const ingredients = allDrops.filter(drop => drop.specType == "Ingredient"); const ingredientCount = ingredients.length;
+              
+              var newHtml = durToSpan(shipInfo.durationType, shipToName(shipInfo.ship)) + '<br />';
+              
+              //Add x number of gold stars
+              newHtml += '<span class="text-lg text-goldenstar">' + "★".repeat(shipInfo.level) + '</span><br />';
+
+              const launchDateTime = new Date(shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay, shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]);
+              const returnDateTime = new Date(shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay, shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]);
+
+              //Compute the duration in days, hours, minutes
+              const duration = returnDateTime - launchDateTime;
+              const days = Math.floor(duration / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((duration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+
+              const durationString = (days > 0 ? days + "d" : "") + (hours > 0 ? hours + "h": "") + minutes + "m";
+
+              newHtml += 'Launched: ' + shipInfo.launchYear + '-' + shipInfo.launchMonth + '-' + shipInfo.launchDay + ' ' + shipInfo.launchTime + '<br />';
+              newHtml += 'Returned: ' + shipInfo.returnYear + '-' + shipInfo.returnMonth + '-' + shipInfo.returnDay + ' ' + shipInfo.returnTime + '<br />';
+              newHtml += 'Duration: ' + durationString + '<br />';
+              newHtml += 'Capacity: ' + shipInfo.capacity + '<br />';
+              if(shipInfo.target != ""){
+                newHtml += '<div class="items-center justify-center flex"> <span>Sensor Target:</span><div style="margin-left: 0.3rem;" class="text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">' + properCase(shipInfo.target.replace("_", " ")) + '</div></div><br />';
+              }
+
+              //Filter [ x ] that have the same `name`, `level`, `specType`, and `rarity`
+              // If there are 2 artifacts with the same name, level, specType, and rarity, increment the `count` of the first one, and remove the second one
+              function groupedSpecType(collection){
+                return collection.reduce((acc, obj) => {
+                  const key = obj.name + "_" + obj.level + "_" + obj.specType + "_" + obj.rarity;
+                  if (!acc[key]) {
+                    acc[key] = obj;
+                    acc[key].count = 1;
+                  }else{
+                    acc[key].count++;
+                  }
+                  return acc;
+                }, {});
+              }
+              
+              if(artifactCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 bg-blue-900">Artifacts (' + artifactCount + ')</div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                  const groupedSpecArtifacts = groupedSpecType(artifacts);
+                for(const af in groupedSpecArtifacts){
+                  const artifact = groupedSpecArtifacts[af];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var imagePath = "images/artifacts/" + artifact.name + "/" + artifact.name + "_" + (parseInt(artifact.level) + 1) + ".png";
+                  imagePath = imagePath.replaceAll("ORNATE_GUSSET", "GUSSET");
+                  imagePath = imagePath.replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
+                  var backgroundClass = "";
+                  switch(artifact.rarity){
+                    case 0: backgroundClass = 'bg-darker'; break;
+                    case 1: backgroundClass = 'bg-rare'; break;
+                    case 2: backgroundClass = 'bg-epic'; break;
+                    case 3: backgroundClass = 'bg-legendary'; break;
+                    default: backgroundClass = 'bg-darker'; break;
+                  }
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(artifact.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var width = "w-1rem";
+                    if(artifact.count > 9) width = "w-1.5rem";
+                    if(artifact.count > 99) width = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + width + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + artifact.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+              if(stoneCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 bg-fuchsia-900">Eggfinity stones (' + stoneCount + ') </div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                const groupedSpecStones = groupedSpecType(stones);
+                for(const st in groupedSpecStones){
+                  const stone = groupedSpecStones[st];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(stone.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var stoneWidth = "w-1rem";
+                    if(stone.count > 9) stoneWidth = "w-1.5rem";
+                    if(stone.count > 99) stoneWidth = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + stoneWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stone.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+              if(ingredientCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 text-gray-400 bg-darkerer">Ingredients (' + ingredientCount + ') </div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                const groupedSpecIngredients = groupedSpecType(ingredients);
+                for(const ing in groupedSpecIngredients){
+                  const ingredient = groupedSpecIngredients[ing];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(ingredient.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var ingredientWidth = "w-1rem";
+                    if(ingredient.count > 9) ingredientWidth = "w-1.5rem";
+                    if(ingredient.count > 99) ingredientWidth = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + ingredientWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+              if(stoneFragmentCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 text-gray-400 bg-darkerer">Stone fragments (' + stoneFragmentCount + ') </div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                const groupedSpecStoneFragments = groupedSpecType(stoneFragments);
+                for(const sf in groupedSpecStoneFragments){
+                  const stoneFragment = groupedSpecStoneFragments[sf];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var stoneFragmentImagePath = "images/artifacts/" + stoneFragment.name.replace('_FRAGMENT', '') + "/" + stoneFragment.name.replace('_FRAGMENT', '') + "_" + (parseInt(stoneFragment.level) + 1) + ".png";
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + stoneFragment.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(stoneFragment.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(stoneFragment.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var stoneFragmentWidth = "w-1rem";
+                    if(stoneFragment.count > 9) stoneFragmentWidth = "w-1.5rem";
+                    if(stoneFragment.count > 99) stoneFragmentWidth = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + stoneFragmentWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stoneFragment.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+
+              document.getElementById('missionViewContentDiv').innerHTML = newHtml;
+              document.querySelector('.overlay').style.display = 'flex';
             };
 
             return {
@@ -936,7 +1134,9 @@
               durToSpan,
               levelToStars,
               shipToName,
-              getShipDrops,
+              viewSpecificMission,
+              targetImage,
+              closeOverlay,
 
               dataFilter,
               filterHasChanged,

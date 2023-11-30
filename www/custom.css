@@ -5,7 +5,7 @@
 }
   
 .mission-item {
-    flex: 0 0 calc(33.33% - 20px); /* Set the width of each column */
+    flex: 0 0 calc(33.33% - 10px); /* Set the width of each column */
     box-sizing: border-box;
 }
 
@@ -87,23 +87,22 @@
   border-color: transparent transparent transparent #505050;
 }
 
-.color-overlay {
-    position: relative;
-    display: inline-block;
-  }
+.overlay {
+  background: rgba(0, 0, 0, 0.5); /* 50% transparent black */
+}
 
-  .color-overlay img {
-    display: block;
-    max-width: 100%;
-    height: auto;
-  }
+.bg-common {
+  background-color: rgb(229 231 235);
+}
 
-  .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #9ca3af;
-    mix-blend-mode: multiply;
-  }
+.bg-rare {
+  background: radial-gradient(#b3ffff,#b3ffff,#6ab6ff);
+}
+
+.bg-epic {
+  background: radial-gradient(#ff40ff,#ff40ff,#c03fe2);
+}
+
+.bg-legendary {
+  background: radial-gradient(#fffe41,#fffe41,#eeab42);
+}

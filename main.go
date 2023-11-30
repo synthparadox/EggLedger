@@ -47,7 +47,8 @@ var (
 	// /private/var/folders/<...>/<...>/T/AppTranslocation/<UUID>/d/internal
 	_appIsTranslocated bool
 
-	_devMode = os.Getenv("DEV_MODE") != ""
+	_devMode   = os.Getenv("DEV_MODE") != ""
+	dateFormat = "%02d:%02d:%02d"
 )
 
 const (
@@ -105,7 +106,7 @@ type ExportedFile struct {
 	EID      string `json:"eid"`
 }
 
-type FileMission struct {
+type LoadedMission struct {
 	LaunchDay    int32                        `json:"launchDay"`
 	LaunchMonth  int32                        `json:"launchMonth"`
 	LaunchYear   int32                        `json:"launchYear"`
@@ -119,13 +120,14 @@ type FileMission struct {
 	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
 	Level        int32                        `json:"level"`
 	Capacity     int32                        `json:"capacity"`
-	Target       *ei.ArtifactSpec_Name        `json:"target"`
+	Target       string                       `json:"target"`
 }
 
 type MissionDrop struct {
-	Name   string `json:"name"`
-	Level  int32  `json:"level"`
-	Rarity int32  `json:"rarity"`
+	SpecType string `json:"specType"`
+	Name     string `json:"name"`
+	Level    int32  `json:"level"`
+	Rarity   int32  `json:"rarity"`
 }
 
 type ExportAccount struct {
@@ -244,9 +246,7 @@ func viewMissionsOfId(eid string) (string, error) {
 	}
 
 	//Array of FileMission
-	missionArr := []FileMission{}
-
-	dateFormat := "%02d:%02d:%02d"
+	missionArr := []LoadedMission{}
 
 	for _, completeMission := range completeMissions {
 
@@ -257,7 +257,7 @@ func viewMissionsOfId(eid string) (string, error) {
 		rtH, rtM, rtS := returnTimeObject.Clock()
 		returnTime := fmt.Sprintf(dateFormat, rtH, rtM, rtS)
 
-		missionInst := FileMission{
+		missionInst := LoadedMission{
 			LaunchDay:   int32(launchDateTimeObject.Day()),
 			LaunchMonth: int32(launchDateTimeObject.Month()),
 			LaunchYear:  int32(launchDateTimeObject.Year()),
@@ -273,7 +273,7 @@ func viewMissionsOfId(eid string) (string, error) {
 			DurationType: completeMission.Info.DurationType,
 			Level:        int32(*completeMission.Info.Level),
 			Capacity:     int32(*completeMission.Info.Capacity),
-			Target:       completeMission.Info.TargetArtifact,
+			Target:       properTargetName(completeMission.Info.TargetArtifact),
 		}
 		missionArr = append(missionArr, missionInst)
 	}
@@ -286,6 +286,14 @@ func viewMissionsOfId(eid string) (string, error) {
 
 	// Return the JSON string
 	return string(jsonData), nil
+}
+
+func properTargetName(name *ei.ArtifactSpec_Name) string {
+	if name == nil || *name == ei.ArtifactSpec_UNKNOWN {
+		return ""
+	} else {
+		return ei.ArtifactSpec_Name_name[int32(*name)]
+	}
 }
 
 func main() {
@@ -685,7 +693,7 @@ func main() {
 		Return a JSON array of the drops from a given mission
 	*/
 	ui.MustBind("getShipDrops", func(playerId string, shipId string) string {
-		//Get the ship drops from the database
+		//Get the mission from the database
 		completeMission, err := db.RetrieveCompleteMission(playerId, shipId)
 		if err != nil {
 			log.Error(err)
@@ -698,7 +706,19 @@ func main() {
 			missionDrop := MissionDrop{
 				Name:   ei.ArtifactSpec_Name_name[int32(spec.GetName())],
 				Level:  int32(*drop.Spec.Level),
-				Rarity: int32(*drop.Spec.Level),
+				Rarity: int32(*drop.Spec.Rarity),
+			}
+			switch {
+			case strings.Contains(missionDrop.Name, "_FRAGMENT"):
+				missionDrop.SpecType = "StoneFragment"
+			case strings.Contains(missionDrop.Name, "_STONE"):
+				missionDrop.SpecType = "Stone"
+			case strings.Contains(missionDrop.Name, "GOLD_METEORITE"),
+				strings.Contains(missionDrop.Name, "SOLAR_TITANIUM"),
+				strings.Contains(missionDrop.Name, "TAU_CETI_GEODE"):
+				missionDrop.SpecType = "Ingredient"
+			default:
+				missionDrop.SpecType = "Artifact"
 			}
 			shipDrops = append(shipDrops, missionDrop)
 		}
@@ -711,6 +731,51 @@ func main() {
 		}
 
 		//Return the JSON
+		return string(jsonData)
+	})
+
+	ui.MustBind("getShipInfo", func(playerId string, shipId string) string {
+		//Get the mission from the database
+		completeMission, err := db.RetrieveCompleteMission(playerId, shipId)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		launchDateTimeObject := time.Unix(int64(*completeMission.Info.StartTimeDerived), 0)
+		ltH, ltM, ltS := launchDateTimeObject.Clock()
+		launchTime := fmt.Sprintf(dateFormat, ltH, ltM, ltS)
+		returnTimeObject := launchDateTimeObject.Add(time.Duration(*completeMission.Info.DurationSeconds * float64(time.Second)))
+		rtH, rtM, rtS := returnTimeObject.Clock()
+		returnTime := fmt.Sprintf(dateFormat, rtH, rtM, rtS)
+
+		missionInst := LoadedMission{
+			LaunchDay:   int32(launchDateTimeObject.Day()),
+			LaunchMonth: int32(launchDateTimeObject.Month()),
+			LaunchYear:  int32(launchDateTimeObject.Year()),
+			LaunchTime:  launchTime,
+
+			ReturnDay:   int32(returnTimeObject.Day()),
+			ReturnMonth: int32(returnTimeObject.Month()),
+			ReturnYear:  int32(returnTimeObject.Year()),
+			ReturnTime:  returnTime,
+
+			MissiondId:   *completeMission.Info.Identifier,
+			Ship:         completeMission.Info.Ship,
+			DurationType: completeMission.Info.DurationType,
+			Level:        int32(*completeMission.Info.Level),
+			Capacity:     int32(*completeMission.Info.Capacity),
+			Target:       properTargetName(completeMission.Info.TargetArtifact),
+		}
+
+		// Convert the single mission to a JSON string
+		jsonData, err := json.Marshal(missionInst)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		// Return the JSON string
 		return string(jsonData)
 	})
 
