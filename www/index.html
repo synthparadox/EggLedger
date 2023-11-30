@@ -1051,8 +1051,8 @@
                   if(ingredient.count > 1) {
                     //Width needs to be adjusted based on the number of digits in the count
                     var ingredientWidth = "w-1rem";
-                    if(ingredient.count > 9) ingredientWidth = "w-1.5rem";
-                    if(ingredient.count > 99) ingredientWidth = "w-2rem";
+                    if(ingredient.count > 9) ingredientWidth = "w-2rem";
+                    if(ingredient.count > 99) ingredientWidth = "w-3rem";
                     newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + ingredientWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
                   }
                   newHtml += '</a></div>';
