@@ -54,7 +54,9 @@ module.exports = {
         'darker_tab_hover': "#2e312e"
       },
       borderColor: {
-        "dark_tab": "#111211"
+        "dark_tab": "#111211",
+        'weewoosiren': "rgb(234 88 12)",
+        'red-700': "color: rgb(185 28 28)"
       }
     },
   },

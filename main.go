@@ -281,6 +281,7 @@ func viewMissionsOfId(eid string) (string, error) {
 	// Convert the array of FileMissionYear to a JSON string
 	jsonData, err := json.Marshal(missionArr)
 	if err != nil {
+		log.Error(err)
 		return "", err
 	}
 
@@ -655,7 +656,7 @@ func main() {
 		return false
 	})
 
-	ui.MustBind("findExistingExports", func() []ExportAccount {
+	ui.MustBind("getExistingExports", func() []ExportAccount {
 		knownAccounts := []ExportAccount{}
 		for _, knownAccount := range _storage.KnownAccounts {
 			ids, err := db.RetrievePlayerCompleteMissionIds(knownAccount.Id)

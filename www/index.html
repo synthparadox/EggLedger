@@ -120,7 +120,7 @@
                 v-else
                 type="button"
                 class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                v-on:click="stopFetchingPlayerData()"
+                v-on:click="stopFetchingPlayerData(); refreshExistingExports();"
               >
                 Stop
               </button>
@@ -429,9 +429,12 @@
             </form>
           </div>
           <div class="text-center mt-3rem" ref="noDataToView" v-else>
-            <span class="text-weewoosiren"> No mission data has been loaded yet.<br>Please '<span class="font-bold text-gray-400">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-weewoosiren"> and then come back here.</span>
+            <span class="text-red-700"> No mission data has been loaded yet.<br>Please '<span class="font-bold text-gray-400">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
           <div v-if="loadedAccountMissions && Object.keys(loadedAccountMissions).length > 0">
+            <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="loadedAccountMissionsCount != (readableExistingExports.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
+              <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4"> You are viewing outdated data - click <span class="text-gray-500">View</span> again to fix this.</span>
+            </div>
             <div ref="filterRef">
               <span class="font-bold text-gray-400">Filter:</span>
               <form class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
@@ -442,11 +445,14 @@
               }"
               >
                 <!-- Todo: implement the filter-->
+
+                <!-- Coming soon span -->
+                <span class="text-red-700">Coming soon</span><br/><br/>
                 <button
                   v-if="idle"
                   ref="applyFilterToData"
                   type="submit"
-                  class="-ml-px relative w-20 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  class="-ml-px relative w-20 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   v-bind:disabled="(dataFilter === null || dataBeingFiltered || !filterHasChanged)"
                 >
                   Apply
@@ -855,16 +861,19 @@
             });
             const doesExportExist = Vue.ref(false);
             Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts), async () => {
-              doesExportExist.value = await window.doesExportExist();
+              refreshExistingExports();
             });
             Vue.onMounted(async () => {
+              refreshExistingExports();
+            });
+
+            const refreshExistingExports = async () => {
               doesExportExist.value = await window.doesExportExist();
-            });
-            Vue.watch(doesExportExist, async () => {
               if(doesExportExist.value) {
-                existingExports.value = await window.findExistingExports();
+                existingExports.value = await window.getExistingExports();
               }
-            });
+            };
+
             const selectedAccount = Vue.ref(null);
             window.switchToLedger = () => {
               activeTab.value = UITab.Ledger;
@@ -872,11 +881,17 @@
 
             const eidBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
+            const loadedAccountMissionsCount = Vue.ref(0);
             const loadedAccountMissions = Vue.ref({});
             const viewEidGo = async () => {
+              console.log("Loading mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
+              console.log("readableExistingExports.value: " + JSON.stringify(readableExistingExports.value));
+              loadedAccountMissionsCount.value = readableExistingExports.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
+              console.log("Loaded mission count for EID: " + selectedAccount.value.toString().substring(0, 4) + "...: " + loadedAccountMissionsCount.value);
               eidBeingLoaded.value = true;
               const loadValue = await window.viewEidGo(selectedAccount.value.toString());
-              
+
+              console.log("Loaded mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
               if (loadValue !== "") {
                 loadedEid.value = selectedAccount.value.toString();
                 // Group missions by year, then month, then by day
@@ -900,9 +915,12 @@
                   return acc;
                 }, {});
 
-                window.loadedAccountMissions = groupedMissions;
+                console.log("Grouped mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
                 loadedAccountMissions.value = groupedMissions;
                 eidBeingLoaded.value = false;
+                console.log("Finished collecting mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
+              } else{
+                console.log("Error loading mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "..." + ' (loadValue was empty)');
               }
             };
 
@@ -1005,7 +1023,6 @@
                     default: backgroundClass = 'bg-darker'; break;
                   }
                   newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
-                  //style="font-size: 0.8rem;"
                   if(artifact.count > 1) {
                     //Width needs to be adjusted based on the number of digits in the count
                     var width = "w-1rem";
@@ -1026,7 +1043,6 @@
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
                   var stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
                   newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
-                  //style="font-size: 0.8rem;"
                   if(stone.count > 1) {
                     //Width needs to be adjusted based on the number of digits in the count
                     var stoneWidth = "w-1rem";
@@ -1047,7 +1063,6 @@
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
                   var ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
                   newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
-                  //style="font-size: 0.8rem;"
                   if(ingredient.count > 1) {
                     //Width needs to be adjusted based on the number of digits in the count
                     var ingredientWidth = "w-1rem";
@@ -1137,6 +1152,9 @@
               viewSpecificMission,
               targetImage,
               closeOverlay,
+              refreshExistingExports,
+              loadedAccountMissionsCount,
+              loadedEid,
 
               dataFilter,
               filterHasChanged,
