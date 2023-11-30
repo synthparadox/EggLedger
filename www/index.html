@@ -885,7 +885,6 @@
             const loadedAccountMissions = Vue.ref({});
             const viewEidGo = async () => {
               console.log("Loading mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
-              console.log("readableExistingExports.value: " + JSON.stringify(readableExistingExports.value));
               loadedAccountMissionsCount.value = readableExistingExports.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
               console.log("Loaded mission count for EID: " + selectedAccount.value.toString().substring(0, 4) + "...: " + loadedAccountMissionsCount.value);
               eidBeingLoaded.value = true;
