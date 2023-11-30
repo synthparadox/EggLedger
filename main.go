@@ -13,20 +13,18 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/DavidArthurCole/EggLedger/db"
 	"github.com/DavidArthurCole/EggLedger/ei"
+	"github.com/DavidArthurCole/EggLedger/forkedlorca"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
 	"github.com/skratchdot/open-golang/open"
-	"github.com/tealeg/xlsx"
-	"github.com/zserge/lorca"
 	"golang.org/x/sync/semaphore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -49,7 +47,8 @@ var (
 	// /private/var/folders/<...>/<...>/T/AppTranslocation/<UUID>/d/internal
 	_appIsTranslocated bool
 
-	_devMode = os.Getenv("DEV_MODE") != ""
+	_devMode   = os.Getenv("DEV_MODE") != ""
+	dateFormat = "%02d:%02d:%02d"
 )
 
 const (
@@ -57,7 +56,7 @@ const (
 )
 
 type UI struct {
-	lorca.UI
+	forkedlorca.UI
 }
 
 func (u UI) MustLoad(url string) {
@@ -107,26 +106,34 @@ type ExportedFile struct {
 	EID      string `json:"eid"`
 }
 
-type FileMission struct {
+type LoadedMission struct {
+	LaunchDay    int32                        `json:"launchDay"`
+	LaunchMonth  int32                        `json:"launchMonth"`
+	LaunchYear   int32                        `json:"launchYear"`
+	LaunchTime   string                       `json:"launchTime"`
+	ReturnDay    int32                        `json:"returnDay"`
+	ReturnMonth  int32                        `json:"returnMonth"`
+	ReturnYear   int32                        `json:"returnYear"`
+	ReturnTime   string                       `json:"returnTime"`
 	MissiondId   string                       `json:"missionId"`
 	Ship         *ei.MissionInfo_Spaceship    `json:"ship"`
 	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
 	Level        int32                        `json:"level"`
-	LaunchDate   string                       `json:"launchDate"`
-	ReturnDate   string                       `json:"returnDate"`
 	Capacity     int32                        `json:"capacity"`
-	Target       *ei.ArtifactSpec_Name        `json:"target"`
+	Target       string                       `json:"target"`
 }
 
-type FileMissionMonth struct {
-	Month    time.Month    `json:"month"`
-	Year     int           `json:"year"`
-	Missions []FileMission `json:"missions"`
+type MissionDrop struct {
+	SpecType string `json:"specType"`
+	Name     string `json:"name"`
+	Level    int32  `json:"level"`
+	Rarity   int32  `json:"rarity"`
 }
 
-type FileMissionYear struct {
-	Year   int                `json:"year"`
-	Months []FileMissionMonth `json:"months"`
+type ExportAccount struct {
+	Id           string `json:"id"`
+	Nickname     string `json:"nickname"`
+	MissionCount int    `json:"missionCount"`
 }
 
 func init() {
@@ -229,129 +236,64 @@ func init() {
 	dataInit()
 }
 
-func countRows(filePath string) (int, error) {
-	xlFile, err := xlsx.OpenFile(filePath)
+func viewMissionsOfId(eid string) (string, error) {
+
+	//Get list of complete missions from the DB
+	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
 	if err != nil {
-		return 0, err
+		log.Error(err)
+		return "", err
 	}
-	sheet := xlFile.Sheets[0]
-	rowsCount := len(sheet.Rows)
-	return rowsCount, nil
+
+	//Array of FileMission
+	missionArr := []LoadedMission{}
+
+	for _, completeMission := range completeMissions {
+
+		launchDateTimeObject := time.Unix(int64(*completeMission.Info.StartTimeDerived), 0)
+		ltH, ltM, ltS := launchDateTimeObject.Clock()
+		launchTime := fmt.Sprintf(dateFormat, ltH, ltM, ltS)
+		returnTimeObject := launchDateTimeObject.Add(time.Duration(*completeMission.Info.DurationSeconds * float64(time.Second)))
+		rtH, rtM, rtS := returnTimeObject.Clock()
+		returnTime := fmt.Sprintf(dateFormat, rtH, rtM, rtS)
+
+		missionInst := LoadedMission{
+			LaunchDay:   int32(launchDateTimeObject.Day()),
+			LaunchMonth: int32(launchDateTimeObject.Month()),
+			LaunchYear:  int32(launchDateTimeObject.Year()),
+			LaunchTime:  launchTime,
+
+			ReturnDay:   int32(returnTimeObject.Day()),
+			ReturnMonth: int32(returnTimeObject.Month()),
+			ReturnYear:  int32(returnTimeObject.Year()),
+			ReturnTime:  returnTime,
+
+			MissiondId:   *completeMission.Info.Identifier,
+			Ship:         completeMission.Info.Ship,
+			DurationType: completeMission.Info.DurationType,
+			Level:        int32(*completeMission.Info.Level),
+			Capacity:     int32(*completeMission.Info.Capacity),
+			Target:       properTargetName(completeMission.Info.TargetArtifact),
+		}
+		missionArr = append(missionArr, missionInst)
+	}
+
+	// Convert the array of FileMissionYear to a JSON string
+	jsonData, err := json.Marshal(missionArr)
+	if err != nil {
+		return "", err
+	}
+
+	// Return the JSON string
+	return string(jsonData), nil
 }
 
-// Convert YYYYMMDD_HHMMSS to YYYY-MM-DD HH:MM:SS
-func dateReadable(date string) string {
-	return date[0:4] + "-" + date[4:6] + "-" + date[6:8] + " " + date[9:11] + ":" + date[11:13] + ":" + date[13:15]
-}
-
-func viewFile(filePath string) ([]FileMissionYear, error) {
-	if err := open.Start(filePath); err != nil {
-		return nil, err
+func properTargetName(name *ei.ArtifactSpec_Name) string {
+	if name == nil || *name == ei.ArtifactSpec_UNKNOWN {
+		return ""
+	} else {
+		return ei.ArtifactSpec_Name_name[int32(*name)]
 	}
-
-	yearArr := []FileMissionYear{}
-	monthArr := []FileMissionMonth{}
-	xlFile, err := xlsx.OpenFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-	//Assume sheet 0 is the only sheet
-	sheet := xlFile.Sheets[0]
-	rowsCount := len(sheet.Rows)
-	//Skip the first row
-	for i := 1; i < rowsCount; i++ {
-		/*Row is ordered as;
-		Mission ID 	Ship 			Duration Type
-		Level 		Launch Date		Return Date
-		(Duration)	Capacity		Target
-		*/
-		missionId := sheet.Rows[i].Cells[0].String() //Raw data is usable
-		ship := sheet.Rows[i].Cells[1].String()
-		durationType := sheet.Rows[i].Cells[2].String()
-		level, levelerr := strconv.Atoi(sheet.Rows[i].Cells[3].String())       //Raw data is usable after conversion
-		launchDate := sheet.Rows[i].Cells[4].String()                          //Raw data is usable
-		returnDate := sheet.Rows[i].Cells[5].String()                          //Raw data is usable
-		capacity, capacityerr := strconv.Atoi(sheet.Rows[i].Cells[7].String()) //Raw data is usable after conversion
-		target := sheet.Rows[i].Cells[8].String()
-
-		if levelerr != nil || capacityerr != nil {
-			log.Error("Error converting level or capacity to int at row " + strconv.Itoa(i) + " skipping...")
-			continue
-		}
-
-		//Convert ship to enum
-		shipEnum := ei.MissionInfo_Spaceship.Enum(ei.MissionInfo_Spaceship(ei.MissionInfo_Spaceship_value[strings.ToUpper(strings.ReplaceAll(ship, " ", "_"))]))
-		//Convert duration type to enum - I fucking hate Kevin for naming things this way
-		durationTypeEnum := ei.MissionInfo_DurationType.Enum(ei.MissionInfo_DurationType(ei.MissionInfo_DurationType_value[strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(durationType, "Extended", "Epic"), "Standard", "Long"))]))
-		//Convert target to enum
-		//Pre-processor replacements
-		target = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ToUpper(target), "MERCURY'S", "MERCURCY"), "GUSSET", "ORNATE GUSSET"), "VIAL OF MARTIAN DUST", "VIAL MARTIAN DUST")
-		targetEnum := ei.ArtifactSpec_Name.Enum(ei.ArtifactSpec_Name(ei.ArtifactSpec_Name_value[strings.ReplaceAll(strings.TrimSpace(target), " ", "_")]))
-
-		//Parse time from ship (month and year checking & extract)
-		parsedTime, timeParseErr := time.Parse("2006-01-02 15:04:05", launchDate)
-		if timeParseErr != nil {
-			log.Error("Error parsing Date/Time of ship launch at row " + strconv.Itoa(i) + " skipping...")
-			continue
-		}
-
-		year := parsedTime.Year()
-		month := parsedTime.Month()
-
-		missionInst := FileMission{
-			MissiondId:   missionId,
-			Ship:         shipEnum,
-			DurationType: durationTypeEnum,
-			Level:        int32(level),
-			LaunchDate:   launchDate,
-			ReturnDate:   returnDate,
-			Capacity:     int32(capacity),
-			Target:       targetEnum,
-		}
-		//Look for the month in the year
-		monthFound := false
-		monthObj := FileMissionMonth{
-			Month:    month,
-			Year:     year,
-			Missions: []FileMission{},
-		}
-		for i := 0; i < len(monthArr); i++ {
-			if monthArr[i].Month == month && monthArr[i].Year == year {
-				monthFound = true
-				monthObj = monthArr[i]
-				break
-			}
-		}
-		monthObj.Missions = append(monthObj.Missions, missionInst)
-
-		if !monthFound {
-			monthArr = append(monthArr, monthObj)
-		}
-	}
-
-	//Loop through months and add to year
-	for i := 0; i < len(monthArr); i++ {
-		//Look for the year
-		yearFound := false
-		yearObj := FileMissionYear{
-			Year:   monthArr[i].Year,
-			Months: []FileMissionMonth{},
-		}
-		for j := 0; j < len(yearArr); j++ {
-			if yearArr[j].Year == monthArr[i].Year {
-				yearFound = true
-				yearObj = yearArr[j]
-				break
-			}
-		}
-		yearObj.Months = append(yearObj.Months, monthArr[i])
-
-		if !yearFound {
-			yearArr = append(yearArr, yearObj)
-		}
-	}
-
-	return yearArr, nil
 }
 
 func main() {
@@ -359,19 +301,20 @@ func main() {
 		log.Info("starting app in dev mode")
 	}
 
-	chrome := lorca.LocateChrome()
+	chrome := forkedlorca.LocateChrome()
 	if chrome == "" {
-		lorca.PromptDownload()
+		forkedlorca.PromptDownload()
 		log.Fatal("unable to locate Chrome")
 		return
 	}
 
 	args := []string{}
+	args = append(args, "--disable-features=TranslateUI,BlinkGenPropertyTrees")
 	args = append(args, "--remote-allow-origins=*")
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
-	u, err := lorca.New("", "", 600, 600, args...)
+	u, err := forkedlorca.New("", "", 900, 800, args...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -701,74 +644,139 @@ func main() {
 	})
 
 	ui.MustBind("doesExportExist", func() bool {
-		path := filepath.Join(_rootDir, "exports", "missions")
-		//Check if the path exists
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			return false
-		}
-
-		// Check if any XLSX files exist in the export directory
-		files, err := os.ReadDir(path)
-		if err != nil {
-			log.Error(err)
-			return false
-		}
-		for _, file := range files {
-			if strings.HasSuffix(file.Name(), ".xlsx") {
+		for _, knownAccount := range _storage.KnownAccounts {
+			ids, err := db.RetrievePlayerCompleteMissionIds(knownAccount.Id)
+			if err != nil {
+				log.Error(err)
+			} else if len(ids) > 0 {
 				return true
 			}
 		}
 		return false
 	})
 
-	ui.MustBind("findExistingExports", func() []ExportedFile {
-		path := filepath.Join(_rootDir, "exports", "missions")
-		//Get all files in the export directory
-		files, err := os.ReadDir(path)
-		if err != nil {
-			log.Error(err)
-			return nil
-		}
-		var xlsxFiles []ExportedFile
-		for _, file := range files {
-			var fileName = file.Name()
-			if strings.HasSuffix(file.Name(), ".xlsx") {
-				eiRegex := regexp.MustCompile(`EI\d+`)
-				dateRegex := regexp.MustCompile(`\d{8}_\d{6}`)
-
-				eiMatch := eiRegex.FindString(fileName)
-				dateMatch := dateRegex.FindString(fileName)
-
-				if eiMatch == "" || dateMatch == "" {
-					log.Error("Error parsing file name: `" + fileName + "` skipping...")
-					continue
-				}
-
-				rowsCount, xlsxErr := countRows(filepath.Join(_rootDir, "exports", "missions", fileName))
-				if xlsxErr != nil {
-					log.Error(xlsxErr)
-					continue
-				}
-
-				xlsxFiles = append(xlsxFiles, ExportedFile{
-					File:     fileName,
-					Count:    rowsCount,
-					DateTime: dateReadable(dateMatch),
-					EID:      eiMatch,
-				})
+	ui.MustBind("findExistingExports", func() []ExportAccount {
+		knownAccounts := []ExportAccount{}
+		for _, knownAccount := range _storage.KnownAccounts {
+			ids, err := db.RetrievePlayerCompleteMissionIds(knownAccount.Id)
+			if err != nil {
+				log.Error(err)
+			} else if len(ids) > 0 {
+				knownAccounts = append(knownAccounts, ExportAccount{Id: knownAccount.Id, Nickname: knownAccount.Nickname, MissionCount: len(ids)})
 			}
 		}
-		return xlsxFiles
+		return knownAccounts
 	})
 
-	ui.MustBind("viewFile", func(file string) []FileMissionYear {
-		path := filepath.Join(_rootDir, "exports", "missions", file)
-		if fileMissionYears, err := viewFile(path); err != nil {
+	ui.MustBind("viewEidGo", func(eid string) string {
+		if fileMissionYears, err := viewMissionsOfId(eid); err != nil {
 			log.Error(err)
-			return nil
+			return ""
 		} else {
 			return fileMissionYears
 		}
+	})
+
+	ui.MustBind("getTargetName", func(target int) string {
+		return ei.ArtifactSpec_Name_name[int32(target)]
+	})
+
+	ui.MustBind("getShipName", func(ship int) string {
+		return ei.MissionInfo_Spaceship_name[int32(ship)]
+	})
+
+	ui.MustBind("getDurationName", func(duration int) string {
+		return ei.MissionInfo_DurationType_name[int32(duration)]
+	})
+
+	/*
+		Return a JSON array of the drops from a given mission
+	*/
+	ui.MustBind("getShipDrops", func(playerId string, shipId string) string {
+		//Get the mission from the database
+		completeMission, err := db.RetrieveCompleteMission(playerId, shipId)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		shipDrops := []MissionDrop{} //Array of drops
+		for _, drop := range completeMission.Artifacts {
+			spec := drop.GetSpec()
+			missionDrop := MissionDrop{
+				Name:   ei.ArtifactSpec_Name_name[int32(spec.GetName())],
+				Level:  int32(*drop.Spec.Level),
+				Rarity: int32(*drop.Spec.Rarity),
+			}
+			switch {
+			case strings.Contains(missionDrop.Name, "_FRAGMENT"):
+				missionDrop.SpecType = "StoneFragment"
+			case strings.Contains(missionDrop.Name, "_STONE"):
+				missionDrop.SpecType = "Stone"
+			case strings.Contains(missionDrop.Name, "GOLD_METEORITE"),
+				strings.Contains(missionDrop.Name, "SOLAR_TITANIUM"),
+				strings.Contains(missionDrop.Name, "TAU_CETI_GEODE"):
+				missionDrop.SpecType = "Ingredient"
+			default:
+				missionDrop.SpecType = "Artifact"
+			}
+			shipDrops = append(shipDrops, missionDrop)
+		}
+
+		//Convert to JSON
+		jsonData, err := json.Marshal(shipDrops)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		//Return the JSON
+		return string(jsonData)
+	})
+
+	ui.MustBind("getShipInfo", func(playerId string, shipId string) string {
+		//Get the mission from the database
+		completeMission, err := db.RetrieveCompleteMission(playerId, shipId)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		launchDateTimeObject := time.Unix(int64(*completeMission.Info.StartTimeDerived), 0)
+		ltH, ltM, ltS := launchDateTimeObject.Clock()
+		launchTime := fmt.Sprintf(dateFormat, ltH, ltM, ltS)
+		returnTimeObject := launchDateTimeObject.Add(time.Duration(*completeMission.Info.DurationSeconds * float64(time.Second)))
+		rtH, rtM, rtS := returnTimeObject.Clock()
+		returnTime := fmt.Sprintf(dateFormat, rtH, rtM, rtS)
+
+		missionInst := LoadedMission{
+			LaunchDay:   int32(launchDateTimeObject.Day()),
+			LaunchMonth: int32(launchDateTimeObject.Month()),
+			LaunchYear:  int32(launchDateTimeObject.Year()),
+			LaunchTime:  launchTime,
+
+			ReturnDay:   int32(returnTimeObject.Day()),
+			ReturnMonth: int32(returnTimeObject.Month()),
+			ReturnYear:  int32(returnTimeObject.Year()),
+			ReturnTime:  returnTime,
+
+			MissiondId:   *completeMission.Info.Identifier,
+			Ship:         completeMission.Info.Ship,
+			DurationType: completeMission.Info.DurationType,
+			Level:        int32(*completeMission.Info.Level),
+			Capacity:     int32(*completeMission.Info.Capacity),
+			Target:       properTargetName(completeMission.Info.TargetArtifact),
+		}
+
+		// Convert the single mission to a JSON string
+		jsonData, err := json.Marshal(missionInst)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		// Return the JSON string
+		return string(jsonData)
 	})
 
 	ui.MustBind("openFile", func(file string) {

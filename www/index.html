@@ -1,25 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
   <head>
     <title>EggLedger</title>
     <link rel="icon" href="images/icon-64.png" />
     <link rel="stylesheet" href="index.css" />
+    <link rel="stylesheet" href="custom.css" />
     <script src="vue.global.prod.js"></script>
     <script src="shortcuts.js"></script>
   </head>
   <body>
     <div id="app" class="h-stretch">
       <!-- Set display to none initially and reset it once mounted to avoid flash of unrendered template. -->
-      <div v-unhide class="h-stretch flex flex-col space-y-3 pb-3" style="display: none">
-        <div class="h-11 flex-shrink-0 bg-blue-50">
+      <div v-unhide class="h-stretch flex flex-col space-y-3 pb-3 bg-darker" style="display: none">
+        <div class="h-11 flex-shrink-0 bg-dark">
           <div
-            class="h-full flex items-end max-w-7xl w-full mx-auto px-4 space-x-1.5 border-b border-gray-300"
+            class="h-full flex items-end max-w-10xl w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300"
           >
             <div
-              v-for="tab in [UITab.Ledger, UITab.About, UITab.ViewData]"
+              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About]"
               v-bind:key="tab"
-              class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-700 border border-gray-300 rounded-t-md"
-              v-bind:class="tab === activeTab ? 'bg-white border-b-transparent' : 'bg-gray-100 hover:bg-gray-50 cursor-pointer'"
+              class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
+              v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
               v-on:click="activeTab = tab"
             >
               {{ tab }}
@@ -30,9 +31,9 @@
         <div
           v-if="appIsInForbiddenDirectory || appIsTranslocated"
           v-show="activeTab === UITab.Ledger"
-          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-y-scroll"
+          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-y-scroll bg-darker"
         >
-          <div class="text-sm text-gray-700 space-y-1">
+          <div class="text-sm text-gray-400 space-y-1">
             <template v-if="appIsTranslocated">
               <p class="text-red-700">
                 EggLedger.app was launched in a jailed environment due to a macOS security feature.
@@ -58,10 +59,11 @@
         <div
           v-else
           v-show="activeTab === UITab.Ledger"
-          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-hidden"
+          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
         >
           <div>
             <form
+              name="ledgerForm"
               class="mt-1 flex rounded-md shadow-sm"
               v-on:submit="event => {
               event.preventDefault();
@@ -73,8 +75,8 @@
                 <!-- Overlay to tag the input with the corresponding nickname (if the playerId in the input is known). -->
                 <div
                   v-if="nicknameForSelectedPlayerId"
-                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-500 tabular-nums"
-                  style="z-index: -10"
+                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
+                  style="z-index: -20"
                 >
                   <span class="invisible whitespace-pre">{{ playerId }}</span> ({{
                   nicknameForSelectedPlayerId }})
@@ -83,7 +85,7 @@
                 <input
                   ref="playerIdInputRef"
                   type="text"
-                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-transparent tabular-nums"
+                  class="focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-darkerer tabular-nums"
                   placeholder="EI1234567890123456"
                   v-bind:value="playerId"
                   v-on:focus="openPlayerIdDropdown"
@@ -92,13 +94,13 @@
 
                 <ul
                   v-if="playerIdDropdownOpen && knownAccounts.length > 0"
-                  class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
+                  class="absolute z-10 mt-1 w-full bg-darkerer shadow-lg max-h-60 rounded-md py-1 text-gray-400 ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
                   tabindex="-1"
                 >
                   <li
                     v-for="account in knownAccounts"
                     v-bind:key="account.id"
-                    class="text-sm text-gray-900 hover:text-white hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums"
+                    class="text-sm text-gray-400 hover:text-gray-300 hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums"
                     v-on:click="selectPlayerId(account.id)"
                   >
                     {{ account.id }} ({{ account.nickname }})
@@ -109,7 +111,7 @@
                 v-if="idle"
                 ref="playerIdSubmitRef"
                 type="submit"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-gray-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-bind:disabled="playerId.trim() === ''"
               >
                 Fetch
@@ -117,7 +119,7 @@
               <button
                 v-else
                 type="button"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-gray-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-on:click="stopFetchingPlayerData()"
               >
                 Stop
@@ -125,7 +127,7 @@
             </form>
           </div>
 
-          <div class="h-14 px-2 py-1 text-xs text-gray-500 bg-gray-50 rounded-md tabular-nums">
+          <div class="h-14 px-2 py-1 text-xs text-gray-500 bg-darkest rounded-md tabular-nums">
             <template v-if="currentState === AppState.FetchingSave">Fetching save...</template>
             <template v-else-if="currentState === AppState.FetchingMissions">
               <div>
@@ -171,7 +173,7 @@
 
           <div
             ref="messagesRef"
-            class="flex-1 px-2 py-1 overflow-scroll shadow-sm block text-xs font-mono text-gray-700 bg-gray-50 rounded-md"
+            class="flex-1 px-2 py-1 overflow-scroll shadow-sm block text-xs font-mono text-gray-400 bg-darkest rounded-md"
           >
             <div v-for="(message, i) in messages" v-bind:key="i" class="whitespace-pre">
               <span v-bind:class="message.isError ? 'text-red-700' : 'text-green-700'"
@@ -184,9 +186,9 @@
 
         <div
           v-show="activeTab === UITab.About"
-          class="flex-1 max-w-7xl w-full mx-auto px-4 overflow-y-scroll"
+          class="flex-1 max-w-10xl w-full mx-auto px-4 overflow-y-scroll"
         >
-          <div class="text-sm text-gray-700 space-y-2">
+          <div class="text-sm text-gray-400 space-y-2">
             <p class="space-x-3">
               <a
                 v-external-link
@@ -203,6 +205,24 @@
                 >More tools</a
               >
             </p>
+
+            <hr />
+            <div class="space-y-1">
+              <h2 class="font-bold">Is mk2 back?</h2>
+              <span class="mt-1">No. This tool is now being developed independently of mk2 - the community has taken over his orphaned tools since he went AWOL in 2022. <i>For EggLedger</i>, <i>specfically</i>, I  (<a
+                v-external-link
+                href="https://github.com/DavidArthurCole"
+                target="_blank"
+                class="text-gray-500 hover:text-gray-600 underline"
+                >DavidArthurCole</a
+              >) am the active developer and maintainer. To report issues, ask for changes, and more generally, to reach me with any information, reach out on discord <span class="text-short">@davidarthurcole</span>, or <a 
+                v-external-link
+                href="https://github.com/DavidArthurCole/EggLedger/issues/new/choose"
+                target="_blank"
+                class="text-gray-500 hover:text-gray-600 underline"
+              >open an Issue on GitHub</a>.</span>
+            </div>
+            <hr />
 
             <div class="space-y-1">
               <h2 class="font-bold">What does EggLedger do?</h2>
@@ -274,13 +294,13 @@
                 <img
                   src="images/icon_menu.webp"
                   alt="Menu Icon"
-                  class="inline h-5 w-5 p-0.5 relative -top-px border border-gray-300 rounded-full"
+                  class="bg-white inline h-5 w-5 p-0.5 relative -top-px border border-gray-300 rounded-full"
                 />
                 (lower left corner), choose Settings
                 <img
                   src="images/icon_settings.webp"
                   alt="Settings Icon"
-                  class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
+                  class="bg-white inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />, then click on "Privacy & Data". Your ID is at the bottom.
                 <span class="underline">It should look like EI1234567890123456</span>; that's the
                 letters "EI" followed by 16 digits.
@@ -290,7 +310,7 @@
                 <img
                   src="images/icon_help.webp"
                   alt="Help Icon"
-                  class="inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
+                  class="bg-white inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
                 />
                 in the main menu and click on "Data Loss Issue", the game will auto-compose an email
                 with your ID in the subject.
@@ -364,41 +384,108 @@
 
         <div
           v-show="activeTab === UITab.ViewData"
-          class="flex-1 flex flex-col max-w-7xl w-full mx-auto px-4 space-y-3 overflow-hidden"
+          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-scroll shadow-sm block"
         >
-          <div ref="selectViewFileForm" v-if="doesExportExist">
+          <div id="missionViewDiv" ref="missionView" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
+            <div style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
+              <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeOverlay()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              <div id="missionViewContentDiv" style="max-height: 70vh; max-width: 35vw;" class="text-gray-300 text-center overflow-scroll">
+                <!-- Content div that will be populated with mission info -->
+              </div>
+            </div>
+          </div>
+          <div ref="selectViewAccountForm" v-if="doesExportExist">
             <form
+              name="viewAccountForm"
               class="mt-1 flex rounded-md shadow-sm"
               v-on:submit="event => {
               event.preventDefault();
-
-              //TODO: View the file
+              viewEidGo();
             }"
             >
               <div class="relative flex-grow focus-within:z-10">
-                <label for="view-file-sel" class="sr-only">Choose a file</label>
-                <select ref="view-file-sel" 
-                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-transparent tabular-nums"
-                  v-model="selectedFile">
-                  <option v-bind:key="file" v-bind:value="null" >Choose a file</option>
-                  <option v-for="file in readableXlsxFiles" v-bind:key="file" v-bind:value="file">
-                    {{ file.nickname }}   {{ file.datetime }}   ({{ file.count }} missions)
+                <label for="view-file-sel" class="sr-only">Choose an account</label>
+                <select id="view-file-sel" ref="view-file-sel" 
+                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none"
+                  v-model="selectedAccount">
+                  <option v-bind:key="account" v-bind:value="null" >Choose an account</option>
+                  <option v-for="account in readableExistingExports" v-bind:key="account" v-bind:value="account.id">
+                    {{ account.nickname }}  ({{ account.missionCount }} missions)
                 </select>
               </div>
               <button
                 v-if="idle"
-                ref="viewFileSubmitRef"
+                ref="viewAccountSubmitRef"
                 type="submit"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-gray-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                v-bind:disabled="selectedFile === null"
+                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                v-bind:disabled="(selectedAccount === null || eidBeingLoaded)"
               >
                 View
               </button>
             </form>
           </div>
-          <div ref="noDataToView" v-else>
-            <span class="text-red-gray"> No mission data has been exported yet.<br>Please '<span class="font-bold">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-gray"> and then come back here.</span>
+          <div class="text-center mt-3rem" ref="noDataToView" v-else>
+            <span class="text-weewoosiren"> No mission data has been loaded yet.<br>Please '<span class="font-bold text-gray-400">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-weewoosiren"> and then come back here.</span>
           </div>
+          <div v-if="loadedAccountMissions && Object.keys(loadedAccountMissions).length > 0">
+            <div ref="filterRef">
+              <span class="font-bold text-gray-400">Filter:</span>
+              <form class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
+              name="filterForm"
+              v-on:submit="event => {
+                event.preventDefault();
+                applyFilter();
+              }"
+              >
+                <!-- Todo: implement the filter-->
+                <button
+                  v-if="idle"
+                  ref="applyFilterToData"
+                  type="submit"
+                  class="-ml-px relative w-20 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  v-bind:disabled="(dataFilter === null || dataBeingFiltered || !filterHasChanged)"
+                >
+                  Apply
+                </button>
+              </form>
+            </div>
+            <hr class="mt-1rem invisible">
+            <div ref="resultsDiv">
+              <span class="font-bold text-gray-400">Missions:</span>
+              <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+                <div v-for="(value, yIndex) in loadedAccountMissions" :key="yIndex">
+                  <span class="text-lg font-bold underline">{{ yIndex }}</span> <button class="text-lg text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleYear($event, yIndex)">Hide</button>
+                  <div :class="'mt-1 year-' + yIndex + '-child'" v-for="(subValue, mIndex) in value" :key="mIndex">
+                    <div class="mt-1rem ml-2rem">
+                      <span class="text-base font-bold underline">{{ yIndex }}-{{ mIndex }}</span> <button class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleMonth($event, yIndex, mIndex)">Hide</button>
+                      <div :class="'year-' + yIndex + '-child-' + mIndex" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
+                        <div class="mt-1rem ml-2rem">
+                          <span class="text-sm font-bold underline">{{ yIndex }}-{{ mIndex }}-{{ dIndex }}</span> <button class="text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, yIndex, mIndex, dIndex)">Hide</button>
+                          <div class="mt-1rem mission-grid">
+                            <div :class="'text-sm mission-item year-' + yIndex + '-child-' + mIndex + '-' + dIndex" v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
+                              <button 
+                                class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
+                                type="button"
+                                v-on:click="viewSpecificMission(mission.missionId)"
+                              >
+                                <span class="text-gray-300" v-html="mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
+                              </button>
+                            </div>
+                          </div>                        
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <hr :class="'pt-3rem pb-3rem invisible mt-1 year-' + yIndex + '-child'">
+                </div>
+              </div>
+            </div>
+          </div>
+          
         </div>
 
         <footer class="text-center text-sm text-gray-500">
@@ -415,7 +502,7 @@
             target="_blank"
             class="text-gray-500 hover:text-gray-600 underline"
             >mk2</a
-          >, & @<a
+          > & @<a
             v-external-link
             href="https://github.com/DavidArthurCole"
             target="_blank"
@@ -467,8 +554,8 @@
 
         const UITab = {
           Ledger: 'Ledger',
-          About: 'About',
           ViewData: 'View Mission Data',
+          About: 'About',
         };
 
         const AppState = {
@@ -502,6 +589,97 @@
           const mm = date.getMinutes().toString().padStart(2, '0');
           const ss = date.getSeconds().toString().padStart(2, '0');
           return `${hh}:${mm}:${ss}`;
+        }
+
+        function toggleYear(event, year) {
+          const self = event.target;
+          const newState = (self.innerHTML === "Hide") ? "none" : "block";
+          //Switch self to ▼ or ▶
+          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
+          //Hide or show all direct children (year-x-child)
+          const children = document.querySelectorAll(".year-" + year + "-child");
+          for (const child of children) {
+            child.style.display = newState;
+          }
+        };
+
+        function toggleMonth(event, year, month){
+          const self = event.target;
+          const newState = (self.innerHTML === "Hide") ? "none" : "block";
+          //Switch self to ▼ or ▶
+          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
+          //Hide or show all direct children (year-x-child)
+          const children = document.querySelectorAll(".year-" + year + "-child-" + month);
+          for (const child of children) {
+            child.style.display = newState;
+          }
+        };
+
+        function toggleDay(event, year, month, day){
+          const self = event.target;
+          const newState = (self.innerHTML === "Hide") ? "none" : "block";
+          //Switch self to ▼ or ▶
+          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
+          //Hide or show all direct children (year-x-child)
+          const children = document.querySelectorAll(".year-" + year + "-child-" + month + "-" + day);
+          for (const child of children) {
+            child.style.display = newState;
+          }
+        };
+
+        function durToSpan(duration, shipName){
+          if(duration === "" || duration === null || duration === undefined){
+            return "";
+          }else{
+            switch(duration){
+              case 0: return `<span class="text-short">` + shipName + `</span>`;
+              case 1: return `<span class="text-standard">` + shipName + `</span>`;
+              case 2: return `<span class="text-extended">` + shipName + `</span>`;
+              case 3: return `<span class="text-tutorial">` + shipName + `</span>`;
+              default: return `<span style="color: red">` + shipName + `</span>`;
+            }
+          }
+        }
+
+        function shipToName(ship){
+          if(ship === "" || ship === null || ship === undefined){
+            return "";
+          }else{
+            switch(ship){
+              case 0: return "Chicken One";
+              case 1: return "Chicken Nine";
+              case 2: return "Chicken Heavy";
+              case 3: return "BCR";
+              case 4: return "Quintillion Chicken";
+              case 5: return "Cornish-Hen Corvette";
+              case 6: return "Galeggtica";
+              case 7: return "Defihent";
+              case 8: return "Voyegger";
+              case 9: return "Henerprise";
+              default: return "Unknown";
+            }
+          }
+        }
+
+        function levelToStars(level){
+          return level <= 0 ? "" : `(` + level + `<span style="color: gold;">★</span>)`;
+        }
+
+        function closeOverlay() {
+          document.querySelector('.overlay').style.display = 'none';
+          document.getElementById('missionViewContentDiv').innerHTML = "";
+        }
+
+        function properCase(string){
+          string = string.toLowerCase();
+          //Capitalize the first letter of each word, unless it is 'of' or 'the'
+          const words = string.split(" ");
+          for (let i = 0; i < words.length; i++) {
+            if(words[i] !== "of" && words[i] !== "the"){
+              words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+            }
+          }
+          return words.join(" ");
         }
 
         const app = Vue.createApp({
@@ -665,29 +843,246 @@
             };
 
             // ===== Setup for 'View Mission Data' Tab =====
-            const xlsxFiles = Vue.ref([]); //Empty array of strings
-            const readableXlsxFiles = Vue.computed(() => {
-              return xlsxFiles.value.map(file => {
+            const existingExports = Vue.ref([]); //Empty array of strings
+            const readableExistingExports = Vue.computed(() => {
+              return existingExports.value.map(account => {
                 return {
-                  nickname: knownAccounts?.value?.find(account => account.id === file.eid) ?? "Unknown Player",
-                  datetime: file.datetime,
-                  count: file.count
-                }
+                  id: account.id,
+                  nickname: account.nickname,
+                  missionCount: account.missionCount
+                };
               });
             });
             const doesExportExist = Vue.ref(false);
+            Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts), async () => {
+              doesExportExist.value = await window.doesExportExist();
+            });
             Vue.onMounted(async () => {
               doesExportExist.value = await window.doesExportExist();
             });
-            Vue.watch(exportedFiles, async () => {
-              doesExportExist.value = await window.doesExportExist();
+            Vue.watch(doesExportExist, async () => {
               if(doesExportExist.value) {
-                xlsxFiles.value = await window.findExistingExports();
+                existingExports.value = await window.findExistingExports();
               }
             });
-            const selectedFile = Vue.ref(null);
+            const selectedAccount = Vue.ref(null);
             window.switchToLedger = () => {
               activeTab.value = UITab.Ledger;
+            };
+
+            const eidBeingLoaded = Vue.ref(false);
+            const loadedEid = Vue.ref(null);
+            const loadedAccountMissions = Vue.ref({});
+            const viewEidGo = async () => {
+              eidBeingLoaded.value = true;
+              const loadValue = await window.viewEidGo(selectedAccount.value.toString());
+              
+              if (loadValue !== "") {
+                loadedEid.value = selectedAccount.value.toString();
+                // Group missions by year, then month, then by day
+                var groupedMissions = JSON.parse(loadValue).reduce((acc, obj) => {
+                  const year = obj.launchYear;
+                  const month = obj.launchMonth;
+                  const day = obj.launchDay;
+
+                  if (!acc[year]) {
+                    acc[year] = {};
+                  }
+                  if (!acc[year][month]) {
+                    acc[year][month] = {};
+                  }
+                  if (!acc[year][month][day]) {
+                    acc[year][month][day] = [];
+                  }
+
+                  // Add the new mission to the beginning of the array
+                  acc[year][month][day].unshift(obj);
+                  return acc;
+                }, {});
+
+                window.loadedAccountMissions = groupedMissions;
+                loadedAccountMissions.value = groupedMissions;
+                eidBeingLoaded.value = false;
+              }
+            };
+
+            const dataFilter = Vue.ref(null);
+            const filterHasChanged = Vue.ref(false);
+            const dataBeingFiltered = Vue.ref(false);
+            const applyFilter = async () => {
+              dataBeingFiltered.value = true;
+              filterHasChanged.value = false;
+              //Yeah this ain't doin shit yet
+            };
+            Vue.watch(dataFilter, async () => {
+              filterHasChanged.value = true;
+            });
+
+            const targetImage = (target) => {
+              if(target == null || target == "") return "";
+              else{
+                target = target.toUpperCase(); //Redundancy
+                var tier = 4;
+                if(target.indexOf('_FRAGMENT') > -1) {
+                  target = target.replace('_FRAGMENT', '');
+                  tier = 1;
+                }
+                if(target == 'GOLD_METEORITE' || target == 'TAU_CETI_GEODE' || target == 'SOLAR_TITANIUM') tier = 3;
+                const path = "images/artifacts/" + target + "/" + target + "_" + tier + ".png";
+                return `<img src="` + path + `" alt="` + target + `"ml-1rem class="inline h-6 w-6 p-0.5 relative -top-px">`;
+              }
+            };
+
+            const viewSpecificMission = async (ship) => {
+              const shipInfoStr = await window.getShipInfo(loadedEid.value, ship);
+              if(shipInfoStr == "") return;
+              const shipInfo = JSON.parse(shipInfoStr);
+
+              const loadValue = await window.getShipDrops(loadedEid.value, ship);
+              if(loadValue == "") return;
+              const allDrops = JSON.parse(loadValue);
+
+              const artifacts = allDrops.filter(drop => drop.specType == "Artifact"); const artifactCount = artifacts.length; 
+              const stones = allDrops.filter(drop => drop.specType == "Stone"); const stoneCount = stones.length;
+              const stoneFragments = allDrops.filter(drop => drop.specType == "StoneFragment"); const stoneFragmentCount = stoneFragments.length;
+              const ingredients = allDrops.filter(drop => drop.specType == "Ingredient"); const ingredientCount = ingredients.length;
+              
+              var newHtml = durToSpan(shipInfo.durationType, shipToName(shipInfo.ship)) + '<br />';
+              
+              //Add x number of gold stars
+              newHtml += '<span class="text-lg text-goldenstar">' + "★".repeat(shipInfo.level) + '</span><br />';
+
+              const launchDateTime = new Date(shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay, shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]);
+              const returnDateTime = new Date(shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay, shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]);
+
+              //Compute the duration in days, hours, minutes
+              const duration = returnDateTime - launchDateTime;
+              const days = Math.floor(duration / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((duration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+
+              const durationString = (days > 0 ? days + "d" : "") + (hours > 0 ? hours + "h": "") + minutes + "m";
+
+              newHtml += 'Launched: ' + shipInfo.launchYear + '-' + shipInfo.launchMonth + '-' + shipInfo.launchDay + ' ' + shipInfo.launchTime + '<br />';
+              newHtml += 'Returned: ' + shipInfo.returnYear + '-' + shipInfo.returnMonth + '-' + shipInfo.returnDay + ' ' + shipInfo.returnTime + '<br />';
+              newHtml += 'Duration: ' + durationString + '<br />';
+              newHtml += 'Capacity: ' + shipInfo.capacity + '<br />';
+              if(shipInfo.target != ""){
+                newHtml += '<div class="items-center justify-center flex"> <span>Sensor Target:</span><div style="margin-left: 0.3rem;" class="text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">' + properCase(shipInfo.target.replace("_", " ")) + '</div></div><br />';
+              }
+
+              //Filter [ x ] that have the same `name`, `level`, `specType`, and `rarity`
+              // If there are 2 artifacts with the same name, level, specType, and rarity, increment the `count` of the first one, and remove the second one
+              function groupedSpecType(collection){
+                return collection.reduce((acc, obj) => {
+                  const key = obj.name + "_" + obj.level + "_" + obj.specType + "_" + obj.rarity;
+                  if (!acc[key]) {
+                    acc[key] = obj;
+                    acc[key].count = 1;
+                  }else{
+                    acc[key].count++;
+                  }
+                  return acc;
+                }, {});
+              }
+              
+              if(artifactCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 bg-blue-900">Artifacts (' + artifactCount + ')</div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                  const groupedSpecArtifacts = groupedSpecType(artifacts);
+                for(const af in groupedSpecArtifacts){
+                  const artifact = groupedSpecArtifacts[af];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var imagePath = "images/artifacts/" + artifact.name + "/" + artifact.name + "_" + (parseInt(artifact.level) + 1) + ".png";
+                  imagePath = imagePath.replaceAll("ORNATE_GUSSET", "GUSSET");
+                  imagePath = imagePath.replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
+                  var backgroundClass = "";
+                  switch(artifact.rarity){
+                    case 0: backgroundClass = 'bg-darker'; break;
+                    case 1: backgroundClass = 'bg-rare'; break;
+                    case 2: backgroundClass = 'bg-epic'; break;
+                    case 3: backgroundClass = 'bg-legendary'; break;
+                    default: backgroundClass = 'bg-darker'; break;
+                  }
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(artifact.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var width = "w-1rem";
+                    if(artifact.count > 9) width = "w-1.5rem";
+                    if(artifact.count > 99) width = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + width + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + artifact.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+              if(stoneCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 bg-fuchsia-900">Eggfinity stones (' + stoneCount + ') </div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                const groupedSpecStones = groupedSpecType(stones);
+                for(const st in groupedSpecStones){
+                  const stone = groupedSpecStones[st];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(stone.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var stoneWidth = "w-1rem";
+                    if(stone.count > 9) stoneWidth = "w-1.5rem";
+                    if(stone.count > 99) stoneWidth = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + stoneWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stone.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+              if(ingredientCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 text-gray-400 bg-darkerer">Ingredients (' + ingredientCount + ') </div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                const groupedSpecIngredients = groupedSpecType(ingredients);
+                for(const ing in groupedSpecIngredients){
+                  const ingredient = groupedSpecIngredients[ing];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(ingredient.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var ingredientWidth = "w-1rem";
+                    if(ingredient.count > 9) ingredientWidth = "w-1.5rem";
+                    if(ingredient.count > 99) ingredientWidth = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + ingredientWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+              if(stoneFragmentCount > 0) {
+                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 text-gray-400 bg-darkerer">Stone fragments (' + stoneFragmentCount + ') </div>';
+                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                const groupedSpecStoneFragments = groupedSpecType(stoneFragments);
+                for(const sf in groupedSpecStoneFragments){
+                  const stoneFragment = groupedSpecStoneFragments[sf];
+                  newHtml += '<div class="border-box h-11 w-11 p-1">';
+                  var stoneFragmentImagePath = "images/artifacts/" + stoneFragment.name.replace('_FRAGMENT', '') + "/" + stoneFragment.name.replace('_FRAGMENT', '') + "_" + (parseInt(stoneFragment.level) + 1) + ".png";
+                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + stoneFragment.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(stoneFragment.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
+                  //style="font-size: 0.8rem;"
+                  if(stoneFragment.count > 1) {
+                    //Width needs to be adjusted based on the number of digits in the count
+                    var stoneFragmentWidth = "w-1rem";
+                    if(stoneFragment.count > 9) stoneFragmentWidth = "w-1.5rem";
+                    if(stoneFragment.count > 99) stoneFragmentWidth = "w-2rem";
+                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + stoneFragmentWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stoneFragment.count + '</div>'
+                  }
+                  newHtml += '</a></div>';
+                }
+                newHtml += '</div><br />';
+              }
+
+              document.getElementById('missionViewContentDiv').innerHTML = newHtml;
+              document.querySelector('.overlay').style.display = 'flex';
             };
 
             return {
@@ -727,9 +1122,26 @@
 
               //Daveed additions :^)
               doesExportExist,
-              xlsxFiles,
-              readableXlsxFiles,
-              selectedFile,
+              existingExports,
+              readableExistingExports,
+              selectedAccount,
+              loadedAccountMissions,
+              eidBeingLoaded,
+              viewEidGo,
+              toggleDay,
+              toggleMonth,
+              toggleYear,
+              durToSpan,
+              levelToStars,
+              shipToName,
+              viewSpecificMission,
+              targetImage,
+              closeOverlay,
+
+              dataFilter,
+              filterHasChanged,
+              dataBeingFiltered,
+              applyFilter,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,
