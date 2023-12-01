@@ -920,6 +920,7 @@
                 console.log("Finished collecting mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
               } else{
                 console.log("Error loading mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "..." + ' (loadValue was empty)');
+                eidBeingLoaded.value = false;
               }
             };
 

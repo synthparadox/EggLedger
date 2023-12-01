@@ -112,41 +112,41 @@ func RetrievePlayerCompleteMissions(playerId string) ([]*ei.CompleteMissionRespo
 	var count int
 	var startTimestamps []float64
 	var compressedPayloads [][]byte
-	err := transact(action, func(tx *sql.Tx) error {
-		rows, err := tx.Query(`SELECT start_timestamp, complete_payload FROM mission
+	trerr := transact(action, func(tx *sql.Tx) error {
+		rows, querr := tx.Query(`SELECT start_timestamp, complete_payload FROM mission
 			WHERE player_id = ?
 			ORDER BY start_timestamp;`, playerId)
-		if err != nil {
-			return err
+		if querr != nil {
+			return querr
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var startTimestamp float64
 			var compressedPayload []byte
-			if err := rows.Scan(&startTimestamp, &compressedPayload); err != nil {
-				return err
+			if scerr := rows.Scan(&startTimestamp, &compressedPayload); scerr != nil {
+				return scerr
 			}
 			count++
 			startTimestamps = append(startTimestamps, startTimestamp)
 			compressedPayloads = append(compressedPayloads, compressedPayload)
 		}
-		if err := rows.Err(); err != nil {
-			return err
+		if rerr := rows.Err(); rerr != nil {
+			return rerr
 		}
 		return nil
 	})
-	if err != nil {
-		return nil, err
+	if trerr != nil {
+		return nil, trerr
 	}
 	var missions []*ei.CompleteMissionResponse
 	for i := 0; i < count; i++ {
-		completePayload, err := decompress(compressedPayloads[i])
-		if err != nil {
-			return nil, errors.Wrap(err, action)
+		completePayload, cperr := decompress(compressedPayloads[i])
+		if cperr != nil {
+			return nil, errors.Wrap(cperr, action)
 		}
-		m, err := api.DecodeCompleteMissionPayload(completePayload)
-		if err != nil {
-			return nil, errors.Wrap(err, action)
+		m, derr := api.DecodeCompleteMissionPayload(completePayload)
+		if derr != nil {
+			return nil, errors.Wrap(derr, action)
 		}
 		m.Info.StartTimeDerived = &startTimestamps[i]
 		missions = append(missions, m)

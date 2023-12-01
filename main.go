@@ -237,23 +237,22 @@ func init() {
 }
 
 func viewMissionsOfId(eid string) (string, error) {
-
 	//Get list of complete missions from the DB
 	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
 	if err != nil {
 		log.Error(err)
 		return "", err
 	}
-
 	//Array of FileMission
 	missionArr := []LoadedMission{}
 
 	for _, completeMission := range completeMissions {
 
-		launchDateTimeObject := time.Unix(int64(*completeMission.Info.StartTimeDerived), 0)
+		info := completeMission.Info
+		launchDateTimeObject := time.Unix(int64(*info.StartTimeDerived), 0)
 		ltH, ltM, ltS := launchDateTimeObject.Clock()
 		launchTime := fmt.Sprintf(dateFormat, ltH, ltM, ltS)
-		returnTimeObject := launchDateTimeObject.Add(time.Duration(*completeMission.Info.DurationSeconds * float64(time.Second)))
+		returnTimeObject := launchDateTimeObject.Add(time.Duration(info.GetDurationSeconds() * float64(time.Second)))
 		rtH, rtM, rtS := returnTimeObject.Clock()
 		returnTime := fmt.Sprintf(dateFormat, rtH, rtM, rtS)
 
@@ -268,12 +267,12 @@ func viewMissionsOfId(eid string) (string, error) {
 			ReturnYear:  int32(returnTimeObject.Year()),
 			ReturnTime:  returnTime,
 
-			MissiondId:   *completeMission.Info.Identifier,
-			Ship:         completeMission.Info.Ship,
-			DurationType: completeMission.Info.DurationType,
-			Level:        int32(*completeMission.Info.Level),
-			Capacity:     int32(*completeMission.Info.Capacity),
-			Target:       properTargetName(completeMission.Info.TargetArtifact),
+			MissiondId:   info.GetIdentifier(),
+			Ship:         info.Ship,
+			DurationType: info.DurationType,
+			Level:        int32(info.GetLevel()),
+			Capacity:     int32(info.GetCapacity()),
+			Target:       properTargetName(info.TargetArtifact),
 		}
 		missionArr = append(missionArr, missionInst)
 	}
@@ -315,7 +314,7 @@ func main() {
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
-	u, err := forkedlorca.New("", "", 900, 800, args...)
+	u, err := forkedlorca.New("", "", 800, 700, args...)
 	if err != nil {
 		log.Fatal(err)
 	}
