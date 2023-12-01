@@ -173,7 +173,7 @@
 
           <div
             ref="messagesRef"
-            class="flex-1 px-2 py-1 overflow-scroll shadow-sm block text-xs font-mono text-gray-400 bg-darkest rounded-md"
+            class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-400 bg-darkest rounded-md"
           >
             <div v-for="(message, i) in messages" v-bind:key="i" class="whitespace-pre">
               <span v-bind:class="message.isError ? 'text-red-700' : 'text-green-700'"
@@ -384,16 +384,16 @@
 
         <div
           v-show="activeTab === UITab.ViewData"
-          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-scroll shadow-sm block"
+          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-auto shadow-sm block"
         >
           <div id="missionViewDiv" ref="missionView" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
-            <div style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
+            <div id="innerMissionViewDiv" style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
               <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
-              <div id="missionViewContentDiv" style="max-height: 70vh; max-width: 35vw;" class="text-gray-300 text-center overflow-scroll">
+              <div id="missionViewContentDiv" style="max-height: 70vh; max-width: 35vw; min-width: 30vw;" class="text-gray-300 text-center overflow-auto">
                 <!-- Content div that will be populated with mission info -->
               </div>
             </div>
@@ -746,15 +746,19 @@
               window.removeEventListener('focus', handleFocus);
             });
 
+            const isFetching = Vue.ref(false);
             const fetchPlayerData = async () => {
               const normalizedId = normalizePlayerId(playerId.value);
               if (normalizedId !== '') {
+                isFetching.value = true;
                 await window.fetchPlayerData(normalizedId);
+                isFetching.value = false;
               }
             };
 
             const stopFetchingPlayerData = async () => {
               await window.stopFetchingPlayerData();
+              isFetching.value = false;
             };
 
             // ===== App state =====
@@ -884,13 +888,9 @@
             const loadedAccountMissionsCount = Vue.ref(0);
             const loadedAccountMissions = Vue.ref({});
             const viewEidGo = async () => {
-              console.log("Loading mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
               loadedAccountMissionsCount.value = readableExistingExports.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
-              console.log("Loaded mission count for EID: " + selectedAccount.value.toString().substring(0, 4) + "...: " + loadedAccountMissionsCount.value);
               eidBeingLoaded.value = true;
               const loadValue = await window.viewEidGo(selectedAccount.value.toString());
-
-              console.log("Loaded mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
               if (loadValue !== "") {
                 loadedEid.value = selectedAccount.value.toString();
                 // Group missions by year, then month, then by day
@@ -913,15 +913,9 @@
                   acc[year][month][day].unshift(obj);
                   return acc;
                 }, {});
-
-                console.log("Grouped mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
                 loadedAccountMissions.value = groupedMissions;
-                eidBeingLoaded.value = false;
-                console.log("Finished collecting mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "...");
-              } else{
-                console.log("Error loading mission data for EID: " + selectedAccount.value.toString().substring(0, 4) + "..." + ' (loadValue was empty)');
-                eidBeingLoaded.value = false;
               }
+              eidBeingLoaded.value = false;
             };
 
             const dataFilter = Vue.ref(null);
@@ -951,7 +945,46 @@
               }
             };
 
+            //Set it up so that if a click is performed outside of the 'viewMissionDiv', closeOverlay() is called
+            Vue.onMounted(() => {
+              const largerDiv = document.getElementById('missionViewDiv');
+              largerDiv.addEventListener('click', function(event) {
+                if(this.style.display == 'none') return false; //If the overlay is already hidden, don't do anything
+                const innerDiv = document.getElementById('innerMissionViewDiv');
+                const divRect = innerDiv.getBoundingClientRect();
+                const clickX = event.clientX;
+                const clickY = event.clientY;
+                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeOverlay();
+              });
+            });
+
+            function generateHoverText(drop, tier, imgPath){
+              if(!drop.gameName) return "";
+              const rarityText = ((drop) => {
+                if(drop.specType != "Artifact") return "";
+                switch(drop.rarity){
+                  case 1: return ' <span class="text-rare">Rare</span>';
+                  case 2: return ' <span class="text-epic">Epic</span>';
+                  case 3: return ' <span class="text-legendary">Legendary</span>';
+                  default: return "";
+                }
+              })(drop);
+              return '<span class="text-sm tooltiptext-custom speech-bubble">' + drop.gameName + ' (T' + tier + ')' + rarityText + ' × ' + drop.count + '</span>';
+            }
+
+            function numToDigClass(num){
+              switch(parseInt(num.toString())){ //Coerce to int
+                case num <= 9: return "w-onedig";
+                case num > 9: return "w-twodig";
+                case num > 99: return "w-threedig";
+                default: return "w-onedig";
+              };
+            }
             const viewSpecificMission = async (ship) => {
+
+              //Do not allow viewing a mission while data is being fetched - prevent collisions
+              if(isFetching.value) return false; 
+
               const shipInfoStr = await window.getShipInfo(loadedEid.value, ship);
               if(shipInfoStr == "") return;
               const shipInfo = JSON.parse(shipInfoStr);
@@ -968,7 +1001,7 @@
               var newHtml = durToSpan(shipInfo.durationType, shipToName(shipInfo.ship)) + '<br />';
               
               //Add x number of gold stars
-              newHtml += '<span class="text-lg text-goldenstar">' + "★".repeat(shipInfo.level) + '</span><br />';
+              newHtml += '<span class="text-star text-goldenstar">' + "★".repeat(shipInfo.level) + '</span><br />';
 
               const launchDateTime = new Date(shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay, shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]);
               const returnDateTime = new Date(shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay, shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]);
@@ -1004,97 +1037,81 @@
                 }, {});
               }
               
+              const commonRepDivClasses = "text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1";
+              const commonSecondProps = 'target="_blank" class="tooltip-custom relative block h-full w-full rounded-full';
               if(artifactCount > 0) {
-                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 bg-blue-900">Artifacts (' + artifactCount + ')</div>';
-                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
-                  const groupedSpecArtifacts = groupedSpecType(artifacts);
+                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' bg-blue-900">Artifacts (' + artifactCount + ')</div><div class="flex flex-wrap justify-center mx-auto">';
+                const groupedSpecArtifacts = groupedSpecType(artifacts);
                 for(const af in groupedSpecArtifacts){
                   const artifact = groupedSpecArtifacts[af];
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  var imagePath = "images/artifacts/" + artifact.name + "/" + artifact.name + "_" + (parseInt(artifact.level) + 1) + ".png";
-                  imagePath = imagePath.replaceAll("ORNATE_GUSSET", "GUSSET");
-                  imagePath = imagePath.replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
-                  var backgroundClass = "";
-                  switch(artifact.rarity){
-                    case 0: backgroundClass = 'bg-darker'; break;
-                    case 1: backgroundClass = 'bg-rare'; break;
-                    case 2: backgroundClass = 'bg-epic'; break;
-                    case 3: backgroundClass = 'bg-legendary'; break;
-                    default: backgroundClass = 'bg-darker'; break;
-                  }
-                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
-                  if(artifact.count > 1) {
-                    //Width needs to be adjusted based on the number of digits in the count
-                    var width = "w-1rem";
-                    if(artifact.count > 9) width = "w-1.5rem";
-                    if(artifact.count > 99) width = "w-2rem";
-                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + width + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + artifact.count + '</div>'
-                  }
-                  newHtml += '</a></div>';
+                  const imagePath = ("images/artifacts/" + artifact.name + "/" + artifact.name + "_" + (parseInt(artifact.level) + 1) + ".png").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
+                  const backgroundClass = ((rarity) => {
+                    switch (rarity) {
+                      case 0: return 'bg-darkerer';
+                      case 1: return 'bg-rare';
+                      case 2: return 'bg-epic';
+                      case 3: return 'bg-legendary';
+                      default: return 'bg-darkerer';
+                    }
+                  })(artifact.rarity);
+                  const afExplorerName = artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1);
+                  const hoverSpan = generateHoverText(artifact, parseInt(artifact.level) + 1, imagePath);
+                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
+                  if(artifact.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(artifact.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + artifact.count + '</div>'
+                  newHtml += hoverSpan + '</a></div>';
                 }
                 newHtml += '</div><br />';
               }
               if(stoneCount > 0) {
-                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 bg-fuchsia-900">Eggfinity stones (' + stoneCount + ') </div>';
-                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' bg-fuchsia-900">Eggfinity stones (' + stoneCount + ') </div><div class="flex flex-wrap justify-center mx-auto">';
                 const groupedSpecStones = groupedSpecType(stones);
                 for(const st in groupedSpecStones){
                   const stone = groupedSpecStones[st];
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  var stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
-                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
-                  if(stone.count > 1) {
-                    //Width needs to be adjusted based on the number of digits in the count
-                    var stoneWidth = "w-1rem";
-                    if(stone.count > 9) stoneWidth = "w-1.5rem";
-                    if(stone.count > 99) stoneWidth = "w-2rem";
-                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + stoneWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stone.count + '</div>'
-                  }
-                  newHtml += '</a></div>';
+                  const stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
+                  const afExplorerName = stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1);
+                  const hoverSpan = generateHoverText(stone, parseInt(stone.level) + 2, stoneImagePath);
+                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
+                  if(stone.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stone.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stone.count + '</div>'
+                  newHtml += hoverSpan + '</a></div>';
                 }
                 newHtml += '</div><br />';
               }
               if(ingredientCount > 0) {
-                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 text-gray-400 bg-darkerer">Ingredients (' + ingredientCount + ') </div>';
-                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Ingredients (' + ingredientCount + ') </div><div class="flex flex-wrap justify-center mx-auto">';
+                newHtml += ''
                 const groupedSpecIngredients = groupedSpecType(ingredients);
                 for(const ing in groupedSpecIngredients){
                   const ingredient = groupedSpecIngredients[ing];
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  var ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
-                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
-                  if(ingredient.count > 1) {
-                    //Width needs to be adjusted based on the number of digits in the count
-                    var ingredientWidth = "w-1rem";
-                    if(ingredient.count > 9) ingredientWidth = "w-2rem";
-                    if(ingredient.count > 99) ingredientWidth = "w-3rem";
-                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + ingredientWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
-                  }
-                  newHtml += '</a></div>';
+                  const ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
+                  const afExplorerName = ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1);
+                  const hoverSpan = generateHoverText(ingredient, parseInt(ingredient.level) + 1, ingredientImagePath);
+                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
+                  if(ingredient.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(ingredient.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
+                  newHtml += hoverSpan + '</a></div>';
                 }
                 newHtml += '</div><br />';
               }
               if(stoneFragmentCount > 0) {
-                newHtml += '<div class="text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1 text-gray-400 bg-darkerer">Stone fragments (' + stoneFragmentCount + ') </div>';
-                newHtml += '<div style="style="max-width: 30vw" class="flex flex-wrap justify-center mx-auto">'
+                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Stone fragments (' + stoneFragmentCount + ') </div><div class="flex flex-wrap justify-center mx-auto">';
                 const groupedSpecStoneFragments = groupedSpecType(stoneFragments);
                 for(const sf in groupedSpecStoneFragments){
                   const stoneFragment = groupedSpecStoneFragments[sf];
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  var stoneFragmentImagePath = "images/artifacts/" + stoneFragment.name.replace('_FRAGMENT', '') + "/" + stoneFragment.name.replace('_FRAGMENT', '') + "_" + (parseInt(stoneFragment.level) + 1) + ".png";
-                  newHtml += '<a v-external-linkdata-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + stoneFragment.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(stoneFragment.level) + 1) + '/" target="_blank" class="relative block h-full w-full rounded-full bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
-                  //style="font-size: 0.8rem;"
-                  if(stoneFragment.count > 1) {
-                    //Width needs to be adjusted based on the number of digits in the count
-                    var stoneFragmentWidth = "w-1rem";
-                    if(stoneFragment.count > 9) stoneFragmentWidth = "w-1.5rem";
-                    if(stoneFragment.count > 99) stoneFragmentWidth = "w-2rem";
-                    newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + stoneFragmentWidth + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stoneFragment.count + '</div>'
-                  }
-                  newHtml += '</a></div>';
+                  const stoneFragmentImagePath = "images/artifacts/" + stoneFragment.name.replace('_FRAGMENT', '') + "/" + stoneFragment.name.replace('_FRAGMENT', '') + "_" + (parseInt(stoneFragment.level) + 1) + ".png";
+                  const afExplorerName = stoneFragment.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(stoneFragment.level) + 1) 
+                  const hoverSpan = generateHoverText(stoneFragment, parseInt(stoneFragment.level) + 1, stoneFragmentImagePath);
+                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
+                  if(stoneFragment.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stoneFragment.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stoneFragment.count + '</div>'
+                  newHtml += hoverSpan + '</a></div>';
                 }
                 newHtml += '</div><br />';
               }
+
+              //Shamelessly stolen straight from Rockets Tracker :^)
+              newHtml += '<div class="mt-2 text-xs text-gray-300 text-center"> Hover mouse over an item to show details.<br> Click to open the relevant <a href="https://wasmegg-carpet.netlify.app/artifact-explorer/" target="_blank" class="underline">artifact explorer</a> page.<br> Click / double click on mobile. </div>'
 
               document.getElementById('missionViewContentDiv').innerHTML = newHtml;
               document.querySelector('.overlay').style.display = 'flex';

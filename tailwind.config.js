@@ -20,9 +20,9 @@ module.exports = {
         '1rem': '1rem',
       },
       width: {
-        '1rem': '1rem',
-        '2rem': '2rem',
-        '3rem': '3rem',
+        'onedig': '1rem',
+        'twodig': '1.25rem',
+        'threedig': '1.5rem',
       },
       lineHeight: {
         '1rem': '1rem'
@@ -33,6 +33,9 @@ module.exports = {
         '1rem': '1rem',
         '2rem': '2rem',
         '3rem': '3rem',
+      },
+      fontSize: {
+        'star': '1.4rem',
       },
       maxWidth: {
         '8xl': '88rem',

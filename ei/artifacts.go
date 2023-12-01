@@ -26,6 +26,12 @@ func (a ArtifactSpec_Name) CasedName() string {
 	return capitalizeArtifactName(strings.ToLower(a.GameName()))
 }
 
+/*func (a *ArtifactSpec) ArtifactEffectString() string {
+	switch *a.Name {
+
+	}
+}*/
+
 // GameName is in all caps. Use CasedName for cased version.
 func (a *ArtifactSpec) GameName() string {
 	switch *a.Name {

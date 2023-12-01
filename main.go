@@ -126,6 +126,7 @@ type LoadedMission struct {
 type MissionDrop struct {
 	SpecType string `json:"specType"`
 	Name     string `json:"name"`
+	GameName string `json:"gameName"`
 	Level    int32  `json:"level"`
 	Rarity   int32  `json:"rarity"`
 }
@@ -704,9 +705,10 @@ func main() {
 		for _, drop := range completeMission.Artifacts {
 			spec := drop.GetSpec()
 			missionDrop := MissionDrop{
-				Name:   ei.ArtifactSpec_Name_name[int32(spec.GetName())],
-				Level:  int32(*drop.Spec.Level),
-				Rarity: int32(*drop.Spec.Rarity),
+				Name:     ei.ArtifactSpec_Name_name[int32(spec.GetName())],
+				GameName: spec.CasedName(),
+				Level:    int32(*drop.Spec.Level),
+				Rarity:   int32(*drop.Spec.Rarity),
 			}
 			switch {
 			case strings.Contains(missionDrop.Name, "_FRAGMENT"):
