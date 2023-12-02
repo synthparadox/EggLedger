@@ -1301,12 +1301,6 @@
                       break;
                     }
                     case 'drops': {
-                      /*  TODO: Filter by drops
-                        The idea here would be to first determine the base quality of the artifact - then filter out
-                        all ships that could not have possibly dropped it.
-                        Past that, need to manually check each drop to see if it matches the filter,
-                        which is going to take significantly more time than the other filters.
-                      */
                       const durConfig = durationConfigs.value[mission.ship].durations[mission.durationType];
                       const filterQuality = filter.val.split("_")[3]; const qualityBypass = (filterQuality == '%');
                       const filterRarity = filter.val.split("_")[2]; const rarityBypass = (filterRarity == '%');
