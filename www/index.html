@@ -186,7 +186,7 @@
 
         <div
           v-show="activeTab === UITab.About"
-          class="flex-1 max-w-10xl w-full mx-auto px-4 overflow-y-scroll"
+          class="flex-1 max-w-10xl w-full mx-auto px-4 overflow-y-auto"
         >
           <div class="text-sm text-gray-400 space-y-2">
             <p class="space-x-3">
@@ -386,7 +386,7 @@
           v-show="activeTab === UITab.ViewData"
           class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-auto shadow-sm block"
         >
-          <div id="missionViewDiv" ref="missionView" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
+          <div id="missionViewDiv" ref="missionViewDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
             <div id="innerMissionViewDiv" style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
               <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -405,6 +405,10 @@
               v-on:submit="event => {
               event.preventDefault();
               viewEidGo();
+              topLevelFilterOptions.value = [null];
+              filterOperators.value = [null];
+              filterValues.value = [null];
+              window.updateFilterConditionsCount();
             }"
             >
               <div class="relative flex-grow focus-within:z-10">
@@ -431,53 +435,111 @@
           <div class="text-center mt-3rem" ref="noDataToView" v-else>
             <span class="text-red-700"> No mission data has been loaded yet.<br>Please '<span class="font-bold text-gray-400">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
-          <div v-if="loadedAccountMissions && Object.keys(loadedAccountMissions).length > 0">
-            <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="loadedAccountMissionsCount != (readableExistingExports.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
+          <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+            <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="selectedAccount != null && selectedAccount == loadedEid && loadedAccountMissionsCount != (readableExistingExports.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
               <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4"> You are viewing outdated data - click <span class="text-gray-500">View</span> again to fix this.</span>
             </div>
             <div ref="filterRef">
-              <span class="font-bold text-gray-400">Filter:</span>
+              <span class="font-bold text-gray-400">Filter:</span> <button id="toggleFilterButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" onclick="toggleFilter()">Hide</button>
               <form class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
               name="filterForm"
+              v-if="!hideFilter"
               v-on:submit="event => {
                 event.preventDefault();
                 applyFilter();
               }"
               >
-                <!-- Todo: implement the filter-->
+                <div class="relative flex-grow" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
 
-                <!-- Coming soon span -->
-                <span class="text-red-700">Coming soon</span><br/><br/>
+                  <!-- Separator -->
+                  <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
+
+                  <div class="relative flex flex-row items-center flex-grow focus-within:z-10">
+                    <!-- Top level filter options -->
+                    <select :id="'top-level-filter-' + index" :ref="'top-level-filter-' + index" 
+                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      v-model="topLevelFilterOptions[index]"
+                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else updateFilterNoReCount();"
+                      v-bind:disabled="topLevelFilterOptions[index + 1] != null">
+                      <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
+                        {{ validOption.text }}
+                    </select>
+                    <!-- Operator options -->
+                    <select :id="'op-filter-' + index" :ref="'op-filter-' + index" 
+                      v-if="topLevelFilterOptions[index] != null"
+                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      v-model="filterOperators[index]"
+                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else updateFilterNoReCount();"
+                      v-bind:disabled="topLevelFilterOptions[index + 1] != null">
+                      <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                        {{ validOperator.text }}
+                    </select>
+                    <!-- Value options -->
+                    <select :id="'filter-value-' + index" :ref ="'filter-value-' + index"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null"
+                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      v-model="filterValues[index]"
+                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else updateFilterNoReCount();"
+                      v-bind:disabled="topLevelFilterOptions[index + 1] != null">
+                      <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" v-bind:key="validValue" v-bind:value="validValue.value">
+                        {{ validValue.text }}
+                    </select>
+                    <!-- Clear button-->
+                    <button 
+                      v-if="topLevelFilterOptions[index] != null"
+                      style="margin-right: 1rem;"
+                      class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border rounded-md bg-transparent mt-05rem"
+                      title="Remove filter condition"
+                      v-on:click="removeAndShift(index)">
+                      ×
+                    </button>
+                    <!-- Show a warning div if the filter is incomplete -->
+                    <span
+                      v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null)"
+                      class="tooltip-custom items-center justify-center text-red-700 text-sml border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
+                      (!)
+                      <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Create a 2 px visible gray line that goes across the entire div-->
+                <hr class="mt-1rem w-full">
+
                 <button
                   v-if="idle"
                   ref="applyFilterToData"
                   type="submit"
-                  class="-ml-px relative w-20 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  v-bind:disabled="(dataFilter === null || dataBeingFiltered || !filterHasChanged)"
+                  class="mt-05rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  v-bind:disabled="(dataFilter === [] || dataBeingFiltered || !filterHasChanged)"
                 >
-                  Apply
+                  Apply Filter
                 </button>
               </form>
             </div>
             <hr class="mt-1rem invisible">
             <div ref="resultsDiv">
-              <span class="font-bold text-gray-400">Missions:</span>
-              <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
-                <div v-for="(value, yIndex) in loadedAccountMissions" :key="yIndex">
+              <span class="font-bold text-gray-400">Missions: <span v-if="filteredMissions != null && allLoadedMissions != null && filteredMissions.length != allLoadedMissions.length"> ( <span class="text-green-700 text-sm">{{ filteredMissions.length }} shown, {{ allLoadedMissions.length - filteredMissions.length }} filtered out </span>)</span></span>
+              <div v-if="filteredMissions.length == 0">
+                <span class="text-gray">No missions to display.</span>
+              </div>
+              <div v-else class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+                <div v-for="(value, yIndex) in groupedMissions" :key="yIndex">
                   <span class="text-lg font-bold underline">{{ yIndex }}</span> <button class="text-lg text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleYear($event, yIndex)">Hide</button>
-                  <div :class="'mt-1 year-' + yIndex + '-child'" v-for="(subValue, mIndex) in value" :key="mIndex">
+                  <div :class="'mt-1 year-' + yIndex + '-child'" 
+                    v-for="(subValue, mIndex) in value" :key="mIndex">
                     <div class="mt-1rem ml-2rem">
                       <span class="text-base font-bold underline">{{ yIndex }}-{{ mIndex }}</span> <button class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleMonth($event, yIndex, mIndex)">Hide</button>
                       <div :class="'year-' + yIndex + '-child-' + mIndex" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
                         <div class="mt-1rem ml-2rem">
                           <span class="text-sm font-bold underline">{{ yIndex }}-{{ mIndex }}-{{ dIndex }}</span> <button class="text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, yIndex, mIndex, dIndex)">Hide</button>
                           <div class="mt-1rem mission-grid">
-                            <div :class="'text-sm mission-item year-' + yIndex + '-child-' + mIndex + '-' + dIndex" v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
+                            <div :class="'text-sm mission-item year-' + yIndex + '-child-' + mIndex + '-' + dIndex" 
+                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
                               <button 
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                 type="button"
-                                v-on:click="viewSpecificMission(mission.missionId)"
-                              >
+                                v-on:click="viewSpecificMission(mission.missionId)">
                                 <span class="text-gray-300" v-html="mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
                               </button>
                             </div>
@@ -647,6 +709,20 @@
           }
         }
 
+        function durToName(dur){
+          if(dur === "" || dur === null || dur === undefined){
+            return "";
+          }else{
+            switch(dur){
+              case 0: return "Short";
+              case 1: return "Standard";
+              case 2: return "Extended";
+              case 3: return "Tutorial";
+              default: return "Unknown";
+            }
+          }
+        }
+
         function shipToName(ship){
           if(ship === "" || ship === null || ship === undefined){
             return "";
@@ -686,6 +762,83 @@
             }
           }
           return words.join(" ");
+        }
+
+        function getTopLevelFilterOptions(){
+          return [
+            {
+              text: 'Ship',
+              value: 'ship'
+            },
+            {
+              text: 'Duration',
+              value: 'duration'
+            },
+            {
+              text: 'Level',
+              value: 'level'
+            },
+            {
+              text: 'Target',
+              value: 'target'
+            }
+          ]
+        }
+
+        function getFilterOpOptions(topLevel){
+          switch(topLevel){
+            case 'ship':
+            case 'duration':
+            case 'level': return [
+              {
+                text: 'is',
+                value: '='
+              },
+              {
+                text: 'is not',
+                value: '!='
+              },
+              {
+                text: 'greater than',
+                value: '>'
+              },
+              {
+                text: 'less than',
+                value: '<'
+              }
+            ];
+            case 'target': return [
+              {
+                text: 'is',
+                value: '='
+              },
+              {
+                text: 'is not',
+                value: '!='
+              }
+            ];
+          }
+        }
+
+        function getFilterValueOptions(topLevel){
+          switch(topLevel){
+            case 'ship': return Array.from({ length: 10 }, (_, index) => ({
+                text: shipToName(index),
+                value: index,
+              }));
+            case 'duration': return Array.from({ length: 4 }, (_, index) => ({
+                text: durToName(index),
+                value: index,
+              }));
+            case 'level': return Array.from({ length: 8 }, (_, index) => ({
+                text: index + '★',
+                value: index,
+              }));
+            case 'target': return possibleTargets.map(target => ({
+                text: target.displayName,
+                value: target.id
+              }));
+          }
         }
 
         const app = Vue.createApp({
@@ -883,52 +1036,196 @@
               activeTab.value = UITab.Ledger;
             };
 
+            const possibleTargets = Vue.ref(null);
+            Vue.onMounted(async () => {
+              possibleTargets.value = JSON.parse(await window.getPossibleTargets());
+              window.possibleTargets = possibleTargets.value;
+            });
+
             const eidBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
             const loadedAccountMissionsCount = Vue.ref(0);
-            const loadedAccountMissions = Vue.ref({});
+
+            const allLoadedMissions = Vue.ref(null);
+            const filteredMissions = Vue.ref(null);
+            const groupedMissions = Vue.computed(() => {
+              if(filteredMissions.value == null || filteredMissions.value.length == 0) return {};
+              return filteredMissions.value.reduce((acc, obj) => {
+                const year = obj.launchYear;
+                const month = obj.launchMonth;
+                const day = obj.launchDay;
+
+                if (!acc[year]) {
+                  acc[year] = {};
+                }
+                if (!acc[year][month]) {
+                  acc[year][month] = {};
+                }
+                if (!acc[year][month][day]) {
+                  acc[year][month][day] = [];
+                }
+
+                // Add the new mission to the beginning of the array
+                acc[year][month][day].unshift(obj);
+                return acc;
+              }, {});
+            });
+
             const viewEidGo = async () => {
               loadedAccountMissionsCount.value = readableExistingExports.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
               eidBeingLoaded.value = true;
               const loadValue = await window.viewEidGo(selectedAccount.value.toString());
               if (loadValue !== "") {
+                allLoadedMissions.value = JSON.parse(loadValue);
+                filteredMissions.value = allLoadedMissions.value;
                 loadedEid.value = selectedAccount.value.toString();
-                // Group missions by year, then month, then by day
-                var groupedMissions = JSON.parse(loadValue).reduce((acc, obj) => {
-                  const year = obj.launchYear;
-                  const month = obj.launchMonth;
-                  const day = obj.launchDay;
-
-                  if (!acc[year]) {
-                    acc[year] = {};
-                  }
-                  if (!acc[year][month]) {
-                    acc[year][month] = {};
-                  }
-                  if (!acc[year][month][day]) {
-                    acc[year][month][day] = [];
-                  }
-
-                  // Add the new mission to the beginning of the array
-                  acc[year][month][day].unshift(obj);
-                  return acc;
-                }, {});
-                loadedAccountMissions.value = groupedMissions;
               }
               eidBeingLoaded.value = false;
             };
 
-            const dataFilter = Vue.ref(null);
+            const filterConditionsCount = Vue.ref(1);
+            function generateFilterConditionsArr() {
+              return new Array(filterConditionsCount.value);
+            }
+            const topLevelFilterOptions = Vue.ref([]);
+            const filterOperators = Vue.ref([]);
+            const filterValues = Vue.ref([]);
+
+            window.updateFilterNoReCount = function() {
+              filterHasChanged.value = true;
+              const newDataFilter = [];
+              if(topLevelFilterOptions.value.length == 0 || topLevelFilterOptions.value == null) return;
+
+              for(let i = 0; i < topLevelFilterOptions.value.length; i++){
+                const topLevel = topLevelFilterOptions.value[i];
+                const op = filterOperators.value[i];
+                const val = filterValues.value[i];
+
+                if(topLevel == null || op == null || val == null) break;
+
+                newDataFilter.push({
+                  topLevel: topLevel,
+                  op: op,
+                  val: val
+                });
+              }
+
+              dataFilter.value = newDataFilter;
+            };
+
+            window.updateFilterConditionsCount = function() {
+              const newDataFilter = [];
+              if(topLevelFilterOptions.value.length == 0 || topLevelFilterOptions.value == null) return;
+              var maxIndex = 0;
+              var set = false;
+
+              for(let i = 0; i < topLevelFilterOptions.value.length; i++){
+                const topLevel = topLevelFilterOptions.value[i];
+                const op = filterOperators.value[i];
+                const val = filterValues.value[i];
+
+                if(topLevel == null || op == null || val == null) {
+                  maxIndex = i;
+                  break;
+                }
+
+                newDataFilter.push({
+                  topLevel: topLevel,
+                  op: op,
+                  val: val
+                });
+
+                if(i + 1 == filterConditionsCount.value) {
+                  filterConditionsCount.value += 1;
+                  set = true;
+                }
+              }
+
+              if(!set) filterConditionsCount.value = maxIndex + 1;
+              dataFilter.value = newDataFilter;
+            };
+
+            const hideFilter = Vue.ref(false);
+            window.toggleFilter = function() {
+              hideFilter.value = !hideFilter.value;
+              document.getElementById('toggleFilterButton').innerHTML = hideFilter.value ? "Show" : "Hide";
+            };
+
+            const removeAndShift = (index) => {
+              //Shift all elements after the one being removed down one
+              for(let i = index; i < topLevelFilterOptions.value.length; i++){
+                topLevelFilterOptions.value[i] = topLevelFilterOptions.value[i + 1];
+                filterOperators.value[i] = filterOperators.value[i + 1];
+                filterValues.value[i] = filterValues.value[i + 1];
+              }
+              window.updateFilterConditionsCount();
+            }
+
+            const missionMatchesFilter = (mission, filters) => {
+              for(const filter of filters){
+                if(filter.topLevel != null && filter.op != null && filter.val != null){
+                  switch(filter.topLevel){
+                    case 'ship': {
+                      switch(filter.op){
+                        case '=': if(mission.ship != filter.val) return false; break;
+                        case '!=': if(mission.ship == filter.val) return false; break;
+                        case '>': if(mission.ship <= filter.val) return false; break;
+                        case '<': if(mission.ship >= filter.val) return false; break;
+                      }
+                      break;
+                    }
+                    case 'duration': {
+                      switch(filter.op){
+                        case '=': if(mission.durationType != filter.val) return false; break;
+                        case '!=': if(mission.durationType == filter.val) return false; break;
+                        case '>': if(mission.durationType <= filter.val) return false; break;
+                        case '<': if(mission.durationType >= filter.val) return false; break;
+                      }
+                      break;
+                    }
+                    case 'level': {
+                      switch(filter.op){
+                        case '=': if(mission.level != filter.val) return false; break;
+                        case '!=': if(mission.level == filter.val) return false; break;
+                        case '>': if(mission.level <= filter.val) return false; break;
+                        case '<': if(mission.level >= filter.val) return false; break;
+                      }
+                      break;
+                    }
+                    case 'target': {
+                      switch(filter.op){
+                        case '=': if(mission.targetInt != filter.val) return false; break;
+                        case '!=': if(mission.targetInt == filter.val) return false; break;
+                      }
+                      break;
+                    }
+                  }
+                }
+              }
+              return true;
+            }
+
+            const dataFilter = Vue.ref([]);
             const filterHasChanged = Vue.ref(false);
             const dataBeingFiltered = Vue.ref(false);
             const applyFilter = async () => {
               dataBeingFiltered.value = true;
               filterHasChanged.value = false;
-              //Yeah this ain't doin shit yet
+              const newFilteredMissions = [];
+              for(const loadedMission of allLoadedMissions.value){
+                if(missionMatchesFilter(loadedMission, dataFilter.value)){
+                  newFilteredMissions.push(loadedMission);
+                }
+              }
+              filteredMissions.value = newFilteredMissions;
+              dataBeingFiltered.value = false;
             };
             Vue.watch(dataFilter, async () => {
               filterHasChanged.value = true;
             });
+            window.manualChangeFilter = async () => {
+              filterHasChanged.value = true;
+            };
 
             const targetImage = (target) => {
               if(target == null || target == "") return "";
@@ -958,8 +1255,14 @@
               });
             });
 
-            function generateHoverText(drop, tier, imgPath){
+            function generateHoverText(drop, tier, effectString){
               if(!drop.gameName) return "";
+              const boundEffectString = (effectString == "") ? "" : ((str) => {
+                const effRegex = /\[(.*?)\]/g;
+                const match = effRegex.exec(str);
+                if(!match) return "???";
+                return "<br />" + str.replace('[', '').replace(']', '').replace(match[1], '<span class="text-sm text-green-500">' + match[1] + '</span>')
+              })(effectString);
               const rarityText = ((drop) => {
                 if(drop.specType != "Artifact") return "";
                 switch(drop.rarity){
@@ -969,16 +1272,17 @@
                   default: return "";
                 }
               })(drop);
-              return '<span class="text-sm tooltiptext-custom speech-bubble">' + drop.gameName + ' (T' + tier + ')' + rarityText + ' × ' + drop.count + '</span>';
+              return '<span class="text-sm tooltiptext-custom speech-bubble">' + drop.gameName + ' (T' + tier + ')' + rarityText + ' × ' + drop.count + boundEffectString + '</span>';
             }
 
-            function numToDigClass(num){
-              switch(parseInt(num.toString())){ //Coerce to int
-                case num <= 9: return "w-onedig";
-                case num > 9: return "w-twodig";
-                case num > 99: return "w-threedig";
-                default: return "w-onedig";
-              };
+            function numToDigClass(num) {
+              const parsedNum = parseInt(num.toString());
+              switch (true) {
+                  case parsedNum <= 9: return "w-onedig";
+                  case parsedNum > 9 && parsedNum <= 99: return "w-twodig";
+                  case parsedNum > 99: return "w-threedig";
+                  default: return "w-onedig";
+              }
             }
             const viewSpecificMission = async (ship) => {
 
@@ -1040,7 +1344,7 @@
               const commonRepDivClasses = "text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1";
               const commonSecondProps = 'target="_blank" class="tooltip-custom relative block h-full w-full rounded-full';
               if(artifactCount > 0) {
-                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' bg-blue-900">Artifacts (' + artifactCount + ')</div><div class="flex flex-wrap justify-center mx-auto">';
+                newHtml += '<div class="' + commonRepDivClasses + ' bg-blue-900">Artifacts (' + artifactCount + ')</div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
                 const groupedSpecArtifacts = groupedSpecType(artifacts);
                 for(const af in groupedSpecArtifacts){
                   const artifact = groupedSpecArtifacts[af];
@@ -1056,7 +1360,7 @@
                     }
                   })(artifact.rarity);
                   const afExplorerName = artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1);
-                  const hoverSpan = generateHoverText(artifact, parseInt(artifact.level) + 1, imagePath);
+                  const hoverSpan = generateHoverText(artifact, parseInt(artifact.level) + 1, artifact.effectString);
                   newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
                   if(artifact.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(artifact.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + artifact.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
@@ -1064,14 +1368,14 @@
                 newHtml += '</div><br />';
               }
               if(stoneCount > 0) {
-                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' bg-fuchsia-900">Eggfinity stones (' + stoneCount + ') </div><div class="flex flex-wrap justify-center mx-auto">';
+                newHtml += '<div class="' + commonRepDivClasses + ' bg-fuchsia-900">Eggfinity stones (' + stoneCount + ') </div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
                 const groupedSpecStones = groupedSpecType(stones);
                 for(const st in groupedSpecStones){
                   const stone = groupedSpecStones[st];
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
                   const stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
                   const afExplorerName = stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1);
-                  const hoverSpan = generateHoverText(stone, parseInt(stone.level) + 2, stoneImagePath);
+                  const hoverSpan = generateHoverText(stone, parseInt(stone.level) + 2, stone.effectString);
                   newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
                   if(stone.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stone.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stone.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
@@ -1079,7 +1383,7 @@
                 newHtml += '</div><br />';
               }
               if(ingredientCount > 0) {
-                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Ingredients (' + ingredientCount + ') </div><div class="flex flex-wrap justify-center mx-auto">';
+                newHtml += '<div class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Ingredients (' + ingredientCount + ') </div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
                 newHtml += ''
                 const groupedSpecIngredients = groupedSpecType(ingredients);
                 for(const ing in groupedSpecIngredients){
@@ -1087,7 +1391,7 @@
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
                   const ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
                   const afExplorerName = ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1);
-                  const hoverSpan = generateHoverText(ingredient, parseInt(ingredient.level) + 1, ingredientImagePath);
+                  const hoverSpan = generateHoverText(ingredient, parseInt(ingredient.level) + 1, "");
                   newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
                   if(ingredient.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(ingredient.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
@@ -1095,14 +1399,14 @@
                 newHtml += '</div><br />';
               }
               if(stoneFragmentCount > 0) {
-                newHtml += '<div style="max-width: 20vw;" class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Stone fragments (' + stoneFragmentCount + ') </div><div class="flex flex-wrap justify-center mx-auto">';
+                newHtml += '<div class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Stone fragments (' + stoneFragmentCount + ') </div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
                 const groupedSpecStoneFragments = groupedSpecType(stoneFragments);
                 for(const sf in groupedSpecStoneFragments){
                   const stoneFragment = groupedSpecStoneFragments[sf];
                   newHtml += '<div class="border-box h-11 w-11 p-1">';
                   const stoneFragmentImagePath = "images/artifacts/" + stoneFragment.name.replace('_FRAGMENT', '') + "/" + stoneFragment.name.replace('_FRAGMENT', '') + "_" + (parseInt(stoneFragment.level) + 1) + ".png";
                   const afExplorerName = stoneFragment.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(stoneFragment.level) + 1) 
-                  const hoverSpan = generateHoverText(stoneFragment, parseInt(stoneFragment.level) + 1, stoneFragmentImagePath);
+                  const hoverSpan = generateHoverText(stoneFragment, parseInt(stoneFragment.level) + 1, "");
                   newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
                   if(stoneFragment.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stoneFragment.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stoneFragment.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
@@ -1111,7 +1415,7 @@
               }
 
               //Shamelessly stolen straight from Rockets Tracker :^)
-              newHtml += '<div class="mt-2 text-xs text-gray-300 text-center"> Hover mouse over an item to show details.<br> Click to open the relevant <a href="https://wasmegg-carpet.netlify.app/artifact-explorer/" target="_blank" class="underline">artifact explorer</a> page.<br> Click / double click on mobile. </div>'
+              newHtml += '<div class="mt-2 text-xs text-gray-300 text-center"> Hover mouse over an item to show details.<br> Click to open the relevant <a href="https://wasmegg-carpet.netlify.app/artifact-explorer/" target="_blank" class="underline">artifact explorer</a> page.</div>'
 
               document.getElementById('missionViewContentDiv').innerHTML = newHtml;
               document.querySelector('.overlay').style.display = 'flex';
@@ -1157,7 +1461,6 @@
               existingExports,
               readableExistingExports,
               selectedAccount,
-              loadedAccountMissions,
               eidBeingLoaded,
               viewEidGo,
               toggleDay,
@@ -1172,11 +1475,24 @@
               refreshExistingExports,
               loadedAccountMissionsCount,
               loadedEid,
+              allLoadedMissions,
+              filteredMissions,
+              groupedMissions,
+              possibleTargets,
 
               dataFilter,
               filterHasChanged,
               dataBeingFiltered,
               applyFilter,
+              getTopLevelFilterOptions,
+              getFilterOpOptions,
+              getFilterValueOptions,
+              generateFilterConditionsArr,
+              topLevelFilterOptions,
+              filterOperators,
+              filterValues,
+              hideFilter,
+              removeAndShift,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,

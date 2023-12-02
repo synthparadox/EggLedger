@@ -121,20 +121,32 @@ type LoadedMission struct {
 	Level        int32                        `json:"level"`
 	Capacity     int32                        `json:"capacity"`
 	Target       string                       `json:"target"`
+	TargetInt    int32                        `json:"targetInt"`
 }
 
 type MissionDrop struct {
-	SpecType string `json:"specType"`
-	Name     string `json:"name"`
-	GameName string `json:"gameName"`
-	Level    int32  `json:"level"`
-	Rarity   int32  `json:"rarity"`
+	SpecType     string `json:"specType"`
+	Name         string `json:"name"`
+	GameName     string `json:"gameName"`
+	EffectString string `json:"effectString"`
+	Level        int32  `json:"level"`
+	Rarity       int32  `json:"rarity"`
 }
 
 type ExportAccount struct {
 	Id           string `json:"id"`
 	Nickname     string `json:"nickname"`
 	MissionCount int    `json:"missionCount"`
+}
+
+type RawPossibleTarget struct {
+	Name        ei.ArtifactSpec_Name `json:"name"`
+	DisplayName string               `json:"displayName"`
+}
+
+type PossibleTarget struct {
+	DisplayName string `json:"displayName"`
+	Id          int32  `json:"id"`
 }
 
 func init() {
@@ -274,6 +286,7 @@ func viewMissionsOfId(eid string) (string, error) {
 			Level:        int32(info.GetLevel()),
 			Capacity:     int32(info.GetCapacity()),
 			Target:       properTargetName(info.TargetArtifact),
+			TargetInt:    int32(info.GetTargetArtifact()),
 		}
 		missionArr = append(missionArr, missionInst)
 	}
@@ -691,6 +704,78 @@ func main() {
 	})
 
 	/*
+		Return a JSON array of the possible targets
+	*/
+	ui.MustBind("getPossibleTargets", func() string {
+		PossibleTargetsRaw := []RawPossibleTarget{
+			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Unknown"},
+			{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan"},
+			{Name: ei.ArtifactSpec_TACHYON_DEFLECTOR, DisplayName: "Tachyon Deflectors"},
+			{Name: ei.ArtifactSpec_SHIP_IN_A_BOTTLE, DisplayName: "Ships in a Bottle"},
+			{Name: ei.ArtifactSpec_TITANIUM_ACTUATOR, DisplayName: "Titanium Actuators"},
+			{Name: ei.ArtifactSpec_DILITHIUM_MONOCLE, DisplayName: "Dilithium Monocles"},
+			{Name: ei.ArtifactSpec_QUANTUM_METRONOME, DisplayName: "Quantum Metronomes"},
+			{Name: ei.ArtifactSpec_PHOENIX_FEATHER, DisplayName: "Phoenix Feathers"},
+			{Name: ei.ArtifactSpec_THE_CHALICE, DisplayName: "Chalices"},
+			{Name: ei.ArtifactSpec_INTERSTELLAR_COMPASS, DisplayName: "Interstellar Compasses"},
+			{Name: ei.ArtifactSpec_CARVED_RAINSTICK, DisplayName: "Carved Rainsticks"},
+			{Name: ei.ArtifactSpec_BEAK_OF_MIDAS, DisplayName: "Beaks of Midas"},
+			{Name: ei.ArtifactSpec_MERCURYS_LENS, DisplayName: "Mercury's Lenses"},
+			{Name: ei.ArtifactSpec_NEODYMIUM_MEDALLION, DisplayName: "Neodymium Medallions"},
+			{Name: ei.ArtifactSpec_ORNATE_GUSSET, DisplayName: "Gussets"},
+			{Name: ei.ArtifactSpec_TUNGSTEN_ANKH, DisplayName: "Tungsten Ankhs"},
+			{Name: ei.ArtifactSpec_AURELIAN_BROOCH, DisplayName: "Aurelian Brooches"},
+			{Name: ei.ArtifactSpec_VIAL_MARTIAN_DUST, DisplayName: "Vials of Martian Dust"},
+			{Name: ei.ArtifactSpec_DEMETERS_NECKLACE, DisplayName: "Demeters Necklaces"},
+			{Name: ei.ArtifactSpec_LUNAR_TOTEM, DisplayName: "Lunar Totems"},
+			{Name: ei.ArtifactSpec_PUZZLE_CUBE, DisplayName: "Puzzle Cubes"},
+			{Name: ei.ArtifactSpec_PROPHECY_STONE, DisplayName: "Prophecy Stones"},
+			{Name: ei.ArtifactSpec_CLARITY_STONE, DisplayName: "Clarity Stones"},
+			{Name: ei.ArtifactSpec_DILITHIUM_STONE, DisplayName: "Dilithium Stones"},
+			{Name: ei.ArtifactSpec_LIFE_STONE, DisplayName: "Life Stones"},
+			{Name: ei.ArtifactSpec_QUANTUM_STONE, DisplayName: "Quantum Stones"},
+			{Name: ei.ArtifactSpec_SOUL_STONE, DisplayName: "Soul Stones"},
+			{Name: ei.ArtifactSpec_TERRA_STONE, DisplayName: "Terra Stones"},
+			{Name: ei.ArtifactSpec_TACHYON_STONE, DisplayName: "Tachyon Stones"},
+			{Name: ei.ArtifactSpec_LUNAR_STONE, DisplayName: "Lunar Stones"},
+			{Name: ei.ArtifactSpec_SHELL_STONE, DisplayName: "Shell Stones"},
+			{Name: ei.ArtifactSpec_SOLAR_TITANIUM, DisplayName: "Solar Titanium"},
+			{Name: ei.ArtifactSpec_TAU_CETI_GEODE, DisplayName: "Geodes"},
+			{Name: ei.ArtifactSpec_GOLD_METEORITE, DisplayName: "Gold Meteorites"},
+			{Name: ei.ArtifactSpec_PROPHECY_STONE_FRAGMENT, DisplayName: "Prophecy Stone Fragments"},
+			{Name: ei.ArtifactSpec_CLARITY_STONE_FRAGMENT, DisplayName: "Clarity Stone Fragments"},
+			{Name: ei.ArtifactSpec_LIFE_STONE_FRAGMENT, DisplayName: "Life Stone Fragments"},
+			{Name: ei.ArtifactSpec_TERRA_STONE_FRAGMENT, DisplayName: "Terra Stone Fragments"},
+			{Name: ei.ArtifactSpec_DILITHIUM_STONE_FRAGMENT, DisplayName: "Dilithium Stone Fragments"},
+			{Name: ei.ArtifactSpec_SOUL_STONE_FRAGMENT, DisplayName: "Soul Stone Fragments"},
+			{Name: ei.ArtifactSpec_QUANTUM_STONE_FRAGMENT, DisplayName: "Quantum Stone Fragments"},
+			{Name: ei.ArtifactSpec_TACHYON_STONE_FRAGMENT, DisplayName: "Tachyon Stone Fragments"},
+			{Name: ei.ArtifactSpec_SHELL_STONE_FRAGMENT, DisplayName: "Shell Stone Fragments"},
+			{Name: ei.ArtifactSpec_LUNAR_STONE_FRAGMENT, DisplayName: "Lunar Stone Fragments"},
+		}
+
+		// Convert the array to PossibleTarget
+		possibleTargets := []PossibleTarget{}
+		for _, rawTarget := range PossibleTargetsRaw {
+			possibleTarget := PossibleTarget{
+				DisplayName: rawTarget.DisplayName,
+				Id:          int32(rawTarget.Name),
+			}
+			possibleTargets = append(possibleTargets, possibleTarget)
+		}
+
+		// Convert the array of PossibleTarget to a JSON string
+		jsonData, err := json.Marshal(possibleTargets)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		// Return the JSON string
+		return string(jsonData)
+	})
+
+	/*
 		Return a JSON array of the drops from a given mission
 	*/
 	ui.MustBind("getShipDrops", func(playerId string, shipId string) string {
@@ -715,12 +800,14 @@ func main() {
 				missionDrop.SpecType = "StoneFragment"
 			case strings.Contains(missionDrop.Name, "_STONE"):
 				missionDrop.SpecType = "Stone"
+				missionDrop.EffectString = spec.DropEffectString()
 			case strings.Contains(missionDrop.Name, "GOLD_METEORITE"),
 				strings.Contains(missionDrop.Name, "SOLAR_TITANIUM"),
 				strings.Contains(missionDrop.Name, "TAU_CETI_GEODE"):
 				missionDrop.SpecType = "Ingredient"
 			default:
 				missionDrop.SpecType = "Artifact"
+				missionDrop.EffectString = spec.DropEffectString()
 			}
 			shipDrops = append(shipDrops, missionDrop)
 		}

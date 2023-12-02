@@ -26,11 +26,725 @@ func (a ArtifactSpec_Name) CasedName() string {
 	return capitalizeArtifactName(strings.ToLower(a.GameName()))
 }
 
-/*func (a *ArtifactSpec) ArtifactEffectString() string {
+func (a *ArtifactSpec) GenericBenefitString() string {
 	switch *a.Name {
-
+	case ArtifactSpec_LUNAR_TOTEM:
+		return "[+^b] away earnings"
+	case ArtifactSpec_NEODYMIUM_MEDALLION:
+		return "[+^b] drone frequency"
+	case ArtifactSpec_BEAK_OF_MIDAS:
+		return "[+^b] chance of gold in gifts and drones"
+	case ArtifactSpec_LIGHT_OF_EGGENDIL:
+		return "Enlightenment egg value increased by [^b]"
+	case ArtifactSpec_TUNGSTEN_ANKH:
+		fallthrough
+	case ArtifactSpec_DEMETERS_NECKLACE:
+		return "[+^b] egg value"
+	case ArtifactSpec_VIAL_MARTIAN_DUST:
+		return "Increases max running chicken bonus by [^b]"
+	case ArtifactSpec_ORNATE_GUSSET:
+		return "[+^b] hab capacity"
+	case ArtifactSpec_THE_CHALICE:
+		return "[+^b] internal hatchery rate"
+	case ArtifactSpec_BOOK_OF_BASAN:
+		return "[+^b] to Egg of Prophecy bonus"
+	case ArtifactSpec_PHOENIX_FEATHER:
+		return "[+^b] Soul Egg collection rate"
+	case ArtifactSpec_AURELIAN_BROOCH:
+		return "[+^b] drone rewards"
+	case ArtifactSpec_CARVED_RAINSTICK:
+		return "[+^b] chance of cash in gifts and drones"
+	case ArtifactSpec_PUZZLE_CUBE:
+		return "[-^b] research cost"
+	case ArtifactSpec_QUANTUM_METRONOME:
+		return "[+^b] egg laying rate"
+	case ArtifactSpec_SHIP_IN_A_BOTTLE:
+		return "[+^b] co-op teammate's earnings"
+	case ArtifactSpec_TACHYON_DEFLECTOR:
+		return "[+^b] co-op teammate's egg laying rate"
+	case ArtifactSpec_INTERSTELLAR_COMPASS:
+		return "[+^b] shipping rate"
+	case ArtifactSpec_DILITHIUM_MONOCLE:
+		return "[+^b] boost boost"
+	case ArtifactSpec_TITANIUM_ACTUATOR:
+		return "[+^b] hold to hatch rate"
+	case ArtifactSpec_MERCURYS_LENS:
+		return "[+^b] farm valuation"
+	// Stones
+	case ArtifactSpec_TACHYON_STONE:
+		return "[+^b] egg laying rate"
+	case ArtifactSpec_DILITHIUM_STONE:
+		return "[+^b] boost duration"
+	case ArtifactSpec_SHELL_STONE:
+		return "[+^b] egg value"
+	case ArtifactSpec_LUNAR_STONE:
+		return "[+^b] away earnings"
+	case ArtifactSpec_SOUL_STONE:
+		return "[+^b] bonus per Soul Egg"
+	case ArtifactSpec_PROPHECY_STONE:
+		return "[+^b] to Egg of Prophecy bonus"
+	case ArtifactSpec_QUANTUM_STONE:
+		return "[+^b] shipping rate"
+	case ArtifactSpec_TERRA_STONE:
+		return "Increases max running chicken bonus by [^b]"
+	case ArtifactSpec_LIFE_STONE:
+		return "[+^b] internal hatchery rate"
+	case ArtifactSpec_CLARITY_STONE:
+		return "[^b] effect of host artifact on enlightenment egg farms"
+	default:
+		return ""
 	}
-}*/
+}
+
+func (a *ArtifactSpec) DropEffectString() string {
+	var replString string
+	switch *a.Name {
+	case ArtifactSpec_LUNAR_TOTEM:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "50%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "150%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "300%"
+			case ArtifactSpec_RARE:
+				replString = "400%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "500%"
+			case ArtifactSpec_RARE:
+				replString = "700%"
+			case ArtifactSpec_EPIC:
+				replString = "900%"
+			}
+		}
+	case ArtifactSpec_NEODYMIUM_MEDALLION:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "10%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "25%"
+			case ArtifactSpec_RARE:
+				replString = "30%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50%"
+			case ArtifactSpec_EPIC:
+				replString = "60%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "110%"
+			case ArtifactSpec_EPIC:
+				replString = "120%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "130%"
+			}
+		}
+	case ArtifactSpec_BEAK_OF_MIDAS:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "20%"
+		case ArtifactSpec_LESSER:
+			replString = "50%"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "200%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "500%"
+			case ArtifactSpec_RARE:
+				replString = "1000%"
+			case ArtifactSpec_LEGENDARY:
+				return "Gold gifts and drone rewards guaranteed"
+			}
+		}
+	case ArtifactSpec_LIGHT_OF_EGGENDIL:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "50%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "120%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "900%"
+			case ArtifactSpec_RARE:
+				replString = "1400%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100x"
+			case ArtifactSpec_EPIC:
+				replString = "150x"
+			case ArtifactSpec_LEGENDARY:
+				replString = "250x"
+			}
+		}
+	case ArtifactSpec_DEMETERS_NECKLACE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "10%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "25%"
+			case ArtifactSpec_RARE:
+				replString = "35%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50%"
+			case ArtifactSpec_RARE:
+				replString = "60%"
+			case ArtifactSpec_EPIC:
+				replString = "75%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "125%"
+			case ArtifactSpec_EPIC:
+				replString = "150%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "200%"
+			}
+		}
+	case ArtifactSpec_VIAL_MARTIAN_DUST:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "10"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50"
+			case ArtifactSpec_RARE:
+				replString = "60"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100"
+			case ArtifactSpec_EPIC:
+				replString = "150"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "200"
+			case ArtifactSpec_RARE:
+				replString = "300"
+			case ArtifactSpec_LEGENDARY:
+				replString = "500"
+			}
+		}
+	case ArtifactSpec_ORNATE_GUSSET:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "10%"
+			case ArtifactSpec_EPIC:
+				replString = "12%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "15%"
+			case ArtifactSpec_RARE:
+				replString = "16%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "20%"
+			case ArtifactSpec_EPIC:
+				replString = "22%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "25%"
+			}
+		}
+	case ArtifactSpec_THE_CHALICE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "10%"
+			case ArtifactSpec_EPIC:
+				replString = "15%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "20%"
+			case ArtifactSpec_RARE:
+				replString = "23%"
+			case ArtifactSpec_EPIC:
+				replString = "25%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "30%"
+			case ArtifactSpec_EPIC:
+				replString = "35%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "40%"
+			}
+		}
+	case ArtifactSpec_BOOK_OF_BASAN:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "0.25%"
+		case ArtifactSpec_LESSER:
+			replString = "0.5%"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "0.75%"
+			case ArtifactSpec_EPIC:
+				replString = "0.8%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "1%"
+			case ArtifactSpec_EPIC:
+				replString = "1.1%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "1.2%"
+			}
+		}
+	case ArtifactSpec_PHOENIX_FEATHER:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "25%"
+		case ArtifactSpec_LESSER:
+			replString = "100%"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "400%"
+			case ArtifactSpec_RARE:
+				replString = "500%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "900%"
+			case ArtifactSpec_RARE:
+				replString = "1100%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "1400%"
+			}
+		}
+	case ArtifactSpec_TUNGSTEN_ANKH:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "10%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "25%"
+			case ArtifactSpec_RARE:
+				replString = "28%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50%"
+			case ArtifactSpec_RARE:
+				replString = "75%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "100%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "125%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "150%"
+			}
+		}
+	case ArtifactSpec_AURELIAN_BROOCH:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "10%"
+		case ArtifactSpec_LESSER:
+			replString = "25%"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50%"
+			case ArtifactSpec_RARE:
+				replString = "60%"
+			case ArtifactSpec_EPIC:
+				replString = "70%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "125%"
+			case ArtifactSpec_EPIC:
+				replString = "150%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "200%"
+			}
+		}
+	case ArtifactSpec_CARVED_RAINSTICK:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "20%"
+		case ArtifactSpec_LESSER:
+			replString = "50%"
+		case ArtifactSpec_NORMAL:
+			replString = "100%"
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "400%"
+			case ArtifactSpec_EPIC:
+				replString = "900%"
+			case ArtifactSpec_LEGENDARY:
+				return "Cash drone rewards and gifts guaranteed"
+			}
+		}
+	case ArtifactSpec_PUZZLE_CUBE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "10%"
+			case ArtifactSpec_EPIC:
+				replString = "15%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "20%"
+			case ArtifactSpec_RARE:
+				replString = "22%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50%"
+			case ArtifactSpec_RARE:
+				replString = "53%"
+			case ArtifactSpec_EPIC:
+				replString = "55%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "60%"
+			}
+		}
+	case ArtifactSpec_QUANTUM_METRONOME:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "10%"
+			case ArtifactSpec_RARE:
+				replString = "12%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "15%"
+			case ArtifactSpec_RARE:
+				replString = "17%"
+			case ArtifactSpec_EPIC:
+				replString = "20%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "25%"
+			case ArtifactSpec_RARE:
+				replString = "27%"
+			case ArtifactSpec_EPIC:
+				replString = "30%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "35%"
+			}
+		}
+	case ArtifactSpec_SHIP_IN_A_BOTTLE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "20%"
+		case ArtifactSpec_LESSER:
+			replString = "30%"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50%"
+			case ArtifactSpec_RARE:
+				replString = "60%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "70%"
+			case ArtifactSpec_RARE:
+				replString = "80%"
+			case ArtifactSpec_EPIC:
+				replString = "90%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "100%"
+			}
+		}
+	case ArtifactSpec_TACHYON_DEFLECTOR:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			replString = "8%"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "12%"
+			case ArtifactSpec_RARE:
+				replString = "13%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "15%"
+			case ArtifactSpec_RARE:
+				replString = "17%"
+			case ArtifactSpec_EPIC:
+				replString = "19%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "20%"
+			}
+		}
+	case ArtifactSpec_INTERSTELLAR_COMPASS:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			replString = "10%"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "20%"
+			case ArtifactSpec_RARE:
+				replString = "22%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "30%"
+			case ArtifactSpec_RARE:
+				replString = "35%"
+			case ArtifactSpec_EPIC:
+				replString = "40%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "50%"
+			}
+		}
+	case ArtifactSpec_DILITHIUM_MONOCLE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			replString = "10%"
+		case ArtifactSpec_NORMAL:
+			replString = "15%"
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "20%"
+			case ArtifactSpec_EPIC:
+				replString = "25%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "30%"
+			}
+		}
+	case ArtifactSpec_TITANIUM_ACTUATOR:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "1"
+		case ArtifactSpec_LESSER:
+			replString = "4"
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "6"
+			case ArtifactSpec_RARE:
+				replString = "7"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "10"
+			case ArtifactSpec_EPIC:
+				replString = "12"
+			case ArtifactSpec_LEGENDARY:
+				replString = "15"
+			}
+		}
+	case ArtifactSpec_MERCURYS_LENS:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "10%"
+		case ArtifactSpec_LESSER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "20%"
+			case ArtifactSpec_RARE:
+				replString = "22%"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "50%"
+			case ArtifactSpec_RARE:
+				replString = "55%"
+			}
+		case ArtifactSpec_GREATER:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "100%"
+			case ArtifactSpec_RARE:
+				replString = "125%"
+			case ArtifactSpec_EPIC:
+				replString = "150%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "200%"
+			}
+		}
+	// Stones
+	case ArtifactSpec_QUANTUM_STONE:
+		fallthrough
+	case ArtifactSpec_TACHYON_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "2%"
+		case ArtifactSpec_LESSER:
+			replString = "4%"
+		case ArtifactSpec_NORMAL:
+			replString = "5%"
+		}
+	case ArtifactSpec_DILITHIUM_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "3%"
+		case ArtifactSpec_LESSER:
+			replString = "6%"
+		case ArtifactSpec_NORMAL:
+			replString = "8%"
+		}
+	case ArtifactSpec_SHELL_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			replString = "8%"
+		case ArtifactSpec_NORMAL:
+			replString = "10%"
+		}
+	case ArtifactSpec_LUNAR_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "20%"
+		case ArtifactSpec_LESSER:
+			replString = "30%"
+		case ArtifactSpec_NORMAL:
+			replString = "40%"
+		}
+	case ArtifactSpec_SOUL_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "5%"
+		case ArtifactSpec_LESSER:
+			replString = "10%"
+		case ArtifactSpec_NORMAL:
+			replString = "25%"
+		}
+	case ArtifactSpec_PROPHECY_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "0.05%"
+		case ArtifactSpec_LESSER:
+			replString = "0.1%"
+		case ArtifactSpec_NORMAL:
+			replString = "0.15%"
+		}
+	case ArtifactSpec_TERRA_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "10"
+		case ArtifactSpec_LESSER:
+			replString = "50"
+		case ArtifactSpec_NORMAL:
+			replString = "100"
+		}
+	case ArtifactSpec_LIFE_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "2%"
+		case ArtifactSpec_LESSER:
+			replString = "3%"
+		case ArtifactSpec_NORMAL:
+			replString = "4%"
+		}
+	case ArtifactSpec_CLARITY_STONE:
+		switch *a.Level {
+		case ArtifactSpec_INFERIOR:
+			replString = "25%"
+		case ArtifactSpec_LESSER:
+			replString = "50%"
+		case ArtifactSpec_NORMAL:
+			replString = "100%"
+		}
+	default:
+		replString = "???" // should never happen
+	}
+
+	return strings.ReplaceAll(a.GenericBenefitString(), "^b", replString)
+}
 
 // GameName is in all caps. Use CasedName for cased version.
 func (a *ArtifactSpec) GameName() string {
