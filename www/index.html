@@ -874,7 +874,7 @@
               }));
             case 'drops': {
               const filteredConfigs = artifactConfigs.filter(a => a.baseQuality <= maxQuality).map(artifact => ({
-                text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + 1) + ')')),
+                text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + (artifact.displayName.toLowerCase().indexOf('stone') > -1 ? 2 : 1)) + ')')),
                 value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
                 styleClass: generateDropStyleClass(artifact)
               }))
@@ -1302,6 +1302,7 @@
                     }
                     case 'drops': {
                       const durConfig = durationConfigs.value[mission.ship].durations[mission.durationType];
+                      const maxQuality = durConfig.maxQuality + (durConfig.levelQualityBump * mission.level);
                       const filterQuality = filter.val.split("_")[3]; const qualityBypass = (filterQuality == '%');
                       const filterRarity = filter.val.split("_")[2]; const rarityBypass = (filterRarity == '%');
                       const filterLevel = filter.val.split("_")[1]; const levelBypass = (filterLevel == '%');
@@ -1311,7 +1312,7 @@
                       const allDrops = JSON.parse(loadValue);
                       switch(filter.op){
                         case 'c':{ //Contains
-                          if(!qualityBypass && durConfig.maxQuality < filterQuality) return false;
+                          if(!qualityBypass && maxQuality < filterQuality) return false;
                           if(!qualityBypass && durConfig.minQuality > filterQuality) return false;
                           for(const drop of allDrops){
                             if(!nameBypass && parseInt(filterName) != drop.id ) continue;

@@ -161,9 +161,11 @@ type PossibleMission struct {
 }
 
 type DurationConfig struct {
-	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
-	MinQuality   float64                      `json:"minQuality"`
-	MaxQuality   float64                      `json:"maxQuality"`
+	DurationType     *ei.MissionInfo_DurationType `json:"durationType"`
+	MinQuality       float64                      `json:"minQuality"`
+	MaxQuality       float64                      `json:"maxQuality"`
+	LevelQualityBump float64                      `json:"levelQualityBump"`
+	MaxLevels        int32                        `json:"maxLevels"`
 }
 
 type PossibleArtifact struct {
@@ -740,12 +742,13 @@ func main() {
 		return ei.MissionInfo_DurationType_name[int32(duration)]
 	})
 
-	ui.MustBind("getMaxQuality", func() int {
-		maxQuality := 0
+	ui.MustBind("getMaxQuality", func() float32 {
+		maxQuality := float32(0)
 		for _, mission := range _eiAfxConfigMissions {
 			for _, duration := range mission.GetDurations() {
-				if int(duration.GetMaxQuality()) > maxQuality {
-					maxQuality = int(duration.GetMaxQuality())
+				compedMaxQuality := float32(duration.GetMaxQuality()) + (duration.GetLevelQualityBump() * float32(len(mission.LevelMissionRequirements)))
+				if compedMaxQuality > maxQuality {
+					maxQuality = compedMaxQuality
 				}
 			}
 		}
@@ -761,9 +764,11 @@ func main() {
 			durations := []*DurationConfig{}
 			for _, duration := range mission.GetDurations() {
 				durationConfig := &DurationConfig{
-					DurationType: duration.DurationType,
-					MinQuality:   float64(duration.GetMinQuality()),
-					MaxQuality:   float64(duration.GetMaxQuality()),
+					DurationType:     duration.DurationType,
+					MinQuality:       float64(duration.GetMinQuality()),
+					MaxQuality:       float64(duration.GetMaxQuality()),
+					LevelQualityBump: float64(duration.GetLevelQualityBump()),
+					MaxLevels:        int32(len(mission.LevelMissionRequirements)),
 				}
 				durations = append(durations, durationConfig)
 			}
