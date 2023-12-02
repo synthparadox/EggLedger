@@ -874,7 +874,7 @@
               }));
             case 'drops': {
               const filteredConfigs = artifactConfigs.filter(a => a.baseQuality <= maxQuality).map(artifact => ({
-                text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + (artifact.displayName.toLowerCase().indexOf('stone') > -1 ? 2 : 1)) + ')')),
+                text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + ((artifact.displayName.toLowerCase().indexOf('stone') > -1 && artifact.displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ')')),
                 value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
                 styleClass: generateDropStyleClass(artifact)
               }))
