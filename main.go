@@ -286,7 +286,11 @@ func viewMissionsOfId(eid string) (string, error) {
 			Level:        int32(info.GetLevel()),
 			Capacity:     int32(info.GetCapacity()),
 			Target:       properTargetName(info.TargetArtifact),
-			TargetInt:    int32(info.GetTargetArtifact()),
+		}
+		if missionInst.Target == "" {
+			missionInst.TargetInt = -1
+		} else {
+			missionInst.TargetInt = int32(info.GetTargetArtifact())
 		}
 		missionArr = append(missionArr, missionInst)
 	}
@@ -303,7 +307,7 @@ func viewMissionsOfId(eid string) (string, error) {
 }
 
 func properTargetName(name *ei.ArtifactSpec_Name) string {
-	if name == nil || *name == ei.ArtifactSpec_UNKNOWN {
+	if name == nil {
 		return ""
 	} else {
 		return ei.ArtifactSpec_Name_name[int32(*name)]
@@ -708,7 +712,7 @@ func main() {
 	*/
 	ui.MustBind("getPossibleTargets", func() string {
 		PossibleTargetsRaw := []RawPossibleTarget{
-			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Unknown"},
+			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted"},
 			{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan"},
 			{Name: ei.ArtifactSpec_TACHYON_DEFLECTOR, DisplayName: "Tachyon Deflectors"},
 			{Name: ei.ArtifactSpec_SHIP_IN_A_BOTTLE, DisplayName: "Ships in a Bottle"},
@@ -755,7 +759,9 @@ func main() {
 		}
 
 		// Convert the array to PossibleTarget
-		possibleTargets := []PossibleTarget{}
+		possibleTargets := []PossibleTarget{
+			{DisplayName: "None (Pre 1.27)", Id: -1},
+		}
 		for _, rawTarget := range PossibleTargetsRaw {
 			possibleTarget := PossibleTarget{
 				DisplayName: rawTarget.DisplayName,
