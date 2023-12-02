@@ -58,7 +58,14 @@ module.exports = {
       },
       borderColor: {
         "dark_tab": "#111211",
-        'red-700': "rgb(185 28 28)"
+        'red-700': "rgb(185 28 28)",
+        'rare': "rgb(69, 159, 246)",
+        'epic': "rgb(139, 93, 246)",
+        'legendary': "rgb(246, 168, 35)",
+        'tutorial': "rgb(115, 128, 140)",
+        'short': "rgb(69, 159, 246)",
+        'standard': "rgb(139, 93, 246)",
+        'extended': "rgb(246, 168, 35)",
       }
     },
   },

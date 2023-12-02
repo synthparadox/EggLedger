@@ -19,6 +19,7 @@ import (
 
 	"github.com/DavidArthurCole/EggLedger/db"
 	"github.com/DavidArthurCole/EggLedger/ei"
+	"github.com/DavidArthurCole/EggLedger/eiafx"
 	"github.com/DavidArthurCole/EggLedger/forkedlorca"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
@@ -47,8 +48,11 @@ var (
 	// /private/var/folders/<...>/<...>/T/AppTranslocation/<UUID>/d/internal
 	_appIsTranslocated bool
 
-	_devMode   = os.Getenv("DEV_MODE") != ""
-	dateFormat = "%02d:%02d:%02d"
+	_devMode             = os.Getenv("DEV_MODE") != ""
+	_dateFormat          = "%02d:%02d:%02d"
+	_eiAfxConfigErr      = eiafx.LoadConfig()
+	_eiAfxConfigMissions []*ei.ArtifactsConfigurationResponse_MissionParameters
+	_eiAfxConfigArtis    []*ei.ArtifactsConfigurationResponse_ArtifactParameters
 )
 
 const (
@@ -125,12 +129,14 @@ type LoadedMission struct {
 }
 
 type MissionDrop struct {
-	SpecType     string `json:"specType"`
-	Name         string `json:"name"`
-	GameName     string `json:"gameName"`
-	EffectString string `json:"effectString"`
-	Level        int32  `json:"level"`
-	Rarity       int32  `json:"rarity"`
+	Id           int32   `json:"id"`
+	SpecType     string  `json:"specType"`
+	Name         string  `json:"name"`
+	GameName     string  `json:"gameName"`
+	EffectString string  `json:"effectString"`
+	Level        int32   `json:"level"`
+	Rarity       int32   `json:"rarity"`
+	Quality      float64 `json:"quality"`
 }
 
 type ExportAccount struct {
@@ -147,6 +153,26 @@ type RawPossibleTarget struct {
 type PossibleTarget struct {
 	DisplayName string `json:"displayName"`
 	Id          int32  `json:"id"`
+}
+
+type PossibleMission struct {
+	Ship      *ei.MissionInfo_Spaceship `json:"ship"`
+	Durations []*DurationConfig         `json:"durations"`
+}
+
+type DurationConfig struct {
+	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
+	MinQuality   float64                      `json:"minQuality"`
+	MaxQuality   float64                      `json:"maxQuality"`
+}
+
+type PossibleArtifact struct {
+	Name        ei.ArtifactSpec_Name `json:"name"`
+	ProtoName   string               `json:"protoName"`
+	DisplayName string               `json:"displayName"`
+	Level       int32                `json:"level"`
+	Rarity      int32                `json:"rarity"`
+	BaseQuality float64              `json:"baseQuality"`
 }
 
 func init() {
@@ -245,6 +271,13 @@ func init() {
 		})
 	}
 
+	if _eiAfxConfigErr != nil {
+		log.Fatal(_eiAfxConfigErr)
+	} else {
+		_eiAfxConfigMissions = eiafx.Config.MissionParameters
+		_eiAfxConfigArtis = eiafx.Config.ArtifactParameters
+	}
+
 	storageInit()
 	dataInit()
 }
@@ -264,10 +297,10 @@ func viewMissionsOfId(eid string) (string, error) {
 		info := completeMission.Info
 		launchDateTimeObject := time.Unix(int64(*info.StartTimeDerived), 0)
 		ltH, ltM, ltS := launchDateTimeObject.Clock()
-		launchTime := fmt.Sprintf(dateFormat, ltH, ltM, ltS)
+		launchTime := fmt.Sprintf(_dateFormat, ltH, ltM, ltS)
 		returnTimeObject := launchDateTimeObject.Add(time.Duration(info.GetDurationSeconds() * float64(time.Second)))
 		rtH, rtM, rtS := returnTimeObject.Clock()
-		returnTime := fmt.Sprintf(dateFormat, rtH, rtM, rtS)
+		returnTime := fmt.Sprintf(_dateFormat, rtH, rtM, rtS)
 
 		missionInst := LoadedMission{
 			LaunchDay:   int32(launchDateTimeObject.Day()),
@@ -707,6 +740,78 @@ func main() {
 		return ei.MissionInfo_DurationType_name[int32(duration)]
 	})
 
+	ui.MustBind("getMaxQuality", func() int {
+		maxQuality := 0
+		for _, mission := range _eiAfxConfigMissions {
+			for _, duration := range mission.GetDurations() {
+				if int(duration.GetMaxQuality()) > maxQuality {
+					maxQuality = int(duration.GetMaxQuality())
+				}
+			}
+		}
+		return maxQuality
+	})
+
+	ui.MustBind("getDurationConfigs", func() string {
+		//Array of PossibleMission
+		possibleMissions := []PossibleMission{}
+
+		for _, mission := range _eiAfxConfigMissions {
+			ship := mission.Ship
+			durations := []*DurationConfig{}
+			for _, duration := range mission.GetDurations() {
+				durationConfig := &DurationConfig{
+					DurationType: duration.DurationType,
+					MinQuality:   float64(duration.GetMinQuality()),
+					MaxQuality:   float64(duration.GetMaxQuality()),
+				}
+				durations = append(durations, durationConfig)
+			}
+			possibleMission := PossibleMission{
+				Ship:      ship,
+				Durations: durations,
+			}
+			possibleMissions = append(possibleMissions, possibleMission)
+		}
+
+		// Convert the array of PossibleMission to a JSON string
+		jsonData, err := json.Marshal(possibleMissions)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		// Return the JSON string
+		return string(jsonData)
+	})
+
+	ui.MustBind("getAfxConfigs", func() string {
+		//Array of PossibleArtifact
+		possibleArtifacts := []PossibleArtifact{}
+
+		for _, artifact := range _eiAfxConfigArtis {
+			possibleArtifact := PossibleArtifact{
+				Name:        *artifact.Spec.Name,
+				ProtoName:   artifact.Spec.Name.String(),
+				DisplayName: artifact.Spec.CasedSmallName(),
+				Level:       int32(artifact.Spec.GetLevel()),
+				Rarity:      int32(artifact.Spec.GetRarity()),
+				BaseQuality: float64(artifact.GetBaseQuality()),
+			}
+			possibleArtifacts = append(possibleArtifacts, possibleArtifact)
+		}
+
+		// Convert the array of PossibleArtifact to a JSON string
+		jsonData, err := json.Marshal(possibleArtifacts)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+
+		// Return the JSON string
+		return string(jsonData)
+	})
+
 	/*
 		Return a JSON array of the possible targets
 	*/
@@ -795,11 +900,23 @@ func main() {
 		shipDrops := []MissionDrop{} //Array of drops
 		for _, drop := range completeMission.Artifacts {
 			spec := drop.GetSpec()
+			var foundQuality float64 = 0
+			// Iterate through the array to find the desired ArtifactParameters
+			for _, artifact := range _eiAfxConfigArtis {
+				// Compare the Spec field
+				if artifact.Spec == spec {
+					// Match found, retrieve the BaseQuality
+					foundQuality = *artifact.BaseQuality
+					break
+				}
+			}
 			missionDrop := MissionDrop{
+				Id:       int32(spec.GetName()),
 				Name:     ei.ArtifactSpec_Name_name[int32(spec.GetName())],
 				GameName: spec.CasedName(),
 				Level:    int32(*drop.Spec.Level),
 				Rarity:   int32(*drop.Spec.Rarity),
+				Quality:  foundQuality,
 			}
 			switch {
 			case strings.Contains(missionDrop.Name, "_FRAGMENT"):
@@ -839,10 +956,10 @@ func main() {
 
 		launchDateTimeObject := time.Unix(int64(*completeMission.Info.StartTimeDerived), 0)
 		ltH, ltM, ltS := launchDateTimeObject.Clock()
-		launchTime := fmt.Sprintf(dateFormat, ltH, ltM, ltS)
+		launchTime := fmt.Sprintf(_dateFormat, ltH, ltM, ltS)
 		returnTimeObject := launchDateTimeObject.Add(time.Duration(*completeMission.Info.DurationSeconds * float64(time.Second)))
 		rtH, rtM, rtS := returnTimeObject.Clock()
-		returnTime := fmt.Sprintf(dateFormat, rtH, rtM, rtS)
+		returnTime := fmt.Sprintf(_dateFormat, rtH, rtM, rtS)
 
 		missionInst := LoadedMission{
 			LaunchDay:   int32(launchDateTimeObject.Day()),

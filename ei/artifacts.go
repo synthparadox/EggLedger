@@ -1148,6 +1148,10 @@ func (a *ArtifactSpec) CasedName() string {
 	return capitalizeArtifactName(strings.ToLower(a.GameName()))
 }
 
+func (a *ArtifactSpec) CasedSmallName() string {
+	return capitalizeArtifactName((strings.ToLower(strings.ReplaceAll(a.Name.String(), "_", " "))))
+}
+
 func capitalizeArtifactName(n string) string {
 	n = strings.ToUpper(n[:1]) + n[1:]
 	// Captalize proper nouns.
