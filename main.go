@@ -980,8 +980,8 @@ func main() {
 			MissiondId:   *completeMission.Info.Identifier,
 			Ship:         completeMission.Info.Ship,
 			DurationType: completeMission.Info.DurationType,
-			Level:        int32(*completeMission.Info.Level),
-			Capacity:     int32(*completeMission.Info.Capacity),
+			Level:        int32(completeMission.Info.GetLevel()),
+			Capacity:     int32(completeMission.Info.GetCapacity()),
 			Target:       properTargetName(completeMission.Info.TargetArtifact),
 		}
 

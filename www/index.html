@@ -1263,40 +1263,42 @@
             }
 
             const missionMatchesFilter = async (mission, filters) => {
+              var allFiltersPassed = true;
               for(const filter of filters){
+                var filterPassed = true;
                 if(filter.topLevel != null && filter.op != null && filter.val != null){
                   switch(filter.topLevel){
                     case 'ship': {
                       switch(filter.op){
-                        case '=': if(mission.ship != filter.val) return false; break;
-                        case '!=': if(mission.ship == filter.val) return false; break;
-                        case '>': if(mission.ship <= filter.val) return false; break;
-                        case '<': if(mission.ship >= filter.val) return false; break;
+                        case '=': if(mission.ship != filter.val) filterPassed = false; break;
+                        case '!=': if(mission.ship == filter.val) filterPassed = false; break;
+                        case '>': if(mission.ship <= filter.val) filterPassed = false; break;
+                        case '<': if(mission.ship >= filter.val) filterPassed = false; break;
                       }
                       break;
                     }
                     case 'duration': {
                       switch(filter.op){
-                        case '=': if(mission.durationType != filter.val) return false; break;
-                        case '!=': if(mission.durationType == filter.val) return false; break;
-                        case '>': if(mission.durationType <= filter.val) return false; break;
-                        case '<': if(mission.durationType >= filter.val) return false; break;
+                        case '=': if(mission.durationType != filter.val) filterPassed = false; break;
+                        case '!=': if(mission.durationType == filter.val) filterPassed = false; break;
+                        case '>': if(mission.durationType <= filter.val) filterPassed = false; break;
+                        case '<': if(mission.durationType >= filter.val) filterPassed = false; break;
                       }
                       break;
                     }
                     case 'level': {
                       switch(filter.op){
-                        case '=': if(mission.level != filter.val) return false; break;
-                        case '!=': if(mission.level == filter.val) return false; break;
-                        case '>': if(mission.level <= filter.val) return false; break;
-                        case '<': if(mission.level >= filter.val) return false; break;
+                        case '=': if(mission.level != filter.val) filterPassed = false; break;
+                        case '!=': if(mission.level == filter.val) filterPassed = false; break;
+                        case '>': if(mission.level <= filter.val) filterPassed = false; break;
+                        case '<': if(mission.level >= filter.val) filterPassed = false; break;
                       }
                       break;
                     }
                     case 'target': {
                       switch(filter.op){
-                        case '=': if(mission.targetInt != filter.val) return false; break;
-                        case '!=': if(mission.targetInt == filter.val) return false; break;
+                        case '=': if(mission.targetInt != filter.val) filterPassed = false; break;
+                        case '!=': if(mission.targetInt == filter.val) filterPassed = false; break;
                       }
                       break;
                     }
@@ -1308,35 +1310,36 @@
                       const filterLevel = filter.val.split("_")[1]; const levelBypass = (filterLevel == '%');
                       const filterName = filter.val.split("_")[0]; const nameBypass = (filterName == '%');
                       const loadValue = await window.getShipDrops(loadedEid.value, mission.missionId);
-                      if(loadValue == "") return false;
+                      if(loadValue == "") filterPassed = false;
                       const allDrops = JSON.parse(loadValue);
                       switch(filter.op){
                         case 'c':{ //Contains
-                          if(!qualityBypass && maxQuality < filterQuality) return false;
-                          if(!qualityBypass && durConfig.minQuality > filterQuality) return false;
+                          var foundDrop = false;
+                          if(!qualityBypass && maxQuality < filterQuality || !qualityBypass && durConfig.minQuality > filterQuality) filterPassed = false;
                           for(const drop of allDrops){
                             if(!nameBypass && parseInt(filterName) != drop.id ) continue;
                             if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
                             if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
-                            return true;
+                            foundDrop = true;
                           }
-                          return false;
+                          if(!foundDrop) filterPassed = false;
+                          break;
                         }
                         case 'dnc': { //Does not contain
                           for(const drop of allDrops){
                             if(!nameBypass && parseInt(filterName) != drop.id ) continue;
                             if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
                             if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
-                            return false;
+                            filterPassed = false;
                           }
-                          return true;
                         }
                       }
                     }
                   }
+                  if(!filterPassed) allFiltersPassed = false;
                 }
               }
-              return true;
+              return allFiltersPassed;
             }
 
             const maxQuality = Vue.ref("");
@@ -1470,7 +1473,9 @@
               var newHtml = durToSpan(shipInfo.durationType, shipToName(shipInfo.ship)) + '<br />';
               
               //Add x number of gold stars
-              newHtml += '<span class="text-star text-goldenstar">' + "★".repeat(shipInfo.level) + '</span><br />';
+              if(shipInfo.level && shipInfo.level >= 0){
+                newHtml += '<span class="text-star text-goldenstar">' + "★".repeat(shipInfo.level) + '</span><br />';
+              }
 
               const launchDateTime = new Date(shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay, shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]);
               const returnDateTime = new Date(shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay, shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]);
@@ -1512,7 +1517,6 @@
               }
               
               const commonRepDivClasses = "text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1";
-              const commonSecondProps = 'target="_blank" class="tooltip-custom relative block h-full w-full rounded-full';
               if(artifactCount > 0) {
                 newHtml += '<div class="' + commonRepDivClasses + ' bg-blue-900">Artifacts (' + artifactCount + ')</div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
                 const groupedSpecArtifacts = groupedSpecType(artifacts);
@@ -1531,7 +1535,7 @@
                   })(artifact.rarity);
                   const afExplorerName = artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1);
                   const hoverSpan = generateHoverText(artifact, parseInt(artifact.level) + 1, artifact.effectString);
-                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
+                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
                   if(artifact.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(artifact.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + artifact.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
                 }
@@ -1546,7 +1550,7 @@
                   const stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
                   const afExplorerName = stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1);
                   const hoverSpan = generateHoverText(stone, parseInt(stone.level) + 2, stone.effectString);
-                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
+                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
                   if(stone.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stone.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stone.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
                 }
@@ -1562,7 +1566,7 @@
                   const ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
                   const afExplorerName = ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1);
                   const hoverSpan = generateHoverText(ingredient, parseInt(ingredient.level) + 1, "");
-                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
+                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
                   if(ingredient.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(ingredient.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
                 }
@@ -1577,7 +1581,7 @@
                   const stoneFragmentImagePath = "images/artifacts/" + stoneFragment.name.replace('_FRAGMENT', '') + "/" + stoneFragment.name.replace('_FRAGMENT', '') + "_" + (parseInt(stoneFragment.level) + 1) + ".png";
                   const afExplorerName = stoneFragment.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(stoneFragment.level) + 1) 
                   const hoverSpan = generateHoverText(stoneFragment, parseInt(stoneFragment.level) + 1, "");
-                  newHtml += '<a v-external-link data-v-tippy="" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" ' + commonSecondProps + ' bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
+                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
                   if(stoneFragment.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stoneFragment.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stoneFragment.count + '</div>'
                   newHtml += hoverSpan + '</a></div>';
                 }
@@ -1585,10 +1589,19 @@
               }
 
               //Shamelessly stolen straight from Rockets Tracker :^)
-              newHtml += '<div class="mt-2 text-xs text-gray-300 text-center"> Hover mouse over an item to show details.<br> Click to open the relevant <a href="https://wasmegg-carpet.netlify.app/artifact-explorer/" target="_blank" class="underline">artifact explorer</a> page.</div>'
+              newHtml += '<div class="mt-2 text-xs text-gray-300 text-center"> Hover mouse over an item to show details.<br> Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="underline">artifact explorer</a> page.</div>'
 
               document.getElementById('missionViewContentDiv').innerHTML = newHtml;
               document.querySelector('.overlay').style.display = 'flex';
+
+              // Manually trigger the external-link directive on the dynamically created element
+              const dynamicElements = document.querySelectorAll('#missionViewContentDiv a');
+              for(const element of dynamicElements){
+                element.addEventListener('click', event => {
+                  event.preventDefault();
+                  window.openURL(element.href);
+                });
+              }
             };
 
             return {
