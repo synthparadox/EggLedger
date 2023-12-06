@@ -151,3 +151,7 @@
   border-radius: 5px; /* Rounded corners for the bubble */
   background-color: rgba(33, 37, 41, 0.95);
 }
+
+::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

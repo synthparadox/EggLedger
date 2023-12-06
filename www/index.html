@@ -63,14 +63,14 @@
         >
           <div>
             <form
+              id="ledgerForm"
               name="ledgerForm"
               class="mt-1 flex rounded-md shadow-sm"
               v-on:submit="event => {
               event.preventDefault();
               closePlayerIdDropdown();
               fetchPlayerData();
-            }"
-            >
+            }">
               <div ref="playerIdSelectRef" class="relative flex-grow focus-within:z-10">
                 <!-- Overlay to tag the input with the corresponding nickname (if the playerId in the input is known). -->
                 <div
@@ -382,10 +382,8 @@
           </div>
         </div>
 
-        <div
-          v-show="activeTab === UITab.ViewData"
-          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-auto shadow-sm block"
-        >
+        <div class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-auto shadow-sm block"
+          v-show="activeTab === UITab.ViewData">
           <div id="missionViewDiv" ref="missionViewDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
             <div id="innerMissionViewDiv" style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
               <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeOverlay()">
@@ -399,35 +397,26 @@
             </div>
           </div>
           <div ref="selectViewAccountForm" v-if="doesExportExist">
-            <form
-              name="viewAccountForm"
-              class="mt-1 flex rounded-md shadow-sm"
+            <form id="viewAccountForm" name="viewAccountForm" class="mt-1 flex rounded-md shadow-sm"
               v-on:submit="event => {
-              event.preventDefault();
-              viewEidGo();
-              topLevelFilterOptions.value = [null];
-              filterOperators.value = [null];
-              filterValues.value = [null];
-              if(window.updateFilterConditionsCount != null) window.updateFilterConditionsCount();
-            }"
-            >
+                event.preventDefault();
+                viewEidGo();
+                topLevelFilterOptions.value = [null];
+                filterOperators.value = [null];
+                filterValues.value = [null];
+                updateFilterConditionsCount();
+              }">
               <div class="relative flex-grow focus-within:z-10">
                 <label for="view-file-sel" class="sr-only">Choose an account</label>
-                <select id="view-file-sel" ref="view-file-sel" 
-                  class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none"
-                  v-model="selectedAccount">
+                <select class="focus:ring-blue-500 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none"
+                  id="view-file-sel" ref="view-file-sel" v-model="selectedAccount">
                   <option v-bind:key="account" v-bind:value="null" >Choose an account</option>
                   <option v-for="account in readableExistingExports" v-bind:key="account" v-bind:value="account.id">
                     {{ account.nickname }}  ({{ account.missionCount }} missions)
                 </select>
               </div>
-              <button
-                v-if="idle"
-                ref="viewAccountSubmitRef"
-                type="submit"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                v-bind:disabled="(selectedAccount === null || eidBeingLoaded)"
-              >
+              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedAccount === null || eidBeingLoaded)">
                 View
               </button>
             </form>
@@ -441,54 +430,64 @@
             </div>
             <div ref="filterRef">
               <span class="font-bold text-gray-400">Filter:</span> <button id="toggleFilterButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" onclick="toggleFilter()">Hide</button>
-              <form class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
-              name="filterForm"
-              v-if="!hideFilter"
+              <form id="filterForm" name="filterForm" v-if="!hideFilter"
+              class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
               v-on:submit="event => {
                 event.preventDefault();
                 applyFilter();
-              }"
-              >
+              }">
                 <div class="relative flex-grow" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
-
                   <!-- Separator -->
                   <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
 
                   <div class="relative flex flex-row items-center flex-grow focus-within:z-10">
                     <!-- Top level filter options -->
-                    <select :id="'top-level-filter-' + index" :ref="'top-level-filter-' + index" 
-                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                      v-model="topLevelFilterOptions[index]"
-                      onchange="if(this.oldValue == null) { if(updateFilterConditionsCount != null) { updateFilterConditionsCount(); } this.oldValue = this.value;} else { updateFilterNoReCount(); } updateValueStyling(this);"
-                      v-bind:disabled="topLevelFilterOptions[index + 1] != null">
+                    <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount(); } updateValueStyling(this);"
+                      v-model="topLevelFilterOptions[index]">
                       <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                         {{ validOption.text }}
                     </select>
+
                     <!-- Operator options -->
-                    <select :id="'op-filter-' + index" :ref="'op-filter-' + index" 
-                      v-if="topLevelFilterOptions[index] != null"
-                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                      v-model="filterOperators[index]"
-                      onchange="if(this.oldValue == null) { if(updateFilterConditionsCount != null) { updateFilterConditionsCount(); } this.oldValue = this.value;} else { updateFilterNoReCount(); } updateValueStyling(this);"
-                      v-bind:disabled="topLevelFilterOptions[index + 1] != null">
+                    <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount(); } updateValueStyling(this);"
+                      v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]">
                       <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                         {{ validOperator.text }}
                     </select>
+
                     <!-- Value options -->
-                    <select :id="'filter-value-' + index" :ref ="'filter-value-' + index"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null"
-                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                      v-model="filterValues[index]"
-                      onchange="if(this.oldValue == null) { if(updateFilterConditionsCount != null) { updateFilterConditionsCount(); } this.oldValue = this.value;} else { updateFilterNoReCount();} updateValueStyling(this);"
-                      v-bind:disabled="topLevelFilterOptions[index + 1] != null">
+                    <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount();} updateValueStyling(this);"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] != 'launchDT' && topLevelFilterOptions[index] != 'returnDT'"
+                      v-model="filterValues[index]">
                       <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                         {{ validValue.text }}
                     </select>
+                    <!-- Launch/Return Date Selectors - 
+                      Min: 20 January 2021  
+                      Max: Today + 5 days -->
+                    <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
+                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
+                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount();} updateValueStyling(this);"
+                      v-bind:disabled="topLevelFilterOptions[index + 1] != null"
+                    >
+
+                    <!-- Todo: generate a "filterState" function to return the current state of the function as an int instead of
+                      complex if statements in the v-ifs -->
+                    <button style="margin-right: 1rem;" type="button" v-on:click="addOr(index)"
+                      class="flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && filterValues[index] != null"
+                      v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
+                      OR
+                    </button>
                     <!-- Clear button-->
                     <button 
                       v-if="topLevelFilterOptions[index] != null"
                       style="margin-right: 1rem;"
-                      class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border rounded-md bg-transparent mt-05rem"
+                      class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem"
                       title="Remove filter condition"
                       v-on:click="removeAndShift(index)">
                       ×
@@ -500,6 +499,61 @@
                       (!)
                       <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
                     </span>
+                  </div>
+                  <div class="ml-2rem relative flex flex-row items-center flex-grow focus-within:z-10" 
+                    v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
+                    v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
+                      <!-- Separator -->
+                      <div class="text-gray-400 mt-05rem mr-05rem">-- OR --</div>
+
+                      <!-- Top level filter options -->
+                      <select v-model="orFilterTopLevelOptions[index][orIndex]"
+                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        onchange="updateFilterNoReCount();">
+                        <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
+                          {{ validOption.text }}
+                      </select>
+                      <!-- Operator options -->
+                      <select
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
+                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        onchange="updateFilterNoReCount();">
+                        <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                          {{ validOperator.text }}
+                      </select>
+
+                      <!-- Value options -->
+                      <select v-model="orFilterValues[index][orIndex]"
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] != 'launchDT' && orFilterTopLevelOptions[index][orIndex] != 'returnDT'"
+                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        onchange="updateFilterNoReCount();">
+                        <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                          {{ validValue.text }}
+                      </select>
+                      <!-- Launch/Return Date Selectors - 
+                        Min: 20 January 2021  
+                        Max: Today + 5 days -->
+                      <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
+                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
+                        onchange="updateFilterNoReCount();"
+                      >
+                      <!-- Clear button-->
+                      <button 
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null"
+                        style="margin-right: 1rem;"
+                        class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem"
+                        title="Remove filter condition"
+                        v-on:click="removeOrAndShift(index, orIndex)">
+                        ×
+                      </button>
+                      <!-- Show a warning div if the filter is incomplete -->
+                      <span
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && (orFilterOperators[index][orIndex] == null || orFilterValues[index][orIndex] == null)"
+                        class="tooltip-custom items-center justify-center text-red-700 text-sml border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
+                        (!)
+                        <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
+                      </span>
                   </div>
                 </div>
 
@@ -785,26 +839,13 @@
 
         function getTopLevelFilterOptions(){
           return [
-            {
-              text: 'Ship',
-              value: 'ship'
-            },
-            {
-              text: 'Duration',
-              value: 'duration'
-            },
-            {
-              text: 'Level',
-              value: 'level'
-            },
-            {
-              text: 'Target',
-              value: 'target'
-            },
-            {
-              text: 'Drops/Loot',
-              value: 'drops'
-            }
+            { text: 'Ship', value: 'ship' },
+            { text: 'Duration', value: 'duration' },
+            { text: 'Level', value: 'level' },
+            { text: 'Target', value: 'target' },
+            { text: 'Drops/Loot', value: 'drops' },
+            { text: 'Launch Date', value: 'launchDT' },
+            { text: 'Return Date', value: 'returnDT' }
           ]
         }
 
@@ -813,43 +854,26 @@
             case 'ship':
             case 'duration':
             case 'level': return [
-              {
-                text: 'is',
-                value: '='
-              },
-              {
-                text: 'is not',
-                value: '!='
-              },
-              {
-                text: 'greater than',
-                value: '>'
-              },
-              {
-                text: 'less than',
-                value: '<'
-              }
+              { text: 'is', value: '=' },
+              { text: 'is not', value: '!=' },
+              { text: 'greater than', value: '>' },
+              { text: 'less than', value: '<' }
             ];
             case 'target': return [
-              {
-                text: 'is',
-                value: '='
-              },
-              {
-                text: 'is not',
-                value: '!='
-              }
+              { text: 'is', value: '=' },
+              { text: 'is not', value: '!=' }
             ];
             case 'drops': return [
-              {
-                text: 'contains',
-                value: 'c'
-              },
-              {
-                text: 'does not contain',
-                value: 'dnc'
-              }
+              { text: 'contains', value: 'c' },
+              { text: 'does not contain', value: 'dnc' }
             ];
+            case 'launchDT':
+            case 'returnDT':
+              return [
+                { text: 'on', value: 'on' },
+                { text: 'before', value: 'before' },
+                { text: 'after', value: 'after' }
+              ]
           }
         }
 
@@ -1180,40 +1204,110 @@
               eidBeingLoaded.value = false;
             };
 
+            //==============================================
+            // Filter stuff :^)
+            //==============================================
+            const filterApplyTime = Vue.ref(0);
+
             const filterConditionsCount = Vue.ref(1);
-            function generateFilterConditionsArr() {
-              return new Array(filterConditionsCount.value);
-            }
             const topLevelFilterOptions = Vue.ref([]);
-            Vue.watch(topLevelFilterOptions, () => {
-              window.topLevelFilterOptions = topLevelFilterOptions.value;
-            }, {deep: true})
             const filterOperators = Vue.ref([]);
             const filterValues = Vue.ref([]);
+
+            const orFilterConditionsCount = Vue.ref([]);
+            const orFilterTopLevelOptions = Vue.ref([[]]);
+            const orFilterOperators = Vue.ref([[]]);
+            const orFilterValues = Vue.ref([[]]);
+
+            const dataFilter = Vue.ref([]);
+            const orDataFilter = Vue.ref([[]]);
+            const maxQuality = Vue.ref("");
+            const durationConfigs = Vue.ref(null);
+            const artifactConfigs = Vue.ref(null);
+            const hideFilter = Vue.ref(false);
+            const filterHasChanged = Vue.ref(false);
+            const dataBeingFiltered = Vue.ref(false);
+
+            // Vue computed/watched values
+            Vue.watch(topLevelFilterOptions, () => {
+              window.topLevelFilterOptions = topLevelFilterOptions.value;
+            }, {deep: true});
+
+            Vue.watch(orFilterTopLevelOptions, () => {
+              window.orFilterTopLevelOptions = orFilterTopLevelOptions.value;
+            }, {deep: true});
+
+            Vue.onMounted(async () => {
+              artifactConfigs.value = JSON.parse(await window.getAfxConfigs());
+              window.artifactConfigs = artifactConfigs.value;
+            });
+
+            Vue.onMounted(async () => {
+              maxQuality.value = JSON.parse(await window.getMaxQuality());
+              window.maxQuality = maxQuality.value;
+              durationConfigs.value = JSON.parse(await window.getDurationConfigs());
+              window.durationConfigs = durationConfigs.value;
+            });
+
+            Vue.watch((dataFilter, orDataFilter), async () => {
+              filterHasChanged.value = true;
+            });
+
+            //==============================================
+            // Filter window functions
+            //==============================================
+            function generateFilterConditionsArr(){
+              return new Array(filterConditionsCount.value);
+            };
+
+            function generateOrFiltersConditionsArr(index){
+              return new Array(orFilterConditionsCount.value[index]);
+            };
+
+            window.manualChangeFilter = async () => {
+              filterHasChanged.value = true;
+            };
 
             window.updateFilterNoReCount = function() {
               filterHasChanged.value = true;
               const newDataFilter = [];
-              if(topLevelFilterOptions.value.length == 0 || topLevelFilterOptions.value == null) return;
-
-              for(let i = 0; i < topLevelFilterOptions.value.length; i++){
+              if(topLevelFilterOptions.value.length != 0 && topLevelFilterOptions.value != null){
+                for(let i = 0; i < topLevelFilterOptions.value.length; i++){
                 const topLevel = topLevelFilterOptions.value[i];
                 const op = filterOperators.value[i];
                 const val = filterValues.value[i];
-
                 if(topLevel == null || op == null || val == null) break;
-
                 newDataFilter.push({
                   topLevel: topLevel,
                   op: op,
                   val: val
                 });
+              } 
               }
-
               dataFilter.value = newDataFilter;
+
+              const newOrDataFilter = [];
+              for(let i = 0; i < orFilterConditionsCount.value; i++){
+                const orDataFilterArr = [];
+                if(orFilterTopLevelOptions.value[i] == null || orFilterOperators.value[i] == null || orFilterValues.value[i] == null) continue;
+                for(let j = 0; j < orFilterTopLevelOptions.value[i].length; j++){
+                  const topLevel = orFilterTopLevelOptions.value[i][j];
+                  const op = orFilterOperators.value[i][j];
+                  const val = orFilterValues.value[i][j];
+                  if(topLevel == null || op == null || val == null) break;
+                  orDataFilterArr.push({
+                    topLevel: topLevel,
+                    op: op,
+                    val: val
+                  });
+                }
+                newOrDataFilter.push(orDataFilterArr);
+              }
+              orDataFilter.value = newOrDataFilter;
             };
 
             window.updateFilterConditionsCount = function() {
+              filterHasChanged.value = true;
               const newDataFilter = [];
               if(topLevelFilterOptions.value.length == 0 || topLevelFilterOptions.value == null) return;
               var maxIndex = 0;
@@ -1245,10 +1339,27 @@
               dataFilter.value = newDataFilter;
             };
 
-            const hideFilter = Vue.ref(false);
             window.toggleFilter = function() {
               hideFilter.value = !hideFilter.value;
               document.getElementById('toggleFilterButton').innerHTML = hideFilter.value ? "Show" : "Hide";
+            };
+
+            
+            //==============================================
+            // Filter Vue functions
+            //==============================================
+            const addOr = (index) => {
+              if(orFilterConditionsCount.value == null) orFilterConditionsCount.value = [];
+              if(orFilterConditionsCount.value[index] == null) orFilterConditionsCount.value[index] = 1;
+              else orFilterConditionsCount.value[index] += 1;
+
+              if(orFilterTopLevelOptions.value[index] == null) orFilterTopLevelOptions.value[index] = [];
+              if(orFilterOperators.value[index] == null) orFilterOperators.value[index] = [];
+              if(orFilterValues.value[index] == null) orFilterValues.value[index] = [];
+
+              orFilterTopLevelOptions.value[index].push(null);
+              orFilterOperators.value[index].push(null);
+              orFilterValues.value[index].push(null);
             };
 
             const removeAndShift = (index) => {
@@ -1257,120 +1368,167 @@
                 topLevelFilterOptions.value[i] = topLevelFilterOptions.value[i + 1];
                 filterOperators.value[i] = filterOperators.value[i + 1];
                 filterValues.value[i] = filterValues.value[i + 1];
+              
+                orFilterConditionsCount.value[i] = orFilterConditionsCount.value[i + 1];
+                orFilterTopLevelOptions.value[i] = orFilterTopLevelOptions.value[i + 1];
+                orFilterOperators.value[i] = orFilterOperators.value[i + 1];
+                orFilterValues.value[i] = orFilterValues.value[i + 1];
               }
               window.updateFilterConditionsCount();
               window.updateFilterNoReCount();
+              filterHasChanged.value = true;
             }
 
-            const missionMatchesFilter = async (mission, filters) => {
-              var allFiltersPassed = true;
-              for(const filter of filters){
-                var filterPassed = true;
-                if(filter.topLevel != null && filter.op != null && filter.val != null){
-                  switch(filter.topLevel){
-                    case 'ship': {
-                      switch(filter.op){
-                        case '=': if(mission.ship != filter.val) filterPassed = false; break;
-                        case '!=': if(mission.ship == filter.val) filterPassed = false; break;
-                        case '>': if(mission.ship <= filter.val) filterPassed = false; break;
-                        case '<': if(mission.ship >= filter.val) filterPassed = false; break;
-                      }
-                      break;
+            const removeOrAndShift = (index, orIndex) => {
+              //Shift all elements after the one being removed down one
+              for(let i = orIndex; i < orFilterTopLevelOptions.value[index].length; i++){
+                orFilterTopLevelOptions.value[index][i] = orFilterTopLevelOptions.value[index][i + 1];
+                orFilterOperators.value[index][i] = orFilterOperators.value[index][i + 1];
+                orFilterValues.value[index][i] = orFilterValues.value[index][i + 1];
+              }
+              orFilterConditionsCount.value[index] -= 1;
+              if(orFilterConditionsCount.value[index] == 0) orFilterConditionsCount.value[index] = null;
+              window.updateFilterNoReCount();
+              filterHasChanged.value = true;
+            }
+
+            const testMissionAgainstFilter = async(mission, filter) => {
+              var filterPassed = true;
+              if(filter.topLevel != null && filter.op != null && filter.val != null){
+                switch(filter.topLevel){
+                  case 'ship': {
+                    switch(filter.op){
+                      case '=': if(mission.ship != filter.val) filterPassed = false; break;
+                      case '!=': if(mission.ship == filter.val) filterPassed = false; break;
+                      case '>': if(mission.ship <= filter.val) filterPassed = false; break;
+                      case '<': if(mission.ship >= filter.val) filterPassed = false; break;
                     }
-                    case 'duration': {
-                      switch(filter.op){
-                        case '=': if(mission.durationType != filter.val) filterPassed = false; break;
-                        case '!=': if(mission.durationType == filter.val) filterPassed = false; break;
-                        case '>': if(mission.durationType <= filter.val) filterPassed = false; break;
-                        case '<': if(mission.durationType >= filter.val) filterPassed = false; break;
-                      }
-                      break;
+                    break;
+                  }
+                  case 'duration': {
+                    switch(filter.op){
+                      case '=': if(mission.durationType != filter.val) filterPassed = false; break;
+                      case '!=': if(mission.durationType == filter.val) filterPassed = false; break;
+                      case '>': if(mission.durationType <= filter.val) filterPassed = false; break;
+                      case '<': if(mission.durationType >= filter.val) filterPassed = false; break;
                     }
-                    case 'level': {
-                      switch(filter.op){
-                        case '=': if(mission.level != filter.val) filterPassed = false; break;
-                        case '!=': if(mission.level == filter.val) filterPassed = false; break;
-                        case '>': if(mission.level <= filter.val) filterPassed = false; break;
-                        case '<': if(mission.level >= filter.val) filterPassed = false; break;
-                      }
-                      break;
+                    break;
+                  }
+                  case 'level': {
+                    switch(filter.op){
+                      case '=': if(mission.level != filter.val) filterPassed = false; break;
+                      case '!=': if(mission.level == filter.val) filterPassed = false; break;
+                      case '>': if(mission.level <= filter.val) filterPassed = false; break;
+                      case '<': if(mission.level >= filter.val) filterPassed = false; break;
                     }
-                    case 'target': {
-                      switch(filter.op){
-                        case '=': if(mission.targetInt != filter.val) filterPassed = false; break;
-                        case '!=': if(mission.targetInt == filter.val) filterPassed = false; break;
-                      }
-                      break;
+                    break;
+                  }
+                  case 'target': {
+                    switch(filter.op){
+                      case '=': if(mission.targetInt != filter.val) filterPassed = false; break;
+                      case '!=': if(mission.targetInt == filter.val) filterPassed = false; break;
                     }
-                    case 'drops': {
-                      const durConfig = durationConfigs.value[mission.ship].durations[mission.durationType];
-                      const maxQuality = durConfig.maxQuality + (durConfig.levelQualityBump * mission.level);
-                      const filterQuality = filter.val.split("_")[3]; const qualityBypass = (filterQuality == '%');
-                      const filterRarity = filter.val.split("_")[2]; const rarityBypass = (filterRarity == '%');
-                      const filterLevel = filter.val.split("_")[1]; const levelBypass = (filterLevel == '%');
-                      const filterName = filter.val.split("_")[0]; const nameBypass = (filterName == '%');
-                      const loadValue = await window.getShipDrops(loadedEid.value, mission.missionId);
-                      if(loadValue == "") filterPassed = false;
-                      const allDrops = JSON.parse(loadValue);
-                      switch(filter.op){
-                        case 'c':{ //Contains
-                          var foundDrop = false;
-                          if(!qualityBypass && maxQuality < filterQuality || !qualityBypass && durConfig.minQuality > filterQuality) filterPassed = false;
-                          for(const drop of allDrops){
-                            if(!nameBypass && parseInt(filterName) != drop.id ) continue;
-                            if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
-                            if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
-                            foundDrop = true;
-                          }
-                          if(!foundDrop) filterPassed = false;
-                          break;
+                    break;
+                  }
+                  case 'launchDT': {
+                    const launchDay = mission.launchDay.toString().padStart(2, '0');
+                    const launchMonth = mission.launchMonth.toString().padStart(2, '0');
+                    const launchYear = mission.launchYear.toString().padStart(4, '0');
+                    const launchDT = new Date(launchYear + "-" + launchMonth + "-" + launchDay);
+                    const filterDT = new Date(filter.val);
+                    switch(filter.op){
+                      case 'on': if(launchDT.toDateString() != filterDT.toDateString()) filterPassed = false; break;
+                      case 'before': if(launchDT >= filterDT) filterPassed = false; break;
+                      case 'after': if(launchDT <= filterDT) filterPassed = false; break;
+                    }
+                    break;
+                  }
+                  case 'returnDT': {
+                    const returnDay = mission.returnDay.toString().padStart(2, '0');
+                    const returnMonth = mission.returnMonth.toString().padStart(2, '0');
+                    const returnYear = mission.returnYear.toString().padStart(4, '0');
+                    const returnDT = new Date(returnYear + "-" + returnMonth + "-" + returnDay);
+                    const filterDT = new Date(filter.val);
+                    switch(filter.op){
+                      case 'on': if(returnDT.toDateString() != filterDT.toDateString()) filterPassed = false; break;
+                      case 'before': if(returnDT >= filterDT) filterPassed = false; break;
+                      case 'after': if(returnDT <= filterDT) filterPassed = false; break;
+                    }
+                    break;
+                  }
+                  case 'drops': {
+                    const durConfig = durationConfigs.value[mission.ship].durations[mission.durationType];
+                    const maxQuality = durConfig.maxQuality + (durConfig.levelQualityBump * mission.level);
+                    const filterQuality = filter.val.split("_")[3]; const qualityBypass = (filterQuality == '%');
+                    const filterRarity = filter.val.split("_")[2]; const rarityBypass = (filterRarity == '%');
+                    const filterLevel = filter.val.split("_")[1]; const levelBypass = (filterLevel == '%');
+                    const filterName = filter.val.split("_")[0]; const nameBypass = (filterName == '%');
+                    const loadValue = await window.getShipDrops(loadedEid.value, mission.missionId);
+                    if(loadValue == "") filterPassed = false;
+                    const allDrops = JSON.parse(loadValue);
+                    switch(filter.op){
+                      case 'c':{ //Contains
+                        var foundDrop = false;
+                        if(!qualityBypass && maxQuality < filterQuality || !qualityBypass && durConfig.minQuality > filterQuality) filterPassed = false;
+                        for(const drop of allDrops){
+                          if(!nameBypass && parseInt(filterName) != drop.id ) continue;
+                          if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
+                          if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
+                          foundDrop = true;
                         }
-                        case 'dnc': { //Does not contain
-                          for(const drop of allDrops){
-                            if(!nameBypass && parseInt(filterName) != drop.id ) continue;
-                            if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
-                            if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
-                            filterPassed = false;
-                          }
+                        if(!foundDrop) filterPassed = false;
+                        break;
+                      }
+                      case 'dnc': { //Does not contain
+                        for(const drop of allDrops){
+                          if(!nameBypass && parseInt(filterName) != drop.id ) continue;
+                          if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
+                          if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
+                          filterPassed = false;
                         }
                       }
                     }
                   }
-                  if(!filterPassed) allFiltersPassed = false;
                 }
+                return filterPassed;
+              } else return false;
+            }
+
+            const missionMatchesFilter = async (mission, filters, orFilters) => {
+              var allFiltersPassed = true;
+              var index = 0;
+              for(const filter of filters){
+                var filterPassed = true;
+                if(filter.topLevel != null && filter.op != null && filter.val != null){
+                  filterPassed = await testMissionAgainstFilter(mission, filter);
+                  if(!filterPassed) {
+                    if(orFilters[index] != null){
+                      for(const orFilter of orFilters[index]){
+                        if(orFilter.topLevel != null && orFilter.op != null && orFilter.val != null){
+                          filterPassed = await testMissionAgainstFilter(mission, orFilter);
+                          if(filterPassed) break;
+                        }
+                      }
+                    }
+                    allFiltersPassed = filterPassed;
+                  }
+                }
+                index++;
               }
               return allFiltersPassed;
             }
 
-            const maxQuality = Vue.ref("");
-            const durationConfigs = Vue.ref(null);
-            Vue.onMounted(async () => {
-              maxQuality.value = JSON.parse(await window.getMaxQuality());
-              window.maxQuality = maxQuality.value;
-              durationConfigs.value = JSON.parse(await window.getDurationConfigs());
-              window.durationConfigs = durationConfigs.value;
-            });
-
-            const artifactConfigs = Vue.ref(null);
-            Vue.onMounted(async () => {
-              artifactConfigs.value = JSON.parse(await window.getAfxConfigs());
-              window.artifactConfigs = artifactConfigs.value;
-            });
-
-            const filterApplyTime = Vue.ref(0);
-            const dataFilter = Vue.ref([]);
-            const filterHasChanged = Vue.ref(false);
-            const dataBeingFiltered = Vue.ref(false);
             const applyFilter = async () => {
-
               //Start a timer to see how long it takes to apply the filter
               const startTime = performance.now();
+
+              window.console.log("orDataFilter.value: " + JSON.stringify(orDataFilter.value));
 
               dataBeingFiltered.value = true;
               filterHasChanged.value = false;
               const newFilteredMissions = [];
               for(const loadedMission of allLoadedMissions.value){
-                if(await missionMatchesFilter(loadedMission, dataFilter.value)){
+                if(await missionMatchesFilter(loadedMission, dataFilter.value, orDataFilter.value)){
                   newFilteredMissions.push(loadedMission);
                 }
               }
@@ -1387,12 +1545,6 @@
 
               filteredMissions.value = newFilteredMissions;
               dataBeingFiltered.value = false;
-            };
-            Vue.watch(dataFilter, async () => {
-              filterHasChanged.value = true;
-            });
-            window.manualChangeFilter = async () => {
-              filterHasChanged.value = true;
             };
 
             const targetImage = (target) => {
@@ -1674,14 +1826,22 @@
               getTopLevelFilterOptions,
               getFilterOpOptions,
               getFilterValueOptions,
-              generateFilterConditionsArr,
               topLevelFilterOptions,
               filterOperators,
               filterValues,
               hideFilter,
               removeAndShift,
+              removeOrAndShift,
+              addOr,
               filterApplyTime,
+              orFilterConditionsCount,
+              orFilterTopLevelOptions,
+              orFilterOperators,
+              orFilterValues,
+              generateFilterConditionsArr,
+              generateOrFiltersConditionsArr,
 
+              updateFilterConditionsCount: window.updateFilterConditionsCount,
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,
               openURL: window.openURL,

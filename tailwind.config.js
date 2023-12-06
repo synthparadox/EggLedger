@@ -14,6 +14,7 @@ module.exports = {
         tutorial: "rgb(115, 128, 140)",
         weewoosiren: "rgb(234 88 12)",
         goldenstar: "rgb(255 215 0)",
+        'yellow-700': "rgb(251 191 36)", 
       },
       height: {
         stretch: 'stretch',
@@ -59,6 +60,7 @@ module.exports = {
       borderColor: {
         "dark_tab": "#111211",
         'red-700': "rgb(185 28 28)",
+        'yellow-700': "rgb(251 191 36)",
         'rare': "rgb(69, 159, 246)",
         'epic': "rgb(139, 93, 246)",
         'legendary': "rgb(246, 168, 35)",
