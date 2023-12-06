@@ -13,3 +13,25 @@ body {
 hr {
   @apply border-gray-200;
 }
+
+.filter-button {
+  @apply bg-darkerer;
+
+    &:focus{
+      @apply outline-none ring-1 ring-blue-500 border-blue-500;
+    }
+
+    &:hover {
+      @apply bg-dark_tab_hover;
+    }
+  
+    /* Disabled state */
+    &:disabled {
+      @apply opacity-50;
+  
+      /* Disabled hover state */
+      &:hover {
+        @apply bg-darker_tab_hover cursor-not-allowed;
+      }
+    }
+}

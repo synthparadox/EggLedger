@@ -209,7 +209,7 @@
             <hr />
             <div class="space-y-1">
               <h2 class="font-bold">Is mk2 back?</h2>
-              <span class="mt-1">No. This tool is now being developed independently of mk2 - the community has taken over his orphaned tools since he went AWOL in 2022. <i>For EggLedger</i>, <i>specfically</i>, I  (<a
+              <span class="mt-1">No. This tool is now being developed independently of mk2 - the community has taken over his orphaned tools since he went AWOL in 2022. <i>For EggLedger</i>, <i>specifically</i>, I  (<a
                 v-external-link
                 href="https://github.com/DavidArthurCole"
                 target="_blank"
@@ -415,7 +415,7 @@
                     {{ account.nickname }}  ({{ account.missionCount }} missions)
                 </select>
               </div>
-              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
               v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedAccount === null || eidBeingLoaded)">
                 View
               </button>
@@ -478,7 +478,8 @@
                     <!-- Todo: generate a "filterState" function to return the current state of the function as an int instead of
                       complex if statements in the v-ifs -->
                     <button style="margin-right: 1rem;" type="button" v-on:click="addOr(index)"
-                      class="flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem"
+                      title="Add alternate filter condition"
+                      class="flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
                       v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && filterValues[index] != null"
                       v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
                       OR
@@ -487,7 +488,7 @@
                     <button 
                       v-if="topLevelFilterOptions[index] != null"
                       style="margin-right: 1rem;"
-                      class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem"
+                      class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
                       title="Remove filter condition"
                       v-on:click="removeAndShift(index)">
                       ×
@@ -504,7 +505,7 @@
                     v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
                     v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
                       <!-- Separator -->
-                      <div class="text-gray-400 mt-05rem mr-05rem">-- OR --</div>
+                      <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
 
                       <!-- Top level filter options -->
                       <select v-model="orFilterTopLevelOptions[index][orIndex]"
@@ -542,7 +543,7 @@
                       <button 
                         v-if="orFilterTopLevelOptions[index][orIndex] != null"
                         style="margin-right: 1rem;"
-                        class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem"
+                        class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
                         title="Remove filter condition"
                         v-on:click="removeOrAndShift(index, orIndex)">
                         ×
@@ -570,7 +571,15 @@
                   Apply Filter
                 </button>
                 <!-- Show the time that it took to apply the filter -->
-                <span v-if="filterApplyTime != ''" class="text-green-700 mt-05rem"><i>Filtered in {{ filterApplyTime }} <span class="text-gray-500">( <span class="text-green-700">{{ filteredMissions.length }} shown, {{ allLoadedMissions.length - filteredMissions.length }} filtered out </span>)</span></i></span>
+                <span v-if="filterApplyTime != ''" class="filter-button text-green-700 mt-05rem">
+                  <i>
+                    Filtered in {{ filterApplyTime }} <span class="text-gray-500">
+                      ( <span class="text-green-700">
+                        {{ filteredMissions.length }} shown, {{ allLoadedMissions.length - filteredMissions.length }} filtered out 
+                      </span>)
+                    </span>
+                  </i>
+                </span>
               </form>
             </div>
             <hr class="mt-1rem invisible">
@@ -1287,7 +1296,7 @@
               dataFilter.value = newDataFilter;
 
               const newOrDataFilter = [];
-              for(let i = 0; i < orFilterConditionsCount.value; i++){
+              for(let i = 0; i < orFilterConditionsCount.value.length; i++){
                 const orDataFilterArr = [];
                 if(orFilterTopLevelOptions.value[i] == null || orFilterOperators.value[i] == null || orFilterValues.value[i] == null) continue;
                 for(let j = 0; j < orFilterTopLevelOptions.value[i].length; j++){
@@ -1349,7 +1358,10 @@
             // Filter Vue functions
             //==============================================
             const addOr = (index) => {
-              if(orFilterConditionsCount.value == null) orFilterConditionsCount.value = [];
+              if(orFilterConditionsCount.value == null) {
+                window.console.log("orFilterConditionsCount.value is null");
+                orFilterConditionsCount.value = []
+              };
               if(orFilterConditionsCount.value[index] == null) orFilterConditionsCount.value[index] = 1;
               else orFilterConditionsCount.value[index] += 1;
 
@@ -1510,7 +1522,7 @@
                         }
                       }
                     }
-                    allFiltersPassed = filterPassed;
+                    if(!filterPassed) allFiltersPassed = false;
                   }
                 }
                 index++;
