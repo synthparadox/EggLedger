@@ -375,7 +375,7 @@
               <p>Since this application piggybacks on Chrome, there are a few known limitations:</p>
               <ul class="list-decimal list-inside">
                 <li>On macOS, clicking on the app in dock can open a new browser window.</li>
-                <li>On Windows, resolution of the task bar app icon is garbage.</li>
+                <li>On Windows, resolution of the task bar app icon is garbage.</li>duration
               </ul>
             </div>
             <hr />
@@ -391,8 +391,139 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
-              <div id="missionViewContentDiv" style="max-height: 70vh; max-width: 35vw; min-width: 30vw;" class="text-gray-300 text-center overflow-auto">
-                <!-- Content div that will be populated with mission info -->
+              <div id="missionViewContentDiv" v-if="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)" 
+                style="max-height: 70vh; max-width: 35vw; min-width: 30vw;" class="text-gray-300 text-center overflow-auto">
+                <!-- Header information about the mission -->
+                <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ shipToName(viewMissionData.shipInfo.ship) }}</span><br />
+                <span class="text-star text-goldenstar" v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0">{{ "★".repeat(viewMissionData.shipInfo.level) }}</span>
+                <br v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0" />
+                Launched: {{ viewMissionData.launchStr }} <br />
+                Returned: {{ viewMissionData.returnStr }} <br />
+                Duration: {{ viewMissionData.durationStr }} <br />
+                Capacity: {{ viewMissionData.shipInfo.capacity }} <br />
+                <div v-if="viewMissionData.shipInfo.target != ''">
+                  <div class="items-center justify-center flex">
+                    <span>Sensor Target: </span>
+                    <div style="margin-left: 0.3rem;" class="text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">
+                      {{ properCase(viewMissionData.shipInfo.target.replace("_", " ")) }}
+                    </div>
+                  </div>
+                  <br/>
+                </div>
+
+                <!-- Artifacts -->
+                <div v-if="viewMissionData.artifactCount > 0">
+                  <div class="mission-view-div bg-blue-900">
+                    Artifacts ({{ viewMissionData.artifactCount }})
+                  </div>
+                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                    <div class="mission-view-rep" v-for="(af, afindex) in viewMissionData.artifacts">
+                      <a v-external-link :class="'tooltip-custom relative block h-full w-full rounded-full ' + afBackgroundClass(af)" 
+                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(af, 1) + '/'">
+                        <img class="h-full w-full" :alt="af.gameName" :src="specPath(af, 1)"/>
+                        <div v-if="af.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(af.count)">
+                          {{ af.count }}
+                        </div>
+                        <span class="text-sm tooltiptext-custom speech-bubble">
+                          {{ af.gameName }} (T{{ parseInt(af.level) + 1 }})
+                          <span :class="afRarityClass(af)">
+                            {{ afRarityText(af) }}
+                          </span>
+                          × {{ af.count }} <br />
+                          {{ boundEffectString(af.effectString)[0] }}
+                          <span class="text-sm text-green-500">
+                            {{ boundEffectString(af.effectString)[1] }}
+                          </span>
+                          {{ boundEffectString(af.effectString)[2] }}
+                        </span>
+                      </a>
+                    </div>
+                  </div>
+                  <br />
+                </div>
+
+                <!-- Stones -->
+                <div v-if="viewMissionData.stoneCount > 0">
+                  <div class="mission-view-div bg-fuchsia-900">
+                    Eggfinity Stones ({{ viewMissionData.stoneCount }})
+                  </div>
+                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                    <div class="mission-view-rep" v-for="(st, stindex) in viewMissionData.stones">
+                      <a v-external-link class="tooltip-custom relative block h-full w-full rounded-full bg-darker" 
+                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(st, 2) + '/'">
+                        <img class="h-full w-full" :alt="st.gameName" :src="specPath(st, 2)"/>
+                        <div v-if="st.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(st.count)">
+                          {{ st.count }}
+                        </div>
+                        <span class="text-sm tooltiptext-custom speech-bubble">
+                          {{ st.gameName }} (T{{ parseInt(st.level) + 2 }})
+                          × {{ st.count }} <br />
+                          {{ boundEffectString(st.effectString)[0] }}
+                          <span class="text-sm text-green-500">
+                            {{ boundEffectString(st.effectString)[1] }}
+                          </span>
+                          {{ boundEffectString(st.effectString)[2] }}
+                        </span>
+                      </a>
+                    </div>
+                  </div>
+                  <br />
+                </div>
+
+                <!-- Ingredients -->
+                <div v-if="viewMissionData.ingredientCount > 0">
+                  <div class="mission-view-div text-gray-400 bg-darkerer">
+                    Ingredients ({{ viewMissionData.ingredientCount }})
+                  </div>
+                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                    <div class="mission-view-rep" v-for="(ing, ingindex) in viewMissionData.ingredients">
+                      <a v-external-link class="tooltip-custom relative block h-full w-full rounded-full bg-darker" 
+                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(ing, 1) + '/'">
+                        <img class="h-full w-full" :alt="ing.gameName" :src="specPath(ing, 1)"/>
+                        <div v-if="ing.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(ing.count)">
+                          {{ ing.count }}
+                        </div>
+                        <span class="text-sm tooltiptext-custom speech-bubble">
+                          {{ ing.gameName }} (T{{ parseInt(ing.level) + 1 }})
+                          × {{ ing.count }}
+                        </span>
+                      </a>
+                    </div>
+                  </div>
+                  <br />
+                </div>
+
+                <!-- Stone Fragments -->
+                <div v-if="viewMissionData.stoneFragmentsCount > 0">
+                  <div class="mission-view-div text-gray-400 bg-darkerer">
+                    Stone Fragments ({{ viewMissionData.stoneFragmentsCount }})
+                  </div>
+                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                    <div class="mission-view-rep" v-for="(sf, sfindex) in viewMissionData.stoneFragments">
+                      <a v-external-link class="tooltip-custom relative block h-full w-full rounded-full bg-darker" 
+                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
+                        <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
+                        <div v-if="sf.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(sf.count)">
+                          {{ sf.count }}
+                        </div>
+                        <span class="text-sm tooltiptext-custom speech-bubble">
+                          {{ sf.gameName }} (T{{ parseInt(sf.level) + 1 }})
+                          × {{ sf.count }} <br />
+                      </a>
+                    </div>
+                    <br />
+                  </div>
+                </div>
+
+                <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
+                <div class="mt-2 text-xs text-gray-300 text-center">
+                  Hover mouse over an item to show details.<br />
+                  Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="underline">
+                    artifact explorer
+                  </a> page.
+                </div>
+
+                <!-- End mission view-->
               </div>
             </div>
           </div>
@@ -467,16 +598,12 @@
                     </select>
                     <!-- Launch/Return Date Selectors - 
                       Min: 20 January 2021  
-                      Max: Today + 5 days -->
+                      Max: Today-->
                     <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
                       class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
                       v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
                       onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount();} updateValueStyling(this);"
-                      v-bind:disabled="topLevelFilterOptions[index + 1] != null"
-                    >
-
-                    <!-- Todo: generate a "filterState" function to return the current state of the function as an int instead of
-                      complex if statements in the v-ifs -->
+                      v-bind:disabled="topLevelFilterOptions[index + 1] != null">
                     <button style="margin-right: 1rem;" type="button" v-on:click="addOr(index)"
                       title="Add alternate filter condition"
                       class="flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
@@ -829,23 +956,6 @@
           return level <= 0 ? "" : `(` + level + `<span style="color: gold;">★</span>)`;
         }
 
-        function closeOverlay() {
-          document.querySelector('.overlay').style.display = 'none';
-          document.getElementById('missionViewContentDiv').innerHTML = "";
-        }
-
-        function properCase(string){
-          string = string.toLowerCase();
-          //Capitalize the first letter of each word, unless it is 'of' or 'the'
-          const words = string.split(" ");
-          for (let i = 0; i < words.length; i++) {
-            if(words[i] !== "of" && words[i] !== "the"){
-              words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
-            }
-          }
-          return words.join(" ");
-        }
-
         function getTopLevelFilterOptions(){
           return [
             { text: 'Ship', value: 'ship' },
@@ -1138,6 +1248,13 @@
             };
 
             // ===== Setup for 'View Mission Data' Tab =====
+            const viewMissionData = Vue.ref({});
+            Vue.onMounted(() => {
+              window.viewMissionData = viewMissionData.value;
+            });
+            Vue.watch(viewMissionData, () => {
+              window.viewMissionData = viewMissionData.value;
+            });
             const doesExportExist = Vue.ref(false);
             const existingExports = Vue.ref([]); //Empty array of strings
             const readableExistingExports = Vue.computed(() => {
@@ -1149,6 +1266,97 @@
                 };
               });
             });
+            //Filter [ x ] that have the same `name`, `level`, `specType`, and `rarity`
+            // If there are 2 artifacts with the same name, level, specType, and rarity, increment the `count` of the first one, and remove the second one
+            const groupedSpecType = (collection) => {
+              return collection.reduce((acc, obj) => {
+                const key = obj.name + "_" + obj.level + "_" + obj.specType + "_" + obj.rarity;
+                if (!acc[key]) {
+                  acc[key] = obj;
+                  acc[key].count = 1;
+                }else{
+                  acc[key].count++;
+                }
+                return acc;
+              }, {});
+            };
+            const numToDigClass = (num) => {
+              const parsedNum = parseInt(num.toString());
+              switch (true) {
+                case parsedNum <= 9: return "w-onedig";
+                case parsedNum > 9 && parsedNum <= 99: return "w-twodig";
+                case parsedNum > 99: return "w-threedig";
+                default: return "w-onedig";
+              }
+            };
+            const properCase = (string) => {
+              string = string.toLowerCase();
+              //Capitalize the first letter of each word, unless it is 'of' or 'the'
+              const words = string.split(" ");
+              for (let i = 0; i < words.length; i++) {
+                if(words[i] !== "of" && words[i] !== "the"){
+                  words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+                }
+              }
+              return words.join(" ");
+            };
+            const boundEffectString = (str) => {
+              const effRegex = /\[(.*?)\]/g;
+              const match = effRegex.exec(str);
+              if(!match) return ["?", "?", "?"];
+              //Return three strings in an array, the first is the string before the effect, the second is the effect, and the third is the string after the effect
+              return [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)];
+            };
+            const durToTextClass = (dur) => {
+              switch(dur){
+                case 0: return "text-short";
+                case 1: return "text-standard";
+                case 2: return "text-extended";
+                case 3: return "text-tutorial";
+                default: return "";
+              }
+            };
+            const afRarityClass = (drop) => {
+              if(drop.specType != 'Artifact') return "";
+              switch(drop.rarity){
+                case 1: return "text-rare";
+                case 2: return "text-epic";
+                case 3: return "text-legendary";
+                default: return "";
+              }
+            };
+            const afRarityText = (drop) => {
+              if(drop.specType != 'Artifact') return "";
+              switch(drop.rarity){
+                case 1: return "Rare";
+                case 2: return "Epic";
+                case 3: return "Legendary";
+                default: return "";
+              }
+            };
+            const afBackgroundClass = (af) => {
+              switch (af.rarity) {
+                case 0: return 'bg-darkerer';
+                case 1: return 'bg-rare';
+                case 2: return 'bg-epic';
+                case 3: return 'bg-legendary';
+                default: return 'bg-darkerer';
+              }
+            };
+            const afExplorerName = (drop, addend) => {
+              return drop.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(drop.level) + addend);
+            };
+            const closeOverlay = () => {
+              document.querySelector('.overlay').style.display = 'none';
+              viewMissionData.value = {};
+            };
+            const openOverlay = () => {
+              document.querySelector('.overlay').style.display = 'flex';
+            };
+            const specPath = (spec, addend) => {
+              const fixedName = spec.name.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
+              return "images/artifacts/" + fixedName + "/" + fixedName + "_" + (parseInt(spec.level) + addend) + ".png";
+            };
             const refreshExistingExports = async () => {
               doesExportExist.value = await window.doesExportExist();
               if(doesExportExist.value) {
@@ -1587,185 +1795,69 @@
               });
             });
 
-            function generateHoverText(drop, tier, effectString){
-              if(!drop.gameName) return "";
-              const boundEffectString = (effectString == "") ? "" : ((str) => {
-                const effRegex = /\[(.*?)\]/g;
-                const match = effRegex.exec(str);
-                if(!match) return "???";
-                return "<br />" + str.replace('[', '').replace(']', '').replace(match[1], '<span class="text-sm text-green-500">' + match[1] + '</span>')
-              })(effectString);
-              const rarityText = ((drop) => {
-                if(drop.specType != "Artifact") return "";
-                switch(drop.rarity){
-                  case 1: return ' <span class="text-rare">Rare</span>';
-                  case 2: return ' <span class="text-epic">Epic</span>';
-                  case 3: return ' <span class="text-legendary">Legendary</span>';
-                  default: return "";
-                }
-              })(drop);
-              return '<span class="text-sm tooltiptext-custom speech-bubble">' + drop.gameName + ' (T' + tier + ')' + rarityText + ' × ' + drop.count + boundEffectString + '</span>';
+            const padNumber = (num) => {
+              num = parseInt(num.toString()); //Make sure it's a number
+              return (num < 10 ? '0' : '') + num;
             }
 
-            function numToDigClass(num) {
-              const parsedNum = parseInt(num.toString());
-              switch (true) {
-                  case parsedNum <= 9: return "w-onedig";
-                  case parsedNum > 9 && parsedNum <= 99: return "w-twodig";
-                  case parsedNum > 99: return "w-threedig";
-                  default: return "w-onedig";
-              }
-            }
-            const viewSpecificMission = async (ship) => {
-
+            const viewSpecificMission = async (missionId) => {
               //Do not allow viewing a mission while data is being fetched - prevent collisions
               if(isFetching.value) return false; 
 
-              const shipInfoStr = await window.getShipInfo(loadedEid.value, ship);
+              const shipInfoStr = await window.getShipInfo(loadedEid.value, missionId);
               if(shipInfoStr == "") return;
               const shipInfo = JSON.parse(shipInfoStr);
 
-              const loadValue = await window.getShipDrops(loadedEid.value, ship);
+              const loadValue = await window.getShipDrops(loadedEid.value, missionId);
               if(loadValue == "") return;
               const allDrops = JSON.parse(loadValue);
 
-              const artifacts = allDrops.filter(drop => drop.specType == "Artifact"); const artifactCount = artifacts.length; 
-              const stones = allDrops.filter(drop => drop.specType == "Stone"); const stoneCount = stones.length;
-              const stoneFragments = allDrops.filter(drop => drop.specType == "StoneFragment"); const stoneFragmentCount = stoneFragments.length;
-              const ingredients = allDrops.filter(drop => drop.specType == "Ingredient"); const ingredientCount = ingredients.length;
-              
-              var newHtml = durToSpan(shipInfo.durationType, shipToName(shipInfo.ship)) + '<br />';
-              
-              //Add x number of gold stars
-              if(shipInfo.level && shipInfo.level >= 0){
-                newHtml += '<span class="text-star text-goldenstar">' + "★".repeat(shipInfo.level) + '</span><br />';
-              }
-
-              const launchDateTime = new Date(shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay, shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]);
-              const returnDateTime = new Date(shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay, shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]);
-
+              const artifacts = allDrops.filter(drop => drop.specType == "Artifact");
+              const stones = allDrops.filter(drop => drop.specType == "Stone");
+              const stoneFragments = allDrops.filter(drop => drop.specType == "StoneFragment");
+              const ingredients = allDrops.filter(drop => drop.specType == "Ingredient");
               //Compute the duration in days, hours, minutes
+
+              const launchDateTime = new Date(
+                shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay, 
+                shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]
+              );
+              const returnDateTime = new Date(
+                shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay, 
+                shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]
+              );
               const duration = returnDateTime - launchDateTime;
               const days = Math.floor(duration / (1000 * 60 * 60 * 24));
               const hours = Math.floor((duration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
               const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-
               const durationString = (days > 0 ? days + "d" : "") + (hours > 0 ? hours + "h": "") + minutes + "m";
+              const launchStr = shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime;
+              const returnStr = shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime;
 
-              const padNumber = (num) => {
-                num = parseInt(num.toString()); //Make sure it's a number
-                return (num < 10 ? '0' : '') + num;
-              }
+              //Find the loaded ships index in the allLoadedMissions array, to get the missions directly before and after it
+              const shipIndex = allLoadedMissions.value.findIndex(mission => mission.missionId == missionId);
+              const prevShip = shipIndex > 0 ? allLoadedMissions.value[shipIndex - 1].missionId : null;
+              const nextShip = shipIndex < allLoadedMissions.value.length - 1 ? allLoadedMissions.value[shipIndex + 1].missionId : null;
 
-              newHtml += 'Launched: ' + shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime + '<br />';
-              newHtml += 'Returned: ' + shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime + '<br />';
-              newHtml += 'Duration: ' + durationString + '<br />';
-              newHtml += 'Capacity: ' + shipInfo.capacity + '<br />';
-              if(shipInfo.target != ""){
-                newHtml += '<div class="items-center justify-center flex"> <span>Sensor Target:</span><div style="margin-left: 0.3rem;" class="text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">' + properCase(shipInfo.target.replace("_", " ")) + '</div></div><br />';
-              }
+              const newMissionViewData = {
+                shipInfo: shipInfo,
+                artifacts: groupedSpecType(artifacts),
+                stones: groupedSpecType(stones),
+                stoneFragments: groupedSpecType(stoneFragments),
+                ingredients: groupedSpecType(ingredients),
+                artifactCount: artifacts.length,
+                stoneCount: stones.length,
+                stoneFragmentCount: stoneFragments.length,
+                ingredientCount: ingredients.length,
+                launchStr: launchStr,
+                returnStr: returnStr,
+                durationStr: durationString,
+                prevShip: prevShip,
+                nextShip: nextShip
+              };
 
-              //Filter [ x ] that have the same `name`, `level`, `specType`, and `rarity`
-              // If there are 2 artifacts with the same name, level, specType, and rarity, increment the `count` of the first one, and remove the second one
-              function groupedSpecType(collection){
-                return collection.reduce((acc, obj) => {
-                  const key = obj.name + "_" + obj.level + "_" + obj.specType + "_" + obj.rarity;
-                  if (!acc[key]) {
-                    acc[key] = obj;
-                    acc[key].count = 1;
-                  }else{
-                    acc[key].count++;
-                  }
-                  return acc;
-                }, {});
-              }
-              
-              const commonRepDivClasses = "text-center text-xs rounded-full w-max px-2 py-0.5 mx-auto mt-2 mb-1";
-              if(artifactCount > 0) {
-                newHtml += '<div class="' + commonRepDivClasses + ' bg-blue-900">Artifacts (' + artifactCount + ')</div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
-                const groupedSpecArtifacts = groupedSpecType(artifacts);
-                for(const af in groupedSpecArtifacts){
-                  const artifact = groupedSpecArtifacts[af];
-                  newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  const imagePath = ("images/artifacts/" + artifact.name + "/" + artifact.name + "_" + (parseInt(artifact.level) + 1) + ".png").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
-                  const backgroundClass = ((rarity) => {
-                    switch (rarity) {
-                      case 0: return 'bg-darkerer';
-                      case 1: return 'bg-rare';
-                      case 2: return 'bg-epic';
-                      case 3: return 'bg-legendary';
-                      default: return 'bg-darkerer';
-                    }
-                  })(artifact.rarity);
-                  const afExplorerName = artifact.name.toLowerCase().replace("_", "-") + '-' + (parseInt(artifact.level) + 1);
-                  const hoverSpan = generateHoverText(artifact, parseInt(artifact.level) + 1, artifact.effectString);
-                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full ' + backgroundClass + '"><img src="' + imagePath + '" class="h-full w-full">';
-                  if(artifact.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(artifact.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + artifact.count + '</div>'
-                  newHtml += hoverSpan + '</a></div>';
-                }
-                newHtml += '</div><br />';
-              }
-              if(stoneCount > 0) {
-                newHtml += '<div class="' + commonRepDivClasses + ' bg-fuchsia-900">Eggfinity stones (' + stoneCount + ') </div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
-                const groupedSpecStones = groupedSpecType(stones);
-                for(const st in groupedSpecStones){
-                  const stone = groupedSpecStones[st];
-                  newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  const stoneImagePath = "images/artifacts/" + stone.name + "/" + stone.name + "_" + (parseInt(stone.level) + 2) + ".png";
-                  const afExplorerName = stone.name.toLowerCase().replace("_", "-") + '-' + (parseInt(stone.level) + 1);
-                  const hoverSpan = generateHoverText(stone, parseInt(stone.level) + 2, stone.effectString);
-                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full bg-darker"><img src="' + stoneImagePath + '" class="h-full w-full">';
-                  if(stone.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stone.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stone.count + '</div>'
-                  newHtml += hoverSpan + '</a></div>';
-                }
-                newHtml += '</div><br />';
-              }
-              if(ingredientCount > 0) {
-                newHtml += '<div class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Ingredients (' + ingredientCount + ') </div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
-                newHtml += ''
-                const groupedSpecIngredients = groupedSpecType(ingredients);
-                for(const ing in groupedSpecIngredients){
-                  const ingredient = groupedSpecIngredients[ing];
-                  newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  const ingredientImagePath = "images/artifacts/" + ingredient.name + "/" + ingredient.name + "_" + (parseInt(ingredient.level) + 1) + ".png";
-                  const afExplorerName = ingredient.name.toLowerCase().replace("_", "-") + '-' + (parseInt(ingredient.level) + 1);
-                  const hoverSpan = generateHoverText(ingredient, parseInt(ingredient.level) + 1, "");
-                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full bg-darker"><img src="' + ingredientImagePath + '" class="h-full w-full">';
-                  if(ingredient.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(ingredient.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + ingredient.count + '</div>'
-                  newHtml += hoverSpan + '</a></div>';
-                }
-                newHtml += '</div><br />';
-              }
-              if(stoneFragmentCount > 0) {
-                newHtml += '<div class="' + commonRepDivClasses + ' text-gray-400 bg-darkerer">Stone fragments (' + stoneFragmentCount + ') </div><div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">';
-                const groupedSpecStoneFragments = groupedSpecType(stoneFragments);
-                for(const sf in groupedSpecStoneFragments){
-                  const stoneFragment = groupedSpecStoneFragments[sf];
-                  newHtml += '<div class="border-box h-11 w-11 p-1">';
-                  const stoneFragmentImagePath = "images/artifacts/" + stoneFragment.name.replace('_FRAGMENT', '') + "/" + stoneFragment.name.replace('_FRAGMENT', '') + "_" + (parseInt(stoneFragment.level) + 1) + ".png";
-                  const afExplorerName = stoneFragment.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(stoneFragment.level) + 1) 
-                  const hoverSpan = generateHoverText(stoneFragment, parseInt(stoneFragment.level) + 1, "");
-                  newHtml += '<a v-external-link target="_blank" href="https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName + '/" class="tooltip-custom relative block h-full w-full rounded-full bg-darker"><img src="' + stoneFragmentImagePath + '" class="h-full w-full">';
-                  if(stoneFragment.count > 1) newHtml += '<div class="text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ' + numToDigClass(stoneFragment.count) + ' ring-white ring-1 rounded-full bg-darkerer text-gray-400">' + stoneFragment.count + '</div>'
-                  newHtml += hoverSpan + '</a></div>';
-                }
-                newHtml += '</div><br />';
-              }
-
-              //Shamelessly stolen straight from Rockets Tracker :^)
-              newHtml += '<div class="mt-2 text-xs text-gray-300 text-center"> Hover mouse over an item to show details.<br> Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="underline">artifact explorer</a> page.</div>'
-
-              document.getElementById('missionViewContentDiv').innerHTML = newHtml;
-              document.querySelector('.overlay').style.display = 'flex';
-
-              // Manually trigger the external-link directive on the dynamically created element
-              const dynamicElements = document.querySelectorAll('#missionViewContentDiv a');
-              for(const element of dynamicElements){
-                element.addEventListener('click', event => {
-                  event.preventDefault();
-                  window.openURL(element.href);
-                });
-              }
+              viewMissionData.value = newMissionViewData;
+              openOverlay();
             };
 
             return {
@@ -1830,6 +1922,17 @@
               maxQuality,
               durationConfigs,
               artifactConfigs,
+              boundEffectString,
+              afRarityClass,
+              afRarityText,
+              afBackgroundClass,
+              afExplorerName,
+              specPath,
+              groupedSpecType,
+              numToDigClass,
+              properCase,
+              durToTextClass,
+              viewMissionData,
 
               dataFilter,
               filterHasChanged,
