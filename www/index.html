@@ -401,7 +401,7 @@
                 Returned: {{ viewMissionData.returnStr }} <br />
                 Duration: {{ viewMissionData.durationStr }} <br />
                 Capacity: {{ viewMissionData.shipInfo.capacity }} <br />
-                <div v-if="viewMissionData.shipInfo.target != ''">
+                <div v-if="viewMissionData.shipInfo.target != '' && viewMissionData.shipInfo.target.toUpperCase() != 'UNKNOWN'">
                   <div class="items-center justify-center flex">
                     <span>Sensor Target: </span>
                     <div style="margin-left: 0.3rem;" class="text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">
@@ -410,6 +410,16 @@
                   </div>
                   <br/>
                 </div>
+                <!-- Previous mission -->
+                <button v-bind:disabled="viewMissionData.prevMission == null" v-on:click="viewSpecificMission(viewMissionData.prevMission)"
+                class="disabled:hover:cursor-not-allowed absolute left-0 top-1/2 transform -translate-y-1/2 pl-2 rounded-md text-gray-400 focus:outline-none z-10 disabled:text-gray-500 hover:text-gray-500">
+                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <!-- Next mission -->
+                <button v-bind:disabled="viewMissionData.nextMission == null" v-on:click="viewSpecificMission(viewMissionData.nextMission)"
+                class="disabled:hover:cursor-not-allowed absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 rounded-md text-gray-400 focus:outline-none z-10 disabled:text-gray-500 hover:text-gray-500">
+                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
 
                 <!-- Artifacts -->
                 <div v-if="viewMissionData.artifactCount > 0">
@@ -494,9 +504,9 @@
                 </div>
 
                 <!-- Stone Fragments -->
-                <div v-if="viewMissionData.stoneFragmentsCount > 0">
+                <div v-if="viewMissionData.stoneFragmentCount > 0">
                   <div class="mission-view-div text-gray-400 bg-darkerer">
-                    Stone Fragments ({{ viewMissionData.stoneFragmentsCount }})
+                    Stone Fragments ({{ viewMissionData.stoneFragmentCount }})
                   </div>
                   <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
                     <div class="mission-view-rep" v-for="(sf, sfindex) in viewMissionData.stoneFragments">
@@ -711,7 +721,11 @@
             </div>
             <hr class="mt-1rem invisible">
             <div ref="resultsDiv">
-              <span class="font-bold text-gray-400">Missions: </span> <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleAll($event)">Hide All</button>
+              <span class="font-bold text-gray-400">Missions: </span>
+              <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleAll($event)">Hide All</button>
+              <label for="viewByDateCB" class="text-gray-400 mr-05rem">Separate missions by day</label>
+              <input id="viewByDateCB" type="checkbox" v-model="viewByDate" checked
+                class="text-gray-400 rounded-full rounded-md bg-darkest hover:bg-darkerer focus:ring-blue-500 focus:border-blue-500"/>
               <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-lg font-mono text-gray-500 bg-darkest rounded-md" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
               </div>
@@ -723,7 +737,8 @@
                     <div class="mt-1rem ml-2rem">
                       <span class="text-base font-bold underline">{{ yIndex }}-{{ mIndex }}</span> <button class="toggleButton text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleMonth($event, yIndex, mIndex)">Hide</button>
                       <div :class="'all-targetable-closeable year-' + yIndex + '-child-' + mIndex" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
-                        <div class="mt-1rem ml-2rem">
+                        <!-- View with date-->
+                        <div v-if="viewByDate" class="mt-1rem ml-2rem">
                           <span class="text-sm font-bold underline">{{ yIndex }}-{{ mIndex }}-{{ dIndex }}</span> <button class="toggleButton text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, yIndex, mIndex, dIndex)">Hide</button>
                           <div class="mt-1rem mission-grid">
                             <div :class="'text-sm mission-item all-targetable-closeable year-' + yIndex + '-child-' + mIndex + '-' + dIndex" 
@@ -736,6 +751,20 @@
                               </button>
                             </div>
                           </div>                        
+                        </div>
+                        <!-- View without date-->
+                        <div v-else class="mt-1rem ml-2rem">
+                          <div class="mt-1rem mission-grid">
+                            <div :class="'text-sm mission-item all-targetable-closeable year-' + yIndex + '-child-' + mIndex + '-' + dIndex" 
+                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
+                              <button 
+                                class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
+                                type="button"
+                                v-on:click="viewSpecificMission(mission.missionId)">
+                                <span class="text-gray-300" v-html="mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1248,6 +1277,7 @@
             };
 
             // ===== Setup for 'View Mission Data' Tab =====
+            const viewByDate = Vue.ref(true);
             const viewMissionData = Vue.ref({});
             Vue.onMounted(() => {
               window.viewMissionData = viewMissionData.value;
@@ -1279,6 +1309,17 @@
                 }
                 return acc;
               }, {});
+            };
+            const sortedGroupedSpecType = (collection) => {
+              return Object.values(groupedSpecType(collection)).sort((a, b) => {
+                if(a.level > b.level) return -1;
+                if(a.level < b.level) return 1;
+                if(a.rarity > b.rarity) return -1;
+                if(a.rarity < b.rarity) return 1;
+                if(a.quality < b.quality) return -1;
+                if(a.quality > b.quality) return 1;
+                return 0;
+              }).reverse();
             };
             const numToDigClass = (num) => {
               const parsedNum = parseInt(num.toString());
@@ -1742,8 +1783,6 @@
               //Start a timer to see how long it takes to apply the filter
               const startTime = performance.now();
 
-              window.console.log("orDataFilter.value: " + JSON.stringify(orDataFilter.value));
-
               dataBeingFiltered.value = true;
               filterHasChanged.value = false;
               const newFilteredMissions = [];
@@ -1836,15 +1875,15 @@
 
               //Find the loaded ships index in the allLoadedMissions array, to get the missions directly before and after it
               const shipIndex = allLoadedMissions.value.findIndex(mission => mission.missionId == missionId);
-              const prevShip = shipIndex > 0 ? allLoadedMissions.value[shipIndex - 1].missionId : null;
-              const nextShip = shipIndex < allLoadedMissions.value.length - 1 ? allLoadedMissions.value[shipIndex + 1].missionId : null;
+              const prevMission = shipIndex > 0 ? allLoadedMissions.value[shipIndex - 1].missionId : null;
+              const nextMission = shipIndex < allLoadedMissions.value.length - 1 ? allLoadedMissions.value[shipIndex + 1].missionId : null;
 
               const newMissionViewData = {
                 shipInfo: shipInfo,
-                artifacts: groupedSpecType(artifacts),
-                stones: groupedSpecType(stones),
-                stoneFragments: groupedSpecType(stoneFragments),
-                ingredients: groupedSpecType(ingredients),
+                artifacts: sortedGroupedSpecType(artifacts),
+                stones: sortedGroupedSpecType(stones),
+                stoneFragments: sortedGroupedSpecType(stoneFragments),
+                ingredients: sortedGroupedSpecType(ingredients),
                 artifactCount: artifacts.length,
                 stoneCount: stones.length,
                 stoneFragmentCount: stoneFragments.length,
@@ -1852,8 +1891,8 @@
                 launchStr: launchStr,
                 returnStr: returnStr,
                 durationStr: durationString,
-                prevShip: prevShip,
-                nextShip: nextShip
+                prevMission: prevMission,
+                nextMission: nextMission
               };
 
               viewMissionData.value = newMissionViewData;
@@ -1913,6 +1952,7 @@
               targetImage,
               closeOverlay,
               refreshExistingExports,
+              viewByDate,
               loadedAccountMissionsCount,
               loadedEid,
               allLoadedMissions,
