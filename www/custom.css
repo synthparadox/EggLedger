@@ -1,110 +1,49 @@
 .mission-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px; /* Adjust the gap between items as needed */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
   
 .mission-item {
-    flex: 0 0 calc(33.33% - 10px); /* Set the width of each column */
-    box-sizing: border-box;
+  flex: 0 0 calc(33.33% - 10px);
+  box-sizing: border-box;
 }
 
-/* Scrollbar dark mode */
 ::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-    background-color: #4c4f52;
-}
-::-webkit-scrollbar-track {
-    background: #303030;
-    border: solid 2px rgba(33,33,33,0.5);
+  background-color: #555;
+  border-radius: 5px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #6b6e71;
+  background-color: #888;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 ::-webkit-scrollbar-corner {
-    background: transparent;
+  background: transparent;
 }
-
-/* Buttons */
-::-webkit-scrollbar-button
-{
-  border-style: solid;
-  height: 16px;
-  width: 16px;
-}
-
-/* Up */
-::-webkit-scrollbar-button:vertical:decrement
-{
-  border-width: 0 7px 14px 7px;
-  border-color: transparent transparent #404040 transparent;
-}
-
-::-webkit-scrollbar-button:vertical:decrement:hover
-{
-  border-color: transparent transparent #505050 transparent;
-}
-
-
-/* Down */
-::-webkit-scrollbar-button:vertical:increment
-{
-  border-width: 14px 7px 0 7px;
-  border-color: #404040 transparent transparent transparent;
-}
-
-::-webkit-scrollbar-button:vertical:increment:hover
-{
-  border-color: #505050 transparent transparent transparent;
-}
-
-
-/* Left */
-::-webkit-scrollbar-button:horizontal:decrement
-{
-  border-width: 7px 14px 7px 0;
-  border-color: transparent #404040 transparent transparent;
-}
-
-::-webkit-scrollbar-button:horizontal:decrement:hover
-{
-  border-color: transparent #505050 transparent transparent;
-}
-
-
-/* Right */
-::-webkit-scrollbar-button:horizontal:increment
-{
-  border-width: 7px 0 7px 14px;
-  border-color: transparent transparent transparent #404040;
-}
-
-::-webkit-scrollbar-button:horizontal:increment:hover
-{
-  border-color: transparent transparent transparent #505050;
+::-webkit-scrollbar-button {
+  display: none; /* Hide the scrollbar buttons */
 }
 
 .overlay {
-  background: rgba(0, 0, 0, 0.5); /* 50% transparent black */
-}
-
-.bg-common {
-  background-color: rgb(229 231 235);
+  background: rgba(0, 0, 0, 0.5);
 }
 
 .bg-rare {
-  background: radial-gradient(#b3ffff,#b3ffff,#6ab6ff);
+  background: radial-gradient(#a8dfff,#8dd5ff,#3a9dfc);
 }
 
 .bg-epic {
-  background: radial-gradient(#ff40ff,#ff40ff,#c03fe2);
+  background: radial-gradient(#ce81f7,#b958ed,#8819c2);
 }
 
 .bg-legendary {
-  background: radial-gradient(#fffe41,#fffe41,#eeab42);
+  background: radial-gradient(#fcdd6a, #ffdb58, #e09143);
 }
 
 .text-rare {

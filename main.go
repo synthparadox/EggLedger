@@ -367,7 +367,7 @@ func main() {
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
-	u, err := forkedlorca.New("", "", 800, 700, args...)
+	u, err := forkedlorca.New("", "", 650, 650, args...)
 	if err != nil {
 		log.Fatal(err)
 	}
