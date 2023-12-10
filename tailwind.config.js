@@ -12,12 +12,13 @@ module.exports = {
         standard: "rgb(139, 93, 246)",
         extended: "rgb(246, 168, 35)",
         tutorial: "rgb(115, 128, 140)",
-        weewoosiren: "rgb(234 88 12)",
-        goldenstar: "rgb(255 215 0)",
+        goldenstar: "rgb(255, 215, 0)",
         'yellow-700': "rgb(251 191 36)", 
         rare: '#6ab6ff',
         epic: '#c03fe2',
-        legendary: '#eeab42'
+        legendary: '#eeab42',
+        dubcap: 'rgb(173, 10, 198)',
+        dubcapdarker: 'rgb(120, 7, 138)',
       },
       height: {
         stretch: 'stretch',

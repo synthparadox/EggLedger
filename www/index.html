@@ -792,6 +792,11 @@
               <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes"
                 class=" rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
             </span>
+            <span class="mr-5">
+              <label for="recolorDCCB" class="text-gray-400 mr-05rem">Re-color dubcaps</label>
+              <input id="recolorDCCB" type="checkbox" v-model="recolorDC"
+                class=" rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
+            </span>
             <div ref="resultsDiv" class="relative h-screen">
               <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-lg font-mono text-gray-500 bg-darkest rounded-md" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
@@ -814,7 +819,7 @@
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                 type="button"
                                 v-on:click="viewSpecificMission(mission.missionId)">
-                                <span v-if="viewMissionTimes" class="text-gray-500" v-html="mission.launchTime"></span>
+                                <span v-if="viewMissionTimes" :class="(recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'" v-html="mission.launchTime"></span>
                                 <span class="text-gray-400" v-html="'  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
                               </button>
                             </div>
@@ -828,8 +833,8 @@
                               <button 
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                 type="button" v-on:click="viewSpecificMission(mission.missionId)">
-                                <span class="text-gray-400" v-html="padDateOut(groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])"></span>
-                                <span v-if="viewMissionTimes" class="text-gray-500" v-html="' ' + mission.launchTime"></span>
+                                <span :class="(recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'" v-html="padDateOut(groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])"></span>
+                                <span v-if="viewMissionTimes" :class="(recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'" v-html="' ' + mission.launchTime"></span>
                                 <span class="text-gray-400" v-html="'  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
                               </button>
                             </div>
@@ -1209,6 +1214,7 @@
             const viewAccountSubmitRef = Vue.ref(null);
             const viewByDate = Vue.ref(false);
             const viewMissionTimes = Vue.ref(true);
+            const recolorDC = Vue.ref(false);
             const viewMissionData = Vue.ref({});
             const doesExportExist = Vue.ref(false);
             const existingExports = Vue.ref([]); //Empty array of strings
@@ -1961,10 +1967,10 @@
               const launchStr = shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime;
               const returnStr = shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime;
 
-              //Find the loaded ships index in the allLoadedMissions array, to get the missions directly before and after it
-              const shipIndex = allLoadedMissions.value.findIndex(mission => mission.missionId == missionId);
-              const prevMission = shipIndex > 0 ? allLoadedMissions.value[shipIndex - 1].missionId : null;
-              const nextMission = shipIndex < allLoadedMissions.value.length - 1 ? allLoadedMissions.value[shipIndex + 1].missionId : null;
+              //Find the loaded ships index in the filteredMissions array, to get the missions directly before and after it
+              const shipIndex = filteredMissions.value.findIndex(mission => mission.missionId == missionId);
+              const prevMission = shipIndex > 0 ? filteredMissions.value[shipIndex - 1].missionId : null;
+              const nextMission = shipIndex < filteredMissions.value.length - 1 ? filteredMissions.value[shipIndex + 1].missionId : null;
 
               //Max of 2
               const capModifier = Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity);
@@ -2045,6 +2051,7 @@
               //View specific mission
               viewByDate,
               viewMissionTimes,
+              recolorDC,
               loadedAccountMissionsCount,
               loadedEid,
               allLoadedMissions,
