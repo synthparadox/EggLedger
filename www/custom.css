@@ -34,42 +34,18 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
-.bg-rare {
-  background: radial-gradient(#a8dfff,#8dd5ff,#3a9dfc);
-}
-
-.bg-epic {
-  background: radial-gradient(#ce81f7,#b958ed,#8819c2);
-}
-
-.bg-legendary {
-  background: radial-gradient(#fcdd6a, #ffdb58, #e09143);
-}
-
-.text-rare {
-  color: #6ab6ff;
-}
-
-.text-epic {
-  color: #c03fe2;
-}
-
-.text-legendary {
-  color: #eeab42;
-}
-
 .tooltip-custom {
   position: relative;
   display: inline-block;
 }
 
   .tooltip-custom:hover .tooltiptext-custom {
-      display: inline-block;
-      z-index: 3;
-      position: absolute;
-      bottom: 25px; /* Adjust this value as needed */
-      left: 50%;
-      transform: translateX(-50%); /* Center the tooltip */
+    display: inline-block;
+    z-index: 3;
+    position: absolute;
+    bottom: 25px; /* Adjust this value as needed */
+    left: 50%;
+    transform: translateX(-50%); /* Center the tooltip */
   }
 
 .tooltiptext-custom {
@@ -93,4 +69,10 @@
 
 ::-webkit-calendar-picker-indicator {
   filter: invert(1);
+}
+
+.double-cap-span {
+  background-image: radial-gradient(rgb(139, 14, 158), rgb(128, 13, 126), rgb(92, 9, 91));
+  border-radius: 10px;
+  text-align: center;
 }

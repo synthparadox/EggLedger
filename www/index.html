@@ -1,4 +1,3 @@
-<!-- Todo: port the 'view this EID' code to MK2's solution for selecting account in the fetch tab-->
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
   <head>
@@ -377,7 +376,8 @@
           </div>
         </div>
 
-        <div class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-auto shadow-sm block"
+        <!-- flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker -->
+        <div class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
           v-show="activeTab === UITab.ViewData">
           <div id="missionViewDiv" ref="missionViewDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
             <div id="innerMissionViewDiv" style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
@@ -392,15 +392,33 @@
                 <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ shipToName(viewMissionData.shipInfo.ship) }}</span><br />
                 <span class="text-star text-goldenstar" v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0">{{ "★".repeat(viewMissionData.shipInfo.level) }}</span>
                 <br v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0" />
-                Launched: {{ viewMissionData.launchStr }} <br />
-                Returned: {{ viewMissionData.returnStr }} <br />
-                Duration: {{ viewMissionData.durationStr }} <br />
-                Capacity: {{ viewMissionData.shipInfo.capacity }} <br />
+                <span>Launched: {{ viewMissionData.launchStr }}</span> <br />
+                <span>Returned: {{ viewMissionData.returnStr }}</span> <br />
+                <span>Duration: {{ viewMissionData.durationStr }}</span> <br />
+                <span class="flex flex-row items-center justify-center">
+                  <span :class="(viewMissionData.shipInfo.isDubCap ? 'mr-05rem' : '')">Capacity: {{ viewMissionData.shipInfo.capacity }} </span>
+                  <span v-if="viewMissionData.shipInfo.isDubCap" 
+                    style="max-width: 7rem;"
+                    class="flex py-1 double-cap-span items-center justify-center flex-1">
+                    <img alt="Artifact Crate" src="https://eggincassets.tcl.sh/64/egginc/icon_afx_chest_2.png" class="w-6 mr-05rem">
+                    <span class="tooltip-custom text-xs font-bold"> {{viewMissionData.capacityModifier}}x Capacity
+                        <span class="font-normal text-sm text-gray-400 tooltiptext-custom speech-bubble">This ship was launched during a<br />
+                          <span style="color: rgb(173, 10, 198)">
+                            {{viewMissionData.capacityModifier}}x Capacity Event
+                          </span>
+                          and returned with<br />
+                          more artifacts than normal.
+                        </span>
+                      </span>
+                    </span>
+                    <br />
+                  </span>
                 <div v-if="viewMissionData.shipInfo.target != '' && viewMissionData.shipInfo.target.toUpperCase() != 'UNKNOWN'">
                   <div class="items-center justify-center flex">
                     <span>Sensor Target: </span>
                     <div style="margin-left: 0.3rem;" class="text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">
                       {{ properCase(viewMissionData.shipInfo.target.replace("_", " ")) }}
+                      
                     </div>
                   </div>
                   <br/>
@@ -532,23 +550,29 @@
               </div>
             </div>
           </div>
-          <div ref="selectViewAccountForm" v-if="doesExportExist">
-            <form id="viewAccountForm" name="viewAccountForm" class="mt-1 flex rounded-md shadow-sm"
+          <div style="margin-top: 0px;" ref="selectViewAccountForm" v-if="doesExportExist">
+            <form 
+              id="viewAccountForm" 
+              name="viewAccountForm" 
+              class="mt-1 flex rounded-md shadow-sm"
               v-on:submit="event => {
                 event.preventDefault();
+                for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
                 viewEidGo();
-                topLevelFilterOptions.value = [null];
-                filterOperators.value = [null];
-                filterValues.value = [null];
-                updateFilterConditionsCount();
               }">
               <div class="relative flex-grow focus-within:z-10">
                 <label for="view-file-sel" class="sr-only">Choose an account</label>
                 <select 
                   class="focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-darkerer tabular-nums"
                   id="view-file-sel" ref="view-file-sel" 
-                  v-model="selectedAccount">
-                  <option v-for="account in readableExistingExports" v-bind:key="account" v-bind:value="account.id">
+                  v-model="selectedAccount"
+                  v-on:change="viewAccountSubmitRef.focus();"
+                >
+                  <option
+                    class="text-sm text-gray-400 hover:text-gray-300 hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums"
+                    v-for="account in readableExistingExports" 
+                    v-bind:key="account" v-bind:value="account.id"
+                  >
                     {{ account.nickname }}  ({{ account.missionCount }} missions)
                 </select>
               </div>
@@ -558,140 +582,169 @@
               </button>
             </form>
           </div>
-          <div class="text-center mt-3rem" ref="noDataToView" v-else>
-            <span class="text-red-700"> No mission data has been loaded yet.<br>Please '<span class="font-bold text-gray-400">Fetch</span>' from the </span><button type="button" class="btn-link" onclick="switchToLedger()" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
+          <div class="text-center text-lg mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView" v-else>
+            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
           <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
             <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="selectedAccount != null && selectedAccount == loadedEid && loadedAccountMissionsCount != (readableExistingExports.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
               <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4"> You are viewing outdated data - click <span class="text-gray-500">View</span> again to fix this.</span>
             </div>
             <div ref="filterRef">
-              <span class="font-bold text-gray-400">Filter:</span> <button id="toggleFilterButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" onclick="toggleFilter()">Hide</button>
-              <form id="filterForm" name="filterForm" v-if="!hideFilter"
-              class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
-              v-on:submit="event => {
-                event.preventDefault();
-                applyFilter();
-              }">
-                <div class="relative flex-grow" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
-                  <!-- Separator -->
-                  <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
+              <span style="margin-left: 0.5rem;" class="font-bold text-gray-400">Filter: </span>
+              <button 
+                id="toggleFilterButton"
+                class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" 
+                type="button" 
+                v-on:click="e => {
+                  e.preventDefault();
+                  hideFilter = !hideFilter;
+                  e.target.innerHTML = hideFilter ? 'Show' : 'Hide';
+                }"
+              >
+                Hide
+              </button>
+              <form 
+                id="filterForm"
+                name="filterForm"
+                v-if="!hideFilter"
+                class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
+                v-on:submit="event => {
+                  event.preventDefault();
+                  applyFilter();
+                }"
+              >
+                <div
+                  class="max-h-60 overflow-y-auto"  
+                >
+                  <div 
+                    class="relative flex-grow"
+                    style="max-height: 60%"
+                    v-for="(item, index) in generateFilterConditionsArr()"
+                    :key="index"
+                  >
+                    <!-- Separator -->
+                    <div 
+                      v-if="index != 0"
+                      class="text-gray-400 mt-05rem"
+                    >
+                      -- AND --
+                    </div>
 
-                  <div class="relative flex flex-row items-center flex-grow focus-within:z-10">
-                    <!-- Top level filter options -->
-                    <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount(); } updateValueStyling(this); clearOpValue(this);"
-                      v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
-                      <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
-                        {{ validOption.text }}
-                    </select>
-
-                    <!-- Operator options -->
-                    <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount(); } updateValueStyling(this);"
-                      v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
-                      <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
-                        {{ validOperator.text }}
-                    </select>
-
-                    <!-- Value options (Base) -->
-                    <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount();} updateValueStyling(this);"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] != 'launchDT' && topLevelFilterOptions[index] != 'returnDT'"
-                      v-model="filterValues[index]" :id="'filter-value-' + index">
-                      <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
-                        {{ validValue.text }}
-                    </select>
-                    <!-- Launch/Return Date Selectors - 
-                      Min: 20 January 2021  
-                      Max: Today-->
-                    <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
-                      class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
-                      onchange="if(this.oldValue == null) { updateFilterConditionsCount(); this.oldValue = this.value;} else { updateFilterNoReCount();} updateValueStyling(this);"
-                      v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
-
-                    <!-- OR controls -->
-                    <button style="margin-right: 1rem;" type="button" v-on:click="addOr(index)"
-                      title="Add alternate filter condition"
-                      class="flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && filterValues[index] != null"
-                      v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
-                      OR
-                    </button>
-
-                    <!-- Clear button-->
-                    <button 
-                      v-if="topLevelFilterOptions[index] != null"
-                      style="margin-right: 1rem;"
-                      class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
-                      title="Remove filter condition"
-                      v-on:click="removeAndShift(index)">
-                      ×
-                    </button>
-
-                    <!-- Show a warning div if the filter is incomplete -->
-                    <span
-                      v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null)"
-                      class="tooltip-custom items-center justify-center text-red-700 text-sml border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
-                      (!)
-                      <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
-                    </span>
-                  </div>
-                  <div class="ml-2rem relative flex flex-row items-center flex-grow focus-within:z-10" 
-                    v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
-                    v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
-                      <!-- Separator -->
-                      <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
-
+                    <div class="relative flex flex-row items-center flex-grow focus-within:z-10">
                       <!-- Top level filter options -->
-                      <select v-model="orFilterTopLevelOptions[index][orIndex]"
-                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                        onchange="updateFilterNoReCount();">
+                      <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        v-on:change="handleFilterChange"
+                        v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
                         <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                           {{ validOption.text }}
                       </select>
+
                       <!-- Operator options -->
-                      <select
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
-                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                        onchange="updateFilterNoReCount();">
-                        <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                      <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        v-on:change="handleFilterChange"
+                        v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
+                        <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                           {{ validOperator.text }}
                       </select>
 
-                      <!-- Value options -->
-                      <select v-model="orFilterValues[index][orIndex]"
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] != 'launchDT' && orFilterTopLevelOptions[index][orIndex] != 'returnDT'"
-                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                        onchange="updateFilterNoReCount();">
-                        <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                      <!-- Value options (Base) -->
+                      <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        v-on:change="handleFilterChange"
+                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] != 'launchDT' && topLevelFilterOptions[index] != 'returnDT'"
+                        v-model="filterValues[index]" :id="'filter-value-' + index">
+                        <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
                       </select>
                       <!-- Launch/Return Date Selectors - 
                         Min: 20 January 2021  
-                        Max: Today + 5 days -->
-                      <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
+                        Max: Today-->
+                      <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
                         class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
-                        onchange="updateFilterNoReCount();"
-                      >
+                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
+                        v-on:change="handleFilterChange"
+                        v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
+
+                      <!-- OR controls -->
+                      <button style="margin-right: 1rem;" type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
+                        title="Add alternate filter condition"
+                        class="flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
+                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && filterValues[index] != null"
+                        v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
+                        OR
+                      </button>
+
                       <!-- Clear button-->
                       <button 
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null"
+                        v-if="topLevelFilterOptions[index] != null"
                         style="margin-right: 1rem;"
                         class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
                         title="Remove filter condition"
-                        v-on:click="removeOrAndShift(index, orIndex)">
+                        v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
                         ×
                       </button>
+
                       <!-- Show a warning div if the filter is incomplete -->
                       <span
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && (orFilterOperators[index][orIndex] == null || orFilterValues[index][orIndex] == null)"
+                        v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null)"
                         class="tooltip-custom items-center justify-center text-red-700 text-sml border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
                         (!)
                         <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
                       </span>
+                    </div>
+                    <div class="ml-2rem relative flex flex-row items-center flex-grow focus-within:z-10" 
+                      v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
+                      v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
+                        <!-- Separator -->
+                        <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
+
+                        <!-- Top level filter options -->
+                        <select v-model="orFilterTopLevelOptions[index][orIndex]"
+                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          v-on:change="handleOrFilterChange" :id="'filter-top-' + index + '-' + orIndex">
+                          <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
+                            {{ validOption.text }}
+                        </select>
+                        <!-- Operator options -->
+                        <select
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
+                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          v-on:change="handleOrFilterChange" :id="'filter-op-' + index + '-' + orIndex">
+                          <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                            {{ validOperator.text }}
+                        </select>
+
+                        <!-- Value options -->
+                        <select v-model="orFilterValues[index][orIndex]"
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] != 'launchDT' && orFilterTopLevelOptions[index][orIndex] != 'returnDT'"
+                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
+                          <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                            {{ validValue.text }}
+                        </select>
+                        <!-- Launch/Return Date Selectors - 
+                          Min: 20 January 2021  
+                          Max: Today + 5 days -->
+                        <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
+                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
+                          v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex"
+                        >
+                        <!-- Clear button-->
+                        <button 
+                          style="margin-right: 1rem;"
+                          class="flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
+                          title="Remove filter condition"
+                          v-on:click="e => {e.preventDefault(); removeOrAndShift(index, orIndex); }">
+                          ×
+                        </button>
+                        <!-- Show a warning div if the filter is incomplete -->
+                        <span
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null && (orFilterOperators[index][orIndex] == null || orFilterValues[index][orIndex] == null)"
+                          class="tooltip-custom items-center justify-center text-red-700 text-sml border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
+                          (!)
+                          <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
+                        </span>
+                    </div>
                   </div>
                 </div>
 
@@ -727,26 +780,33 @@
               </form>
             </div>
             <hr class="mt-1rem invisible">
-            <div ref="resultsDiv">
-              <span class="font-bold text-gray-400">Missions: </span>
-              <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleAll($event)">Hide All</button>
+            <span style="margin-left: 0.5rem;" class="font-bold text-gray-400">Missions: </span>
+            <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event)">Collapse All</button>
+            <span class="mr-5">
               <label for="viewByDateCB" class="text-gray-400 mr-05rem">Separate missions by day</label>
-              <input id="viewByDateCB" type="checkbox" v-model="viewByDate" checked
-                class="rounded-full rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
+              <input id="viewByDateCB" type="checkbox" v-model="viewByDate"
+                class="rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
+            </span>
+            <span class="mr-5">
+              <label for="viewMissionTimesCB" class="text-gray-400 mr-05rem">Show launch times</label>
+              <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes"
+                class=" rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
+            </span>
+            <div ref="resultsDiv" class="relative h-screen">
               <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-lg font-mono text-gray-500 bg-darkest rounded-md" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
               </div>
-              <div v-else class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
-                <div v-for="(value, yIndex) in groupedMissions" :key="yIndex">
-                  <span :class="'text-lg font-bold underline y-header-' + groupedYearArr[yIndex]">{{ groupedYearArr[yIndex] }}</span> <button class="toggleButton text-lg text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleYear($event, groupedYearArr[yIndex])">Hide</button>
+              <div v-else id="missionListDiv" :style="'max-height: ' + /*( hideFilter ? '75' : '60')*/ calculateMaxMissionDivHeight() + '%'" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+                <template v-for="(value, yIndex) in groupedMissions" :key="yIndex">
+                  <span :class="'text-lg font-bold underline y-header-' + groupedYearArr[yIndex]">{{ groupedYearArr[yIndex] }}</span> <button class="toggleButton text-lg text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex])">Collapse</button>
                   <div :class="'mt-1 all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child'" 
                     v-for="(subValue, mIndex) in value" :key="mIndex">
                     <div class="mt-1rem ml-2rem">
-                      <span class="text-base font-bold underline">{{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}</span> <button class="toggleButton text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleMonth($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex])">Hide</button>
+                      <span class="text-base font-bold underline">{{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}</span> <button class="toggleButton text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex])">Collapse</button>
                       <div :class="'all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child-' + groupedMonthsArr[yIndex][mIndex]" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
                         <!-- View with date-->
                         <div v-if="viewByDate" class="mt-1rem ml-2rem">
-                          <span class="text-sm font-bold underline">{{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}-{{ groupedDaysArr[yIndex][mIndex][dIndex] }}</span> <button class="toggleButton text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleDay($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])">Hide</button>
+                          <span class="text-sm font-bold underline">{{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}-{{ groupedDaysArr[yIndex][mIndex][dIndex] }}</span> <button class="toggleButton text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])">Collapse</button>
                           <div class="mt-1rem mission-grid">
                             <div :class="'text-sm mission-item all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child-' + groupedMonthsArr[yIndex][mIndex] + '-' + groupedDaysArr[yIndex][mIndex][dIndex]" 
                               v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
@@ -754,7 +814,8 @@
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                 type="button"
                                 v-on:click="viewSpecificMission(mission.missionId)">
-                                <span class="text-gray-400" v-html="mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
+                                <span v-if="viewMissionTimes" class="text-gray-500" v-html="mission.launchTime"></span>
+                                <span class="text-gray-400" v-html="'  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
                               </button>
                             </div>
                           </div>                        
@@ -767,7 +828,9 @@
                               <button 
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                 type="button" v-on:click="viewSpecificMission(mission.missionId)">
-                                <span class="text-gray-400" v-html="shortenDate(groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex]) + ' ' + mission.launchTime + '  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
+                                <span class="text-gray-400" v-html="padDateOut(groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])"></span>
+                                <span v-if="viewMissionTimes" class="text-gray-500" v-html="' ' + mission.launchTime"></span>
+                                <span class="text-gray-400" v-html="'  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
                               </button>
                             </div>
                           </div>
@@ -775,8 +838,9 @@
                       </div>
                     </div>
                   </div>
+                  <br/>
                   <hr :class="'pt-3rem pb-3rem invisible mt-1 all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child'">
-                </div>
+                </template>
               </div>
             </div>
           </div>
@@ -886,63 +950,22 @@
           return `${hh}:${mm}:${ss}`;
         }
 
-        function toggleAll(event){
+        function toggleElements(event, year, month, day) {
           const self = event.target;
-          const newState = (self.innerHTML === "Hide All") ? "none" : "block";
-          //Switch self to ▼ or ▶
-          self.innerHTML = (self.innerHTML === "Show All") ? "Hide All" : "Show All";
-          //Switch `toggleButton` class elements to `Show` or `Hide`
-          const bChildren = document.querySelectorAll(".toggleButton");
-          for (const child of bChildren) {
-            child.innerHTML = (self.innerHTML === "Show All") ? "Show" : "Hide";
-          }
-          //Get all `all-targetable-closeable` class elements
-          const children = document.querySelectorAll(".all-targetable-closeable");
-          for (const child of children) {
-            child.style.display = newState;
-          }
+          const isAll = !((year || month || day));
+          const newState = (self.innerHTML.indexOf("Collapse") > -1) ? "none" : "block";
+          self.innerHTML = ((self.innerHTML.indexOf("Expand") > -1) ? "Collapse" : "Expand") + (isAll ? " All" : "");
+
+          if(isAll) {
+            for (const child of document.querySelectorAll(".toggleButton")) child.innerHTML = (self.innerHTML === "Expand All") ? "Expand" : "Collapse";
+            for (const child of document.querySelectorAll(".all-targetable-closeable")) child.style.display = newState;
+          } else if(document.getElementById('viewByDateCB').checked || !month) for (const child of document.querySelectorAll(".all-targetable-closeable" + ('.year-' + year + '-child' + (month ? '-' + month : '') + (day ? '-' + day : '')))) child.style.display = newState;
+          else for (const child of document.querySelectorAll("[class*='" + ('year-' + year + '-child' + (month ? '-' + month : '')) + "']")) child.style.display = newState;
         }
 
-        function toggleYear(event, year) {
-          const self = event.target;
-          const newState = (self.innerHTML === "Hide") ? "none" : "block";
-          //Switch self to ▼ or ▶
-          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
-          //Hide or show all direct children (year-x-child)
-          const children = document.querySelectorAll(".year-" + year + "-child");
-          for (const child of children) {
-            child.style.display = newState;
-          }
-        };
-
-        function toggleMonth(event, year, month){
-          const self = event.target;
-          const newState = (self.innerHTML === "Hide") ? "none" : "block";
-          //Switch self to ▼ or ▶
-          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
-          //Hide or show all direct children (year-x-child)
-          const children = document.querySelectorAll(".year-" + year + "-child-" + month);
-          for (const child of children) {
-            child.style.display = newState;
-          }
-        };
-
-        function toggleDay(event, year, month, day){
-          const self = event.target;
-          const newState = (self.innerHTML === "Hide") ? "none" : "block";
-          //Switch self to ▼ or ▶
-          self.innerHTML = (self.innerHTML === "Show") ? "Hide" : "Show";
-          //Hide or show all direct children (year-x-child)
-          const children = document.querySelectorAll(".year-" + year + "-child-" + month + "-" + day);
-          for (const child of children) {
-            child.style.display = newState;
-          }
-        };
-
-        function shortenDate(year, month, day){
-          //Remove leading 0s
-          month = month.toString().replace(/^0+/, '');
-          day = day.toString().replace(/^0+/, '');
+        function padDateOut(year, month, day){
+          if(month < 10) month = "0" + month;
+          if(day < 10) day = "0" + day;
           return year + "-" + month + "-" + day;
         }
 
@@ -998,79 +1021,6 @@
           return level <= 0 ? "" : `(` + level + `<span style="color: gold;">★</span>)`;
         }
 
-        function getTopLevelFilterOptions(){
-          return [
-            { text: 'Ship', value: 'ship' },
-            { text: 'Duration', value: 'duration' },
-            { text: 'Level', value: 'level' },
-            { text: 'Target', value: 'target' },
-            { text: 'Drops/Loot', value: 'drops' },
-            { text: 'Launch Date', value: 'launchDT' },
-            { text: 'Return Date', value: 'returnDT' }
-          ]
-        }
-
-        function getFilterOpOptions(topLevel){
-          switch(topLevel){
-            case 'ship':
-            case 'duration':
-            case 'level': return [
-              { text: 'is', value: '=' },
-              { text: 'is not', value: '!=' },
-              { text: 'greater than', value: '>' },
-              { text: 'less than', value: '<' }
-            ];
-            case 'target': return [
-              { text: 'is', value: '=' },
-              { text: 'is not', value: '!=' }
-            ];
-            case 'drops': return [
-              { text: 'contains', value: 'c' },
-              { text: 'does not contain', value: 'dnc' }
-            ];
-            case 'launchDT':
-            case 'returnDT':
-              return [
-                { text: 'on', value: 'on' },
-                { text: 'before', value: 'before' },
-                { text: 'after', value: 'after' }
-              ]
-          }
-        }
-
-        function getFilterValueOptions(topLevel){
-          switch(topLevel){
-            case 'ship': return Array.from({ length: 10 }, (_, index) => ({
-                text: shipToName(index),
-                value: index,
-              }));
-            case 'duration': return Array.from({ length: 4 }, (_, index) => ({
-                text: durToName(index),
-                value: index,
-                styleClass: generateDurStyleClass(index)
-              }));
-            case 'level': return Array.from({ length: 8 }, (_, index) => ({
-                text: index + '★',
-                value: index
-              }));
-            case 'target': return possibleTargets.map(target => ({
-                text: target.displayName,
-                value: target.id
-              }));
-            case 'drops': {
-              const filteredConfigs = artifactConfigs.filter(a => a.baseQuality <= maxQuality).map(artifact => ({
-                text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + ((artifact.displayName.toLowerCase().indexOf('stone') > -1 && artifact.displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ')')),
-                value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
-                styleClass: generateDropStyleClass(artifact)
-              }))
-              filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary'});
-              filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic'});
-              filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare'});   
-              return filteredConfigs;
-            }
-          }
-        }
-
         function generateDurStyleClass(dur){
           switch(dur){
             case 0: return 'text-short';
@@ -1090,50 +1040,6 @@
             default: return 'text-gray-400';
           }
         }
-
-        window.clearOpValue = (passedEl) => {
-          //Extract the index from the element's id (split on the last dash)
-          const index = parseInt(passedEl.id.split("-").pop());
-          //Clear the value and operator fields
-          if(passedEl.value == ''){
-            filterOperators[index] = null;
-            filterValues[index] = null;
-          }
-        }
-
-        window.updateValueStyling = (passedEl) => {
-          //Extract the index from the element's id (split on the last dash)
-          const index = parseInt(passedEl.id.split("-").pop());
-          const el = document.getElementById('filter-value-' + index);
-          if(!el) return;
-          const existingBorder = el ? 'border-' + el.classList.toString().match(/ border-(.*?)(\s|"|'|$)/)[1].trim() : '';
-          const existingText =  el ? 'text-' + el.classList.toString().replace('text-sm', ' ').match(/ text-(.*?)(\s|"|'|$)/)[1].trim() : ''; 
-          var newBorder = '', newText = '';
-          if(topLevelFilterOptions[index] == 'drops' &&  el.value != ''){
-            switch(el.value.split("_")[ 2]) {
-              case "0": newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
-              case "1": newBorder = 'border-rare'; newText = 'text-rare'; break;
-              case "2": newBorder = 'border-epic'; newText = 'text-epic'; break;
-              case "3": newBorder = 'border-legendary'; newText = 'text-legendary'; break;
-              default: newBorder = 'border-gray-300'; newText = 'text-gray-40 0'; break;
-            }
-          } else if(topLevelFilterOptions[index] == 'duration' && el.value != ''){
-            switch(el.value){
-              case "0": newBorder = 'border-short'; newText = 'text-short'; break;
-              case "1": newBorder = 'border-standard'; newText = 'text-standard'; break;
-              case "2": newBorder = 'border-extended'; newText = 'text-extended'; break;
-              case "3": newBorder = 'border-tutorial'; newText = 'text-tutorial'; break;
-              default: newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
-            }
-          } else {
-            newBorder = 'border-gray-300';
-            newText = 'text-gray-400';
-          }
-          el.classList.remove(existingBorder);
-          el.classList.add(newBorder);
-          el.classList.remove(existingText);
-          el.classList.add(newText);
-         }
 
         const app = Vue.createApp({
           setup() {
@@ -1300,7 +1206,9 @@
             };
 
             // ===== Setup for 'View Mission Data' Tab =====
+            const viewAccountSubmitRef = Vue.ref(null);
             const viewByDate = Vue.ref(false);
+            const viewMissionTimes = Vue.ref(true);
             const viewMissionData = Vue.ref({});
             const doesExportExist = Vue.ref(false);
             const existingExports = Vue.ref([]); //Empty array of strings
@@ -1427,25 +1335,13 @@
             };
             const refreshExistingExports = async () => {
               doesExportExist.value = await window.doesExportExist();
-              if(doesExportExist.value) {
-                existingExports.value = await window.getExistingExports();
-              }
+              if(doesExportExist.value) existingExports.value = await window.getExistingExports();
             };
             Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts, currentState), async () => {
               refreshExistingExports();
             });
             Vue.onMounted(async () => {
               refreshExistingExports();
-            });
-
-            window.switchToLedger = () => {
-              activeTab.value = UITab.Ledger;
-            };
-
-            const possibleTargets = Vue.ref(null);
-            Vue.onMounted(async () => {
-              possibleTargets.value = JSON.parse(await window.getPossibleTargets());
-              window.possibleTargets = possibleTargets.value;
             });
 
             const selectedAccount = Vue.ref(null);
@@ -1494,7 +1390,20 @@
               );
             });
 
+            const calculateMaxMissionDivHeight = () => {
+              if(hideFilter.value) return '80';
+              else{
+                //Sum all values in orFilterConditionsCount, ignoring null
+                const orsSum = orFilterConditionsCount.value.reduce((a, b) => a + (b || 0), 0);
+                const count = (parseInt(filterConditionsCount?.value ?? 1) ?? 1) + orsSum;
+                const calc = 80 - ((count == 1 ? 0 : count * 7.0) + 7);
+                if(calc < 60) return '60';
+                else return calc.toString();
+              }
+            };
+
             const viewEidGo = async () => {
+              filterApplyTime.value = ""; //Reset the filter apply time
               loadedAccountMissionsCount.value = readableExistingExports.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
               eidBeingLoaded.value = true;
               const loadValue = await window.viewEidGo(selectedAccount.value.toString());
@@ -1509,8 +1418,7 @@
             //==============================================
             // Filter stuff :^)
             //==============================================
-            const filterApplyTime = Vue.ref(0);
-
+            const filterApplyTime = Vue.ref("");
             const filterConditionsCount = Vue.ref(1);
             const topLevelFilterOptions = Vue.ref([]);
             const filterOperators = Vue.ref([]);
@@ -1523,37 +1431,101 @@
 
             const dataFilter = Vue.ref([]);
             const orDataFilter = Vue.ref([[]]);
-            const maxQuality = Vue.ref("");
-            const durationConfigs = Vue.ref(null);
-            const artifactConfigs = Vue.ref(null);
             const hideFilter = Vue.ref(false);
             const filterHasChanged = Vue.ref(false);
             const dataBeingFiltered = Vue.ref(false);
 
-            // Vue computed/watched values
-            Vue.watch(topLevelFilterOptions, () => {
-              window.topLevelFilterOptions = topLevelFilterOptions.value;
-            }, {deep: true});
-
-            Vue.watch(orFilterTopLevelOptions, () => {
-              window.orFilterTopLevelOptions = orFilterTopLevelOptions.value;
-            }, {deep: true});
-
+            const possibleTargets = Vue.ref(null);
+            const maxQuality = Vue.ref("");
+            const durationConfigs = Vue.ref(null);
+            const artifactConfigs = Vue.ref(null);
             Vue.onMounted(async () => {
               artifactConfigs.value = JSON.parse(await window.getAfxConfigs());
-              window.artifactConfigs = artifactConfigs.value;
-            });
-
-            Vue.onMounted(async () => {
               maxQuality.value = JSON.parse(await window.getMaxQuality());
-              window.maxQuality = maxQuality.value;
               durationConfigs.value = JSON.parse(await window.getDurationConfigs());
-              window.durationConfigs = durationConfigs.value;
+              possibleTargets.value = JSON.parse(await window.getPossibleTargets());
             });
 
             Vue.watch((dataFilter, orDataFilter), async () => {
               filterHasChanged.value = true;
             });
+
+            const getTopLevelFilterOptions = () => {
+              return [
+                { text: 'Ship', value: 'ship' },
+                { text: 'Duration', value: 'duration' },
+                { text: 'Level', value: 'level' },
+                { text: 'Target', value: 'target' },
+                { text: 'Drops/Loot', value: 'drops' },
+                { text: 'Launch Date', value: 'launchDT' },
+                { text: 'Return Date', value: 'returnDT' },
+                { text: 'Double Cap', value: 'dubcap'}
+              ]
+            }
+
+            const getFilterOpOptions = (topLevel) => {
+              switch(topLevel){
+                case 'ship':
+                case 'duration':
+                case 'level': return [
+                  { text: 'is', value: '=' },
+                  { text: 'is not', value: '!=' },
+                  { text: 'greater than', value: '>' },
+                  { text: 'less than', value: '<' }
+                ];
+                case 'target': return [
+                  { text: 'is', value: '=' },
+                  { text: 'is not', value: '!=' }
+                ];
+                case 'drops': return [
+                  { text: 'contains', value: 'c' },
+                  { text: 'does not contain', value: 'dnc' }
+                ];
+                case 'launchDT':
+                case 'returnDT': return [
+                  { text: 'on', value: 'on' },
+                  { text: 'before', value: 'before' },
+                  { text: 'after', value: 'after' }
+                ];
+                case 'dubcap': return [
+                  { text: 'is', value: '=' },
+                ];
+              }
+            }
+
+            const getFilterValueOptions = (topLevel) => {
+              switch(topLevel){
+                case 'ship': return Array.from({ length: 10 }, (_, index) => ({
+                    text: shipToName(index),
+                    value: index,
+                  }));
+                case 'duration': return Array.from({ length: 4 }, (_, index) => ({
+                    text: durToName(index),
+                    value: index,
+                    styleClass: generateDurStyleClass(index)
+                  }));
+                case 'level': return Array.from({ length: 8 }, (_, index) => ({
+                    text: index + '★',
+                    value: index
+                  }));
+                case 'target': return possibleTargets.value.map(target => ({
+                    text: target.displayName,
+                    value: target.id
+                  }));
+                case 'drops': {
+                  const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
+                    text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + ((artifact.displayName.toLowerCase().indexOf('stone') > -1 && artifact.displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ')')),
+                    value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
+                    styleClass: generateDropStyleClass(artifact)
+                  }))
+                  filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary'});
+                  filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic'});
+                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare'});   
+                  return filteredConfigs;
+                }
+                case 'dubcap': return [{ text: 'True', value: 'true' },{ text: 'False', value: 'false' }];
+              }
+            }
 
             //==============================================
             // Filter window functions
@@ -1566,11 +1538,51 @@
               return new Array(orFilterConditionsCount.value[index]);
             };
 
-            window.manualChangeFilter = async () => {
+            const manualChangeFilter = async () => {
               filterHasChanged.value = true;
             };
 
-            window.updateFilterNoReCount = function() {
+            const updateValueStyling = (passedEl, isOr) => {
+              //Extract the index from the element's id (split on the last dash)
+              const index = parseInt(passedEl.id.split("-")[2]);
+              const orIndex = isOr ? parseInt(passedEl.id.split("-").pop()) : null;
+              if(isOr && orIndex == null) return;
+
+              const el = document.getElementById('filter-value-' + index + (isOr ? ('-' + orIndex) : ''));
+              if(!el) return;
+              const existingBorder = el ? 'border-' + el.classList.toString().match(/ border-(.*?)(\s|"|'|$)/)[1].trim() : '';
+              const existingText =  el ? 'text-' + el.classList.toString().replace('text-sm', ' ').match(/ text-(.*?)(\s|"|'|$)/)[1].trim() : ''; 
+              const isDrops = isOr ? orFilterTopLevelOptions.value[index][orIndex] == 'drops' : topLevelFilterOptions.value[index] == 'drops';
+              const isDuration = isOr ? orFilterTopLevelOptions.value[index][orIndex] == 'duration' : topLevelFilterOptions.value[index] == 'duration';
+              var newBorder = '', newText = '';
+
+              if(isDrops &&  el.value != ''){
+                switch(el.value.split("_")[ 2]) {
+                  case "0": newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
+                  case "1": newBorder = 'border-rare'; newText = 'text-rare'; break;
+                  case "2": newBorder = 'border-epic'; newText = 'text-epic'; break;
+                  case "3": newBorder = 'border-legendary'; newText = 'text-legendary'; break;
+                  default: newBorder = 'border-gray-300'; newText = 'text-gray-40 0'; break;
+                }
+              } else if(isDuration && el.value != ''){
+                switch(el.value){
+                  case "0": newBorder = 'border-short'; newText = 'text-short'; break;
+                  case "1": newBorder = 'border-standard'; newText = 'text-standard'; break;
+                  case "2": newBorder = 'border-extended'; newText = 'text-extended'; break;
+                  case "3": newBorder = 'border-tutorial'; newText = 'text-tutorial'; break;
+                  default: newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
+                }
+              } else {
+                newBorder = 'border-gray-300';
+                newText = 'text-gray-400';
+              }
+              el.classList.remove(existingBorder);
+              el.classList.add(newBorder);
+              el.classList.remove(existingText);
+              el.classList.add(newText);
+            };
+
+            const updateFilterNoReCount = () => {
               filterHasChanged.value = true;
               const newDataFilter = [];
               if(topLevelFilterOptions.value.length != 0 && topLevelFilterOptions.value != null){
@@ -1608,7 +1620,35 @@
               orDataFilter.value = newOrDataFilter;
             };
 
-            window.updateFilterConditionsCount = function() {
+            const handleFilterChange = (event) => {
+              const targetEl = event.target;
+              const targetId = targetEl.id;
+              if(targetEl.oldValue == null) { 
+                updateFilterConditionsCount(); 
+                targetEl.oldValue = targetEl.value;
+              } else updateFilterNoReCount(); 
+              updateValueStyling(targetEl, false);
+              if(targetId.indexOf('filter-top-') > -1 && targetEl.value == '') {
+                const index = parseInt(targetId.split("-").pop());
+                filterOperators[index] = null;
+                filterValues[index] = null;
+              }
+            };
+
+            const handleOrFilterChange = (event) => {
+              const targetEl = event.target;
+              const targetId = targetEl.id;
+              const index = parseInt(targetId.split("-")[2]);
+              const orIndex = parseInt(targetId.split("-").pop());   
+              updateFilterNoReCount();
+              updateValueStyling(targetEl, true);
+              if(targetId.indexOf('filter-top-') > -1 && targetEl.value == '') {
+                orFilterOperators[index][orIndex] = null;
+                orFilterValues[index][orIndex] = null;
+              }
+            };
+
+            const updateFilterConditionsCount = () => {
               filterHasChanged.value = true;
               const newDataFilter = [];
               if(topLevelFilterOptions.value.length == 0 || topLevelFilterOptions.value == null) return;
@@ -1641,18 +1681,11 @@
               dataFilter.value = newDataFilter;
             };
 
-            window.toggleFilter = function() {
-              hideFilter.value = !hideFilter.value;
-              document.getElementById('toggleFilterButton').innerHTML = hideFilter.value ? "Show" : "Hide";
-            };
-
-            
             //==============================================
             // Filter Vue functions
             //==============================================
             const addOr = (index) => {
               if(orFilterConditionsCount.value == null) {
-                window.console.log("orFilterConditionsCount.value is null");
                 orFilterConditionsCount.value = []
               };
               if(orFilterConditionsCount.value[index] == null) orFilterConditionsCount.value[index] = 1;
@@ -1679,13 +1712,13 @@
                 orFilterOperators.value[i] = orFilterOperators.value[i + 1];
                 orFilterValues.value[i] = orFilterValues.value[i + 1];
               }
-              window.updateFilterConditionsCount();
-              window.updateFilterNoReCount();
+              updateFilterConditionsCount();
+              updateFilterNoReCount();
               filterHasChanged.value = true;
 
               //Look for all `filter-top` elements and update their stylings
               document.querySelectorAll('.filter-top').forEach(el => {
-                window.updateValueStyling(el);
+                updateValueStyling(el, false);
               });
             }
 
@@ -1698,7 +1731,7 @@
               }
               orFilterConditionsCount.value[index] -= 1;
               if(orFilterConditionsCount.value[index] == 0) orFilterConditionsCount.value[index] = null;
-              window.updateFilterNoReCount();
+              updateFilterNoReCount();
               filterHasChanged.value = true;
             }
 
@@ -1706,6 +1739,13 @@
               var filterPassed = true;
               if(filter.topLevel != null && filter.op != null && filter.val != null){
                 switch(filter.topLevel){
+                  case 'dubcap': {
+                    switch(filter.val){
+                      case 'true': if(!mission.isDubCap) filterPassed = false; break;
+                      case 'false': if(mission.isDubCap) filterPassed = false; break;
+                    }
+                    break;
+                  }
                   case 'ship': {
                     switch(filter.op){
                       case '=': if(mission.ship != filter.val) filterPassed = false; break;
@@ -1849,7 +1889,6 @@
               const seconds = Math.floor(applyTime / 1000);
               const ms = Math.floor(applyTime % 1000);
               filterApplyTime.value = seconds + "." + ms + "s";
-              window.filterApplyTime = filterApplyTime.value;
 
               filteredMissions.value = newFilteredMissions;
               dataBeingFiltered.value = false;
@@ -1927,6 +1966,8 @@
               const prevMission = shipIndex > 0 ? allLoadedMissions.value[shipIndex - 1].missionId : null;
               const nextMission = shipIndex < allLoadedMissions.value.length - 1 ? allLoadedMissions.value[shipIndex + 1].missionId : null;
 
+              //Max of 2
+              const capModifier = Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity);
               const newMissionViewData = {
                 shipInfo: shipInfo,
                 artifacts: sortedGroupedSpecType(artifacts),
@@ -1937,6 +1978,7 @@
                 stoneCount: stones.length,
                 stoneFragmentCount: stoneFragments.length,
                 ingredientCount: ingredients.length,
+                capacityModifier: capModifier,
                 launchStr: launchStr,
                 returnStr: returnStr,
                 durationStr: durationString,
@@ -1982,26 +2024,27 @@
 
               appHasUpdate,
 
-              //Daveed additions :^)
+              //View all missions
               doesExportExist,
               existingExports,
               readableExistingExports,
               selectedAccount,
               eidBeingLoaded,
+              viewAccountSubmitRef,
               viewEidGo,
-              toggleDay,
-              toggleMonth,
-              toggleYear,
-              toggleAll,
+              toggleElements,
               durToSpan,
-              shortenDate,
+              padDateOut,
               levelToStars,
               shipToName,
               viewSpecificMission,
               targetImage,
               closeOverlay,
               refreshExistingExports,
+
+              //View specific mission
               viewByDate,
+              viewMissionTimes,
               loadedAccountMissionsCount,
               loadedEid,
               allLoadedMissions,
@@ -2026,29 +2069,36 @@
               groupedMonthsArr,
               groupedDaysArr,
 
+              //Filter
               dataFilter,
-              filterHasChanged,
               dataBeingFiltered,
-              applyFilter,
-              getTopLevelFilterOptions,
-              getFilterOpOptions,
-              getFilterValueOptions,
+              filterApplyTime,
+              filterHasChanged,
+              hideFilter,
               topLevelFilterOptions,
               filterOperators,
               filterValues,
-              hideFilter,
-              removeAndShift,
-              removeOrAndShift,
-              addOr,
-              filterApplyTime,
               orFilterConditionsCount,
               orFilterTopLevelOptions,
               orFilterOperators,
               orFilterValues,
+              addOr,
+              applyFilter,
+              handleFilterChange,
+              handleOrFilterChange,
+              manualChangeFilter,
+              updateFilterConditionsCount,
+              updateValueStyling,
+              updateFilterNoReCount,
+              getTopLevelFilterOptions,
+              getFilterOpOptions,
+              getFilterValueOptions,
+              removeAndShift,
+              removeOrAndShift,
               generateFilterConditionsArr,
               generateOrFiltersConditionsArr,
+              calculateMaxMissionDivHeight,
 
-              updateFilterConditionsCount: window.updateFilterConditionsCount,
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,
               openURL: window.openURL,

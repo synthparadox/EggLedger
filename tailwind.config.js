@@ -15,6 +15,9 @@ module.exports = {
         weewoosiren: "rgb(234 88 12)",
         goldenstar: "rgb(255 215 0)",
         'yellow-700': "rgb(251 191 36)", 
+        rare: '#6ab6ff',
+        epic: '#c03fe2',
+        legendary: '#eeab42'
       },
       height: {
         stretch: 'stretch',
@@ -55,15 +58,20 @@ module.exports = {
         'dark_tab': "#323633",
         'darker_tab': "#262927",
         'dark_tab_hover': "#3a3d3a",
-        'darker_tab_hover': "#2e312e"
+        'darker_tab_hover': "#2e312e",
+      },
+      backgroundImage: {
+        'rare': 'radial-gradient(#a8dfff,#8dd5ff,#3a9dfc)',
+        'epic': 'radial-gradient(#ce81f7,#b958ed,#8819c2)',
+        'legendary': 'radial-gradient(#fcdd6a, #ffdb58, #e09143)',
       },
       borderColor: {
         "dark_tab": "#111211",
         'red-700': "rgb(185 28 28)",
         'yellow-700': "rgb(251 191 36)",
-        'rare': "rgb(69, 159, 246)",
-        'epic': "rgb(139, 93, 246)",
-        'legendary': "rgb(246, 168, 35)",
+        'rare': '#6ab6ff',
+        'epic': '#c03fe2',
+        'legendary': '#eeab42',
         'tutorial': "rgb(115, 128, 140)",
         'short': "rgb(69, 159, 246)",
         'standard': "rgb(139, 93, 246)",

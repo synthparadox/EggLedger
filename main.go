@@ -48,11 +48,12 @@ var (
 	// /private/var/folders/<...>/<...>/T/AppTranslocation/<UUID>/d/internal
 	_appIsTranslocated bool
 
-	_devMode             = os.Getenv("DEV_MODE") != ""
-	_dateFormat          = "%02d:%02d:%02d"
-	_eiAfxConfigErr      = eiafx.LoadConfig()
-	_eiAfxConfigMissions []*ei.ArtifactsConfigurationResponse_MissionParameters
-	_eiAfxConfigArtis    []*ei.ArtifactsConfigurationResponse_ArtifactParameters
+	_devMode               = os.Getenv("DEV_MODE") != ""
+	_dateFormat            = "%02d:%02d:%02d"
+	_eiAfxConfigErr        = eiafx.LoadConfig()
+	_eiAfxConfigMissions   []*ei.ArtifactsConfigurationResponse_MissionParameters
+	_eiAfxConfigArtis      []*ei.ArtifactsConfigurationResponse_ArtifactParameters
+	_nominalShipCapacities = map[ei.MissionInfo_Spaceship]map[ei.MissionInfo_DurationType][]float32{}
 )
 
 const (
@@ -111,21 +112,23 @@ type ExportedFile struct {
 }
 
 type LoadedMission struct {
-	LaunchDay    int32                        `json:"launchDay"`
-	LaunchMonth  int32                        `json:"launchMonth"`
-	LaunchYear   int32                        `json:"launchYear"`
-	LaunchTime   string                       `json:"launchTime"`
-	ReturnDay    int32                        `json:"returnDay"`
-	ReturnMonth  int32                        `json:"returnMonth"`
-	ReturnYear   int32                        `json:"returnYear"`
-	ReturnTime   string                       `json:"returnTime"`
-	MissiondId   string                       `json:"missionId"`
-	Ship         *ei.MissionInfo_Spaceship    `json:"ship"`
-	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
-	Level        int32                        `json:"level"`
-	Capacity     int32                        `json:"capacity"`
-	Target       string                       `json:"target"`
-	TargetInt    int32                        `json:"targetInt"`
+	LaunchDay      int32                        `json:"launchDay"`
+	LaunchMonth    int32                        `json:"launchMonth"`
+	LaunchYear     int32                        `json:"launchYear"`
+	LaunchTime     string                       `json:"launchTime"`
+	ReturnDay      int32                        `json:"returnDay"`
+	ReturnMonth    int32                        `json:"returnMonth"`
+	ReturnYear     int32                        `json:"returnYear"`
+	ReturnTime     string                       `json:"returnTime"`
+	MissiondId     string                       `json:"missionId"`
+	Ship           *ei.MissionInfo_Spaceship    `json:"ship"`
+	DurationType   *ei.MissionInfo_DurationType `json:"durationType"`
+	Level          int32                        `json:"level"`
+	Capacity       int32                        `json:"capacity"`
+	NominalCapcity int32                        `json:"nominalCapacity"`
+	IsDubCap       bool                         `json:"isDubCap"`
+	Target         string                       `json:"target"`
+	TargetInt      int32                        `json:"targetInt"`
 }
 
 type MissionDrop struct {
@@ -278,13 +281,46 @@ func init() {
 	} else {
 		_eiAfxConfigMissions = eiafx.Config.MissionParameters
 		_eiAfxConfigArtis = eiafx.Config.ArtifactParameters
+		initNominalShipCapacities()
 	}
 
 	storageInit()
 	dataInit()
 }
 
+func initNominalShipCapacities() {
+	//Loop through ships, for each duration, get the capacity - generate the capacities for each level with capacity + (cap increase * level)
+	for _, mission := range eiafx.Config.MissionParameters {
+		durations := mission.GetDurations()
+		_nominalShipCapacities[mission.GetShip()] = map[ei.MissionInfo_DurationType][]float32{}
+		for _, duration := range durations {
+			_nominalShipCapacities[mission.GetShip()][duration.GetDurationType()] = []float32{}
+			if len(mission.GetLevelMissionRequirements()) == 0 {
+				_nominalShipCapacities[mission.GetShip()][duration.GetDurationType()] = append(_nominalShipCapacities[mission.GetShip()][duration.GetDurationType()], float32(duration.GetCapacity()))
+			} else {
+				for level := 0; level <= len(mission.GetLevelMissionRequirements()); level++ {
+					_nominalShipCapacities[mission.GetShip()][duration.GetDurationType()] = append(_nominalShipCapacities[mission.GetShip()][duration.GetDurationType()], float32(duration.GetCapacity())+(float32(duration.GetLevelCapacityBump())*float32(level)))
+				}
+			}
+		}
+	}
+}
+
+func isDubCap(mission *ei.CompleteMissionResponse) bool {
+	nominalCapcity := _nominalShipCapacities[mission.Info.GetShip()][mission.Info.GetDurationType()][mission.Info.GetLevel()]
+	if float32(mission.Info.GetCapacity()) >= (nominalCapcity * 1.7) { //1.7 to account for rounding errors (1.5x is the max with ER)
+		return true
+	} else {
+		return false
+	}
+}
+
 func viewMissionsOfId(eid string) (string, error) {
+
+	if len(_nominalShipCapacities) == 0 {
+		initNominalShipCapacities()
+	}
+
 	//Get list of complete missions from the DB
 	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
 	if err != nil {
@@ -315,12 +351,14 @@ func viewMissionsOfId(eid string) (string, error) {
 			ReturnYear:  int32(returnTimeObject.Year()),
 			ReturnTime:  returnTime,
 
-			MissiondId:   info.GetIdentifier(),
-			Ship:         info.Ship,
-			DurationType: info.DurationType,
-			Level:        int32(info.GetLevel()),
-			Capacity:     int32(info.GetCapacity()),
-			Target:       properTargetName(info.TargetArtifact),
+			MissiondId:     info.GetIdentifier(),
+			Ship:           info.Ship,
+			DurationType:   info.DurationType,
+			Level:          int32(info.GetLevel()),
+			Capacity:       int32(info.GetCapacity()),
+			NominalCapcity: int32(_nominalShipCapacities[info.GetShip()][info.GetDurationType()][info.GetLevel()]),
+			IsDubCap:       isDubCap(completeMission),
+			Target:         properTargetName(info.TargetArtifact),
 		}
 		if missionInst.Target == "" {
 			missionInst.TargetInt = -1
@@ -959,10 +997,11 @@ func main() {
 			return ""
 		}
 
-		launchDateTimeObject := time.Unix(int64(*completeMission.Info.StartTimeDerived), 0)
+		info := completeMission.Info
+		launchDateTimeObject := time.Unix(int64(*info.StartTimeDerived), 0)
 		ltH, ltM, ltS := launchDateTimeObject.Clock()
 		launchTime := fmt.Sprintf(_dateFormat, ltH, ltM, ltS)
-		returnTimeObject := launchDateTimeObject.Add(time.Duration(*completeMission.Info.DurationSeconds * float64(time.Second)))
+		returnTimeObject := launchDateTimeObject.Add(time.Duration(*info.DurationSeconds * float64(time.Second)))
 		rtH, rtM, rtS := returnTimeObject.Clock()
 		returnTime := fmt.Sprintf(_dateFormat, rtH, rtM, rtS)
 
@@ -977,12 +1016,14 @@ func main() {
 			ReturnYear:  int32(returnTimeObject.Year()),
 			ReturnTime:  returnTime,
 
-			MissiondId:   *completeMission.Info.Identifier,
-			Ship:         completeMission.Info.Ship,
-			DurationType: completeMission.Info.DurationType,
-			Level:        int32(completeMission.Info.GetLevel()),
-			Capacity:     int32(completeMission.Info.GetCapacity()),
-			Target:       properTargetName(completeMission.Info.TargetArtifact),
+			MissiondId:     *info.Identifier,
+			Ship:           info.Ship,
+			DurationType:   info.DurationType,
+			Level:          int32(info.GetLevel()),
+			Capacity:       int32(info.GetCapacity()),
+			NominalCapcity: int32(_nominalShipCapacities[info.GetShip()][info.GetDurationType()][info.GetLevel()]),
+			IsDubCap:       isDubCap(completeMission),
+			Target:         properTargetName(info.TargetArtifact),
 		}
 
 		// Convert the single mission to a JSON string

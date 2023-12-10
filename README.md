@@ -34,3 +34,12 @@ The MIT License. See COPYING.
 ## Contributing
 
 This repository is open to contribution. If you have something you want to add, feel free to fork the repository and submit a pull request.
+
+## Development notes
+
+If you are using the provided MAKEFILE, you will need to either build the project on linux, or use a WSL environment to build it on Windows.
+Due to optimizing the MAKEFILE for GitHub Actions, the build process is linux-focused to ensure the actions do not fail.
+Beyond that, `make dist` will generate zips and an exe for you to test with.
+
+Q: Why is the entire fucking `lorca` library forked and stored locally?
+A: [This is why](https://github.com/zserge/lorca/issues/167) - I may develop an alternative to keeping this locally, eventually.
