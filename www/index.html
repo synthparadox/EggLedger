@@ -139,13 +139,13 @@
               <div class="grid gap-x-2" style="grid-template-columns: repeat(2, max-content)">
                 <template v-for="file in exportedFiles" v-bind:key="file">
                   <button
-                    class="text-green-500 hover:text-green-600 underline"
+                    class="file-link"
                     v-on:click="openFile(file)"
                   >
                     {{ file }}
                   </button>
                   <button
-                    class="text-blue-500 hover:text-blue-600 underline truncate"
+                    class="url-link truncate"
                     v-on:click="openFileInFolder(file)"
                   >
                     open in folder
@@ -182,14 +182,14 @@
                 v-external-link
                 href="https://github.com/DavidArthurCole/EggLedger/releases"
                 target="_blank"
-                class="text-green-500 hover:text-green-600 underline"
+                class="file-link"
                 >Check for updates</a
               >
               <a
                 v-external-link
                 href="https://wasmegg-carpet.netlify.app/"
                 target="_blank"
-                class="text-green-500 hover:text-green-600 underline"
+                class="file-link"
                 >More tools</a
               >
             </p>
@@ -197,18 +197,26 @@
             <hr />
             <div class="space-y-1">
               <h2 class="font-bold">Is mk2 back?</h2>
-              <span class="mt-1">No. This tool is now being developed independently of mk2 - the community has taken over his orphaned tools since he went AWOL in 2022. <i>For EggLedger</i>, <i>specifically</i>, I  (<a
-                v-external-link
-                href="https://github.com/DavidArthurCole"
-                target="_blank"
-                class="text-gray-500 hover:text-gray-600 underline"
-                >DavidArthurCole</a
-              >) am the active developer and maintainer. To report issues, ask for changes, and more generally, to reach me with any information, reach out on discord <span class="text-short">@davidarthurcole</span>, or <a 
-                v-external-link
-                href="https://github.com/DavidArthurCole/EggLedger/issues/new/choose"
-                target="_blank"
-                class="text-gray-500 hover:text-gray-600 underline"
-              >open an Issue on GitHub</a>.</span>
+              <p>
+                No. This tool is now being developed independently of mk2 - the community has taken over his orphaned tools since he went AWOL in 2022.
+              </p> 
+              <p>
+                <i>For EggLedger</i>, <i>specifically</i>, I (<a
+                  v-external-link
+                  href="https://github.com/DavidArthurCole"
+                  target="_blank"
+                  class="url-link"
+                  >DavidArthurCole</a
+                >) am the active developer and maintainer.
+              </p> 
+              <p>
+                To report issues, ask for changes, and more generally, to reach me with any information, reach out on discord <span class="text-short">@davidarthurcole</span>, or <a 
+                  v-external-link
+                  href="https://github.com/DavidArthurCole/EggLedger/issues/new/choose"
+                  target="_blank"
+                  class="url-link"
+                >open an Issue on GitHub</a>.
+              </p>
             </div>
             <hr />
 
@@ -216,17 +224,24 @@
               <h2 class="font-bold">What does EggLedger do?</h2>
               <p>
                 EggLedger helps export your spaceship mission data, including loot from each
-                mission, to .xlsx (Excel) and .csv formats for further analysis. It is an extension
-                to the
+                mission, to .xlsx (Excel) and .csv formats for further analysis.
+              </p>
+              <p>   
+                It is an extension to the
                 <a
                   v-external-link
                   href="https://wasmegg-carpet.netlify.app/rockets-tracker/"
                   target="_blank"
-                  class="text-blue-500 hover:text-blue-600 underline"
+                  class="url-link"
                   >rockets tracker</a
                 >, answering questions like "from which mission did I obtain this legendary
                 artifact?" and "how many of this item dropped from my ships?" which can't be
                 answered there due to technical or UI limitations.
+              </p>
+              <p>
+                In addition, it mimics the functionality of rockets tracker to provide you access
+                to view your mission data in a more user-friendly way, and lets you filter missions
+                by various criteria.
               </p>
             </div>
             <hr />
@@ -234,10 +249,17 @@
             <div class="space-y-1">
               <h2 class="font-bold">How do I use EggLedger?</h2>
               <p>
-                Go to the Ledger tab, enter your Egg, Inc. account ID (not to be confused with your
-                nickname), and press "Fetch". First session for an account could take a while,
-                proportional to the number of missions you have completed. Subsequent sessions will
-                only fetch unrecorded missions.
+                <ul class="about-list-1">
+                  <li>Go to the Ledger tab</li>
+                  <li>Enter your Egg, Inc. account ID</li>
+                  <li>
+                    Press "Fetch"
+                    <ul class="about-list-2">
+                      <li>The first fetch session for an account could take a while, if you have lots of completed missions</li>
+                      <li>Subsequent sessions will only fetch unrecorded missions</li>
+                    </ul>
+                  </li>
+                </ul>
                 <span class="underline">Data for multiple accounts can coexist.</span>
               </p>
             </div>
@@ -247,11 +269,15 @@
               <h2 class="font-bold">When I use EggLedger, are my data shared with anyone?</h2>
               <p>
                 No. EggLedger communicates with the Egg, Inc. API directly, meaning all your data is
-                kept 100% private. No data or analytics is collected by the EggLedger developer. The
-                only third party request is the occasional update check against github.com; this is
+                kept 100% private. No data or analytics is collected by the EggLedger developer.
+              </p>
+              <p>
+                The only third party request is the occasional update check against github.com; this is
                 the biggest open source code hosting service, there is no personal data attached to
-                the requests and no logs are available to me. Unless you tell me over another
-                channel, there's no way I can determine if you're even using this tool, let alone
+                the requests and no logs are available to me.
+              </p>
+              <p> 
+                Unless you tell me over another channel, there's no way I can determine if you're even using this tool, let alone
                 acquiring collecting any info about your account.
               </p>
             </div>
@@ -265,11 +291,12 @@
                   v-external-link
                   href="https://wasmegg-carpet.netlify.app/rockets-tracker/"
                   target="_blank"
-                  class="text-blue-500 hover:text-blue-600 underline"
+                  class="url-link"
                   >rockets tracker</a
-                >
-                has been safely operating with the same techniques for a very long time. Do realize
-                that none of my tools are sanctioned by the Egg, Inc. developer, so you use them at
+                > has been safely operating with the same techniques for a very long time.
+              </p>
+              <p>
+                Do realize that no community-made tools are sanctioned by the Egg, Inc. developer, so you use them at
                 your own risk. I'm not responsible for any negative effects.
               </p>
             </div>
@@ -278,18 +305,18 @@
             <div class="space-y-1">
               <h2 class="font-bold">Where do I find my Egg, Inc. account ID?</h2>
               <p>
-                Open the game menu
-                <img
-                  src="images/icon_menu.webp"
-                  alt="Menu Icon"
-                  class="bg-white inline h-5 w-5 p-0.5 relative -top-px border border-gray-300 rounded-full"
-                />
-                (lower left corner), choose Settings
-                <img
-                  src="images/icon_settings.webp"
-                  alt="Settings Icon"
-                  class="bg-white inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
-                />, then click on "Privacy & Data". Your ID is at the bottom.
+                <ul class="about-list-1">
+                  <li class="mt-1">
+                    Open the game menu <img src="images/icon_menu.webp" alt="Menu Icon" class="game-btn-ico"/>
+                  </li>
+                  <li class="mt-1">
+                    Choose Settings <img src="images/icon_settings.webp" alt="Settings Icon" class="game-btn-ico"/>
+                  </li>
+                  <li class="mt-1 mb-1">
+                    Choose <span class="p-0.5 text-xs rounded-md bg-privacy_blue w-4" style="padding-left: 10px; padding-right: 10px;"> Privacy &amp; Data </span>
+                  </li>
+                </ul>
+                Your ID is at the bottom.
                 <span class="underline">It should look like EI1234567890123456</span>; that's the
                 letters "EI" followed by 16 digits.
               </p>
@@ -298,9 +325,9 @@
                 <img
                   src="images/icon_help.webp"
                   alt="Help Icon"
-                  class="bg-white inline h-5 w-5 relative -top-px border border-gray-300 rounded-full"
+                  class="game-btn-ico"
                 />
-                in the main menu and click on "Data Loss Issue", the game will auto-compose an email
+                in the main menu and click on <span class="p-0.5 text-xs rounded-md bg-data_loss_red w-4" style="padding-left: 10px; padding-right: 10px;"> Data Loss Issue </span>, the game will auto-compose an email
                 with your ID in the subject.
               </p>
             </div>
@@ -331,14 +358,13 @@
             <div class="space-y-1">
               <h2 class="font-bold">Where does EggLedger store data?</h2>
               <p>
-                All configurations, data, and exported files are stored in the same directory as the
-                EggLedger application.
-                <span class="underline"
-                  >Make sure you put EggLedger in a directory of its own, and don't touch the
-                  "internal" directory</span
-                >
-                (or you risk data corruption). If you want to uninstall EggLedger, just delete the
-                directory, and it won't leave any trace on your system.
+                All configurations, data, and exported files are stored in the same directory as the EggLedger application.
+              </p>
+              <p>
+                <span class="underline">Make sure you put EggLedger in a directory of its own, and don't touch the "internal" directory</span> (or you risk data corruption).
+              </p>
+              <p>
+                If you want to uninstall EggLedger, just delete the directory, and it won't leave any trace on your system.
               </p>
             </div>
             <hr />
@@ -350,7 +376,7 @@
                   v-external-link
                   href="https://areyousure.netlify.app/"
                   target="_blank"
-                  class="text-blue-500 hover:text-blue-600 underline"
+                  class="url-link"
                   >Are you sure</a
                 >
                 you want @mk2's autograph?
@@ -360,10 +386,19 @@
 
             <div class="space-y-1">
               <h2 class="font-bold">Known issues</h2>
-              <p>Since this application piggybacks on Chrome, there are a few known limitations:</p>
-              <ul class="list-decimal list-inside">
-                <li>On macOS, clicking on the app in dock can open a new browser window.</li>
-                <li>On Windows, resolution of the task bar app icon is garbage.</li>duration
+              <ul class="about-list-1">
+                <li>On macOS, clicking on the app in dock can open a new browser window</li>
+                <li>On Windows, resolution of the task bar app icon is garbage</li>
+                <li>
+                  Some ships may fail to pull during a fetch
+                  <ul class="about-list-2">
+                    <li>An ocassional API timeout is normal, and another fetch should work to pull these missions</li>
+                    <li>If frequent timeouts occur, or the same ship fails to pull repeatedly, please reach out</li>
+                  </ul>
+                </li>
+                <li>
+                  Due to the immense number of elements generated, the "View Mission Data" tab may be slow to load
+                </li>
               </ul>
             </div>
             <hr />
@@ -603,6 +638,15 @@
                   applyFilter();
                 }"
               >
+                <!-- Warning (if not already seen) -->
+                <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4" style="max-width: 500px;">
+                  <span class="font-bold underline mb-025rem">Warning:</span><br />
+                  The filter feature is experimental, and may not work as expected (especially with complicated combinations).<br />
+                  You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion.<br />
+                  Please use it carefully, and report any issues you encounter.<br />
+                  <br />
+                  <button type="button" style="padding: 0.75rem;" class="btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
+                </div>
                 <div
                   class="max-h-60 overflow-y-auto"  
                 >
@@ -847,20 +891,20 @@
             v-external-link
             href="https://github.com/DavidArthurCole/EggLedger"
             target="_blank"
-            class="text-gray-500 hover:text-gray-600 underline"
+            class="url-link"
             >EggLedger</a
           >
           v{{ appVersion }} by @<a
             v-external-link
             href="https://github.com/fanaticscripter"
             target="_blank"
-            class="text-gray-500 hover:text-gray-600 underline"
+            class="url-link"
             >mk2</a
           > & @<a
             v-external-link
             href="https://github.com/DavidArthurCole"
             target="_blank"
-            class="text-gray-500 hover:text-gray-600 underline"
+            class="url-link"
             >DavidArthurCole</a
           >
           <span v-if="appHasUpdate" class="text-red-700">
@@ -893,6 +937,7 @@
       //Daveed additions :^)
       // - doesExportExist(): bool
       // - getExistingExports(): []string
+      // - filterWarningRead(): void
 
       // Interrupt worker if the page is reloaded or closed.
       window.addEventListener('beforeunload', async () => {
@@ -1034,6 +1079,13 @@
             case 3: return 'text-legendary';
             default: return 'text-gray-400';
           }
+        }
+
+        const filterWarningRead = Vue.ref((await window.filterWarningRead()) ?? false);
+        const hideFilterWarning = Vue.ref(false);
+        const dismissFilterWarning = async () => {
+          await window.setFilterWarningRead(true);
+          hideFilterWarning.value = true;
         }
 
         const app = Vue.createApp({
@@ -2095,6 +2147,9 @@
               generateFilterConditionsArr,
               generateOrFiltersConditionsArr,
               calculateMaxMissionDivHeight,
+              filterWarningRead,
+              hideFilterWarning,
+              dismissFilterWarning,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,

@@ -17,6 +17,7 @@ type AppStorage struct {
 
 	LastUpdateCheckAt  time.Time `json:"last_update_check_at"`
 	KnownLatestVersion string    `json:"known_latest_version"`
+	FilterWarningRead  bool      `json:"filter_warning_read"`
 }
 
 type Account struct {
@@ -80,6 +81,13 @@ func (s *AppStorage) SetUpdateCheck(latestVersion string) {
 	s.Lock()
 	s.LastUpdateCheckAt = time.Now()
 	s.KnownLatestVersion = latestVersion
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) SetFilterWarningRead(flag bool) {
+	s.Lock()
+	s.FilterWarningRead = flag
 	s.Unlock()
 	go s.Persist()
 }

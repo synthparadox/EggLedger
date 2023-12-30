@@ -76,3 +76,13 @@
   border-radius: 10px;
   text-align: center;
 }
+
+.about-list-1 {
+  padding-left: 25px; 
+  list-style-type: disc;
+}
+
+.about-list-2 {
+  padding-left: 25px; 
+  list-style-type: circle;
+}

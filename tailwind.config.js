@@ -60,6 +60,8 @@ module.exports = {
         'darker_tab': "#262927",
         'dark_tab_hover': "#3a3d3a",
         'darker_tab_hover': "#2e312e",
+        'privacy_blue': "#276ec8",
+        'data_loss_red': "#820808"
       },
       backgroundImage: {
         'rare': 'radial-gradient(#a8dfff,#8dd5ff,#3a9dfc)',

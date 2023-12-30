@@ -479,6 +479,16 @@ func main() {
 		return _storage.KnownAccounts
 	})
 
+	ui.MustBind("filterWarningRead", func() bool {
+		_storage.Lock()
+		defer _storage.Unlock()
+		return _storage.FilterWarningRead
+	})
+
+	ui.MustBind("setFilterWarningRead", func(flag bool) {
+		_storage.SetFilterWarningRead(flag)
+	})
+
 	w := &worker{
 		Weighted: semaphore.NewWeighted(1),
 	}
