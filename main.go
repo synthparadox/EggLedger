@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -146,6 +147,7 @@ type ExportAccount struct {
 	Id           string `json:"id"`
 	Nickname     string `json:"nickname"`
 	MissionCount int    `json:"missionCount"`
+	EBString     string `json:"ebString"`
 }
 
 type RawPossibleTarget struct {
@@ -526,13 +528,96 @@ func main() {
 				}
 				return
 			}
-			nickname := fc.GetBackup().GetUserName()
+
+			backup := fc.GetBackup()
+			game := backup.GetGame()
+			nickname := backup.GetUserName()
+			//EB calculations
+			soulEggBonus := 10.0
+			prophecyEggBonus := 1.05
+			for _, er := range game.GetEpicResearch() {
+				if strings.ToLower(er.GetId()) == "soul_eggs" {
+					soulEggBonus = float64(er.GetLevel()) + 10
+				} else if strings.ToLower(er.GetId()) == "prophecy_bonus" {
+					prophecyEggBonus = (float64(er.GetLevel())+5)/100 + 1
+				}
+			}
+			eb := float64(game.GetSoulEggsD() * soulEggBonus * math.Pow(float64(prophecyEggBonus), float64(game.GetEggsOfProphecy())))
+
+			divByTReps := 0
+			ebCopy := eb
+			for ebCopy > 1000 {
+				ebCopy /= 1000
+				divByTReps++
+			}
+			ebAddendum := ""
+			switch divByTReps {
+			case 0:
+				ebAddendum = ""
+			case 1:
+				ebAddendum = "K"
+			case 2:
+				ebAddendum = "M"
+			case 3:
+				ebAddendum = "B"
+			case 4:
+				ebAddendum = "T"
+			case 5:
+				ebAddendum = "q"
+			case 6:
+				ebAddendum = "Q"
+			case 7:
+				ebAddendum = "s"
+			case 8:
+				ebAddendum = "S"
+			case 9:
+				ebAddendum = "o"
+			case 10:
+				ebAddendum = "N"
+			case 11:
+				ebAddendum = "d"
+			case 12:
+				ebAddendum = "U"
+			case 13:
+				ebAddendum = "D"
+			case 14:
+				ebAddendum = "Td"
+			case 15:
+				ebAddendum = "qd"
+			case 16:
+				ebAddendum = "Qd"
+			case 17:
+				ebAddendum = "sd"
+			case 18:
+				ebAddendum = "Sd"
+			case 19:
+				ebAddendum = "Od"
+			case 20:
+				ebAddendum = "Nd"
+			case 21:
+				ebAddendum = "V"
+			}
+
+			//Print the EB with a maximum of 3 total numbers - i.e. 1.23K, 12.3K, 123K, etc.
+			var precision int
+			switch {
+			case ebCopy < 10.0:
+				precision = 2
+			case ebCopy < 100.0:
+				precision = 1
+			default:
+				precision = 0
+			}
+
+			ebString := fmt.Sprintf(fmt.Sprintf("%%.%df", precision), ebCopy) + ebAddendum
+
 			msg := fmt.Sprintf("successfully fetched backup for %s", playerId)
 			if nickname != "" {
 				msg += fmt.Sprintf(" (%s)", nickname)
 			}
+
 			pinfo(msg)
-			lastBackupTime := fc.GetBackup().GetSettings().GetLastBackupTime()
+			lastBackupTime := backup.GetSettings().GetLastBackupTime()
 			if lastBackupTime != 0 {
 				t := unixToTime(lastBackupTime)
 				now := time.Now()
@@ -544,7 +629,7 @@ func main() {
 			} else {
 				perror("backup is from unknown time")
 			}
-			_storage.AddKnownAccount(Account{Id: playerId, Nickname: nickname})
+			_storage.AddKnownAccount(Account{Id: playerId, Nickname: nickname, EarningsBonus: eb, EBString: ebString})
 			_storage.Lock()
 			updateKnownAccounts(_storage.KnownAccounts)
 			_storage.Unlock()
@@ -744,7 +829,7 @@ func main() {
 		}
 	})
 
-	ui.MustBind("doesExportExist", func() bool {
+	ui.MustBind("doesDataExist", func() bool {
 		for _, knownAccount := range _storage.KnownAccounts {
 			ids, err := db.RetrievePlayerCompleteMissionIds(knownAccount.Id)
 			if err != nil {
@@ -756,14 +841,14 @@ func main() {
 		return false
 	})
 
-	ui.MustBind("getExistingExports", func() []ExportAccount {
+	ui.MustBind("getExistingData", func() []ExportAccount {
 		knownAccounts := []ExportAccount{}
 		for _, knownAccount := range _storage.KnownAccounts {
 			ids, err := db.RetrievePlayerCompleteMissionIds(knownAccount.Id)
 			if err != nil {
 				log.Error(err)
 			} else if len(ids) > 0 {
-				knownAccounts = append(knownAccounts, ExportAccount{Id: knownAccount.Id, Nickname: knownAccount.Nickname, MissionCount: len(ids)})
+				knownAccounts = append(knownAccounts, ExportAccount{Id: knownAccount.Id, Nickname: knownAccount.Nickname, MissionCount: len(ids), EBString: knownAccount.EBString})
 			}
 		}
 		return knownAccounts

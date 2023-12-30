@@ -73,7 +73,7 @@
                   class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
                   style="z-index: -20">
                   <span class="invisible whitespace-pre">{{ playerId }}</span> ({{
-                  nicknameForSelectedPlayerId }})
+                  nicknameForSelectedPlayerId }} {{ objectedExistingData.find(acc => acc.id == playerId)?.ebString ?? "???" }} )
                 </div>
 
                 <input
@@ -96,7 +96,7 @@
                     v-bind:key="account.id" class="drop-opt"
                     v-on:click="selectPlayerId(account.id)"
                   >
-                    {{ account.id }} ({{ account.nickname }})
+                    {{ account.id }} ({{ account.nickname }} {{ objectedExistingData.find(acc => acc.id == account.id)?.ebString ?? "???" }})
                   </li>
                 </ul>
               </div>
@@ -108,7 +108,7 @@
               </button>
               <button
                 v-else ref="stopFetchSubmitRef" type="button" class="fetch-button disabled:hover:darker_tab_hover"
-                v-on:click="stopFetchingPlayerData(); refreshExistingExports();"
+                v-on:click="stopFetchingPlayerData(); refreshExistingData();"
               >
                 Stop
               </button>
@@ -578,7 +578,7 @@
               </div>
             </div>
           </div>
-          <div style="margin-top: 0px;" ref="selectViewAccountForm" v-if="doesExportExist">
+          <div style="margin-top: 0px;" ref="selectViewAccountForm" v-if="doesDataExist">
             <form 
               id="viewAccountForm" name="viewAccountForm" class="select-form"
               v-on:submit="event => {
@@ -586,20 +586,38 @@
                 for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
                 viewEidGo();
               }">
-              <div class="relative flex-grow focus-within:z-10">
-                <label for="view-file-sel" class="sr-only">Choose an account</label>
-                <select 
+              <div ref="viewAccountSelectRef" class="relative flex-grow focus-within:z-10">
+                <!-- Overlay to tag inmput with number of missions -->
+                <div
+                  v-if="selectedAccount != null && objectedExistingData.find(acc => acc.id == selectedAccount) != null"
+                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
+                  style="z-index: -20">
+                  <span class="invisible whitespace-pre">{{ objectedExistingData.find(acc => acc.id == selectedAccount)?.id }}</span> ({{ objectedExistingData.find(acc => acc.id == selectedAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.ebString }} - {{
+                    objectedExistingData.find(acc => acc.id == selectedAccount)?.missionCount }} missions)
+                </div>
+
+                <input
+                  ref="viewAccountInputRef"
+                  type="text"
                   class="drop-select"
-                  id="view-file-sel" ref="view-file-sel" 
-                  v-model="selectedAccount"
-                  v-on:change="viewAccountSubmitRef.focus();"
+                  placeholder="Select an account"
+                  v-bind:value="selectedAccount"
+                  v-on:focus="openViewAccountDropdown"
+                  v-on:input="selectedAccount = $event.target.value"
                 >
-                  <option
-                    v-for="account in readableExistingExports" 
-                    class="drop-opt" v-bind:key="account" v-bind:value="account.id"
+                <ul
+                  v-if="viewAccountDropdownOpen && objectedExistingData.length > 0"
+                  class="absolute z-10 mt-1 w-full bg-darkerer shadow-lg max-h-60 rounded-md py-1 text-gray-400 ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
+                  tabindex="-1"
+                >
+                  <li
+                    v-for="account in objectedExistingData"
+                    v-bind:key="account.id" class="drop-opt"
+                    v-on:click="selectViewAccount(account)"
                   >
-                    {{ account.nickname }}  ({{ account.missionCount }} missions)
-                </select>
+                    {{account.id}} ({{ account.nickname }} {{ account.ebString }} - {{ account.missionCount }} missions)
+                  </li>
+                </ul>
               </div>
               <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
               v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedAccount === null || eidBeingLoaded)">
@@ -607,11 +625,11 @@
               </button>
             </form>
           </div>
-          <div class="text-center text-lg mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView" v-else>
+          <div class="text-center text-md mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView" v-else>
             <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
           <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-            <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="selectedAccount != null && selectedAccount == loadedEid && loadedAccountMissionsCount != (readableExistingExports.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
+            <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="selectedAccount != null && selectedAccount == loadedEid && loadedAccountMissionsCount != (objectedExistingData.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
               <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4"> You are viewing outdated data - click <span class="text-gray-500">View</span> again to fix this.</span>
             </div>
             <div ref="filterRef">
@@ -935,8 +953,8 @@
       // - checkForUpdates()
 
       //Daveed additions :^)
-      // - doesExportExist(): bool
-      // - getExistingExports(): []string
+      // - doesDataExist(): bool
+      // - getexistingData(): []string
       // - filterWarningRead(): void
 
       // Interrupt worker if the page is reloaded or closed.
@@ -1105,6 +1123,27 @@
               }
               return null;
             });
+
+            const viewAccountSelectRef = Vue.ref(null);
+            const viewAccountInputRef = Vue.ref(null);
+            const viewAccountSubmitRef = Vue.ref(null);
+            const viewAccountDropdownOpen = Vue.ref(false);
+            const openViewAccountDropdown = () => {
+              viewAccountDropdownOpen.value = true;
+            };
+            const closeViewAccountDropdown = () => {
+              viewAccountDropdownOpen.value = false;
+              if (playerId.value.trim() !== '' && viewAccountSubmitRef.value !== null) {
+                viewAccountSubmitRef.value.focus();
+              } else {
+                viewAccountInputRef.value?.blur();
+              }
+            };
+            const selectViewAccount = account => {
+              selectedAccount.value = account.id;
+              closeViewAccountDropdown();
+            };
+
             const playerIdSelectRef = Vue.ref(null);
             const playerIdInputRef = Vue.ref(null);
             const playerIdSubmitRef = Vue.ref(null);
@@ -1130,11 +1169,17 @@
               if (!playerIdSelectRef.value?.contains(target)) {
                 closePlayerIdDropdown();
               }
+              if(!viewAccountSelectRef.value?.contains(target)) {
+                closeViewAccountDropdown();
+              }
             };
             const handleFocus = () => {
               const active = document.activeElement;
               if (!playerIdSelectRef.value?.contains(active)) {
                 closePlayerIdDropdown();
+              }
+              if(!viewAccountSelectRef.value?.contains(active)) {
+                closeViewAccountDropdown();
               }
             };
             Vue.onMounted(() => {
@@ -1253,19 +1298,19 @@
             };
 
             // ===== Setup for 'View Mission Data' Tab =====
-            const viewAccountSubmitRef = Vue.ref(null);
             const viewByDate = Vue.ref(false);
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
             const viewMissionData = Vue.ref({});
-            const doesExportExist = Vue.ref(false);
-            const existingExports = Vue.ref([]); //Empty array of strings
-            const readableExistingExports = Vue.computed(() => {
-              return existingExports.value.map(account => {
+            const doesDataExist = Vue.ref(false);
+            const existingData = Vue.ref([]); //Empty array of strings
+            const objectedExistingData = Vue.computed(() => {
+              return existingData.value.map(account => {
                 return {
                   id: account.id,
                   nickname: account.nickname,
-                  missionCount: account.missionCount
+                  missionCount: account.missionCount,
+                  ebString: (account.ebString && account.ebString != "" ? account.ebString : "???"),  
                 };
               }).sort((a, b) => { //sort by missionCount
                 if(a.missionCount > b.missionCount) return -1;
@@ -1381,15 +1426,15 @@
               const fixedName = spec.name.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
               return "images/artifacts/" + fixedName + "/" + fixedName + "_" + (parseInt(spec.level) + addend) + ".png";
             };
-            const refreshExistingExports = async () => {
-              doesExportExist.value = await window.doesExportExist();
-              if(doesExportExist.value) existingExports.value = await window.getExistingExports();
+            const refreshExistingData = async () => {
+              doesDataExist.value = await window.doesDataExist();
+              if(doesDataExist.value) existingData.value = await window.getExistingData();
             };
             Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts, currentState), async () => {
-              refreshExistingExports();
+              refreshExistingData();
             });
             Vue.onMounted(async () => {
-              refreshExistingExports();
+              refreshExistingData();
             });
 
             const selectedAccount = Vue.ref(null);
@@ -1452,7 +1497,8 @@
 
             const viewEidGo = async () => {
               filterApplyTime.value = ""; //Reset the filter apply time
-              loadedAccountMissionsCount.value = readableExistingExports.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
+              window.console.log("selectedAccount: " + selectedAccount.value);
+              loadedAccountMissionsCount.value = objectedExistingData.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
               eidBeingLoaded.value = true;
               const loadValue = await window.viewEidGo(selectedAccount.value.toString());
               if (loadValue !== "") {
@@ -2073,11 +2119,14 @@
               appHasUpdate,
 
               //View all missions
-              doesExportExist,
-              existingExports,
-              readableExistingExports,
+              doesDataExist,
+              existingData,
+              objectedExistingData,
               selectedAccount,
               eidBeingLoaded,
+              viewAccountInputRef,
+              viewAccountSelectRef,
+              viewAccountDropdownOpen,
               viewAccountSubmitRef,
               viewEidGo,
               toggleElements,
@@ -2088,7 +2137,10 @@
               viewSpecificMission,
               targetImage,
               closeOverlay,
-              refreshExistingExports,
+              refreshExistingData,
+              openViewAccountDropdown,
+              selectViewAccount,
+              closeViewAccountDropdown,
 
               //View specific mission
               viewByDate,

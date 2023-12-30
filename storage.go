@@ -21,8 +21,10 @@ type AppStorage struct {
 }
 
 type Account struct {
-	Id       string `json:"id"`
-	Nickname string `json:"nickname"`
+	Id            string  `json:"id"`
+	Nickname      string  `json:"nickname"`
+	EarningsBonus float64 `json:"earningsBonus"`
+	EBString      string  `json:"ebString"`
 }
 
 var (
