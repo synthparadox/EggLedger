@@ -14,7 +14,7 @@
       <div v-unhide class="h-stretch flex flex-col space-y-3 pb-3 bg-darker" style="display: none">
         <div class="h-11 flex-shrink-0 bg-dark">
           <div
-            class="h-full flex items-end max-w-10xl w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
+            class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
               v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About]"
               v-bind:key="tab"
@@ -29,7 +29,7 @@
         <div
           v-if="appIsInForbiddenDirectory || appIsTranslocated"
           v-show="activeTab === UITab.Ledger"
-          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-y-scroll bg-darker">
+          class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-y-scroll bg-darker">
           <div class="text-sm text-gray-400 space-y-1">
             <template v-if="appIsTranslocated">
               <p class="text-red-700">
@@ -56,16 +56,16 @@
         <div
           v-else
           v-show="activeTab === UITab.Ledger"
-          class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
+          class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
           <div>
             <form
-              id="ledgerForm"
-              name="ledgerForm"
-              class="mt-1 flex rounded-md shadow-sm"
+              id="ledgerForm" name="ledgerForm" class="select-form"
               v-on:submit="event => {
-              event.preventDefault();
-              closePlayerIdDropdown();
-              fetchPlayerData();}">
+                event.preventDefault();
+                closePlayerIdDropdown();
+                fetchPlayerData();
+              }"
+            >
               <div ref="playerIdSelectRef" class="relative flex-grow focus-within:z-10">
                 <!-- Overlay to tag the input with the corresponding nickname (if the playerId in the input is known). -->
                 <div
@@ -79,7 +79,7 @@
                 <input
                   ref="playerIdInputRef"
                   type="text"
-                  class="focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-darkerer tabular-nums"
+                  class="drop-select"
                   placeholder="EI1234567890123456"
                   v-bind:value="playerId"
                   v-on:focus="openPlayerIdDropdown"
@@ -93,8 +93,7 @@
                 >
                   <li
                     v-for="account in knownAccounts"
-                    v-bind:key="account.id"
-                    class="text-sm text-gray-400 hover:text-gray-300 hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums"
+                    v-bind:key="account.id" class="drop-opt"
                     v-on:click="selectPlayerId(account.id)"
                   >
                     {{ account.id }} ({{ account.nickname }})
@@ -102,18 +101,13 @@
                 </ul>
               </div>
               <button
-                v-if="idle"
-                ref="playerIdSubmitRef"
-                type="submit"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                v-if="idle" ref="playerIdSubmitRef" type="submit" class="fetch-button disabled:hover:darker_tab_hover"
                 v-bind:disabled="playerId.trim() === ''"
               >
                 Fetch
               </button>
               <button
-                v-else
-                type="button"
-                class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                v-else ref="stopFetchSubmitRef" type="button" class="fetch-button disabled:hover:darker_tab_hover"
                 v-on:click="stopFetchingPlayerData(); refreshExistingExports();"
               >
                 Stop
@@ -180,7 +174,7 @@
 
         <div
           v-show="activeTab === UITab.About"
-          class="flex-1 max-w-10xl w-full mx-auto px-4 overflow-y-auto"
+          class="flex-1 w-full mx-auto px-4 overflow-y-auto"
         >
           <div class="text-sm text-gray-400 space-y-2">
             <p class="space-x-3">
@@ -376,8 +370,7 @@
           </div>
         </div>
 
-        <!-- flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker -->
-        <div class="flex-1 flex flex-col max-w-10xl w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
+        <div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
           v-show="activeTab === UITab.ViewData">
           <div id="missionViewDiv" ref="missionViewDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
             <div id="innerMissionViewDiv" style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
@@ -417,7 +410,7 @@
                   <div class="items-center justify-center flex">
                     <span>Sensor Target: </span>
                     <div style="margin-left: 0.3rem;" class="text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">
-                      {{ properCase(viewMissionData.shipInfo.target.replace("_", " ")) }}
+                      {{ properCase(viewMissionData.shipInfo.target.replaceAll("_", " ")) }}
                       
                     </div>
                   </div>
@@ -552,9 +545,7 @@
           </div>
           <div style="margin-top: 0px;" ref="selectViewAccountForm" v-if="doesExportExist">
             <form 
-              id="viewAccountForm" 
-              name="viewAccountForm" 
-              class="mt-1 flex rounded-md shadow-sm"
+              id="viewAccountForm" name="viewAccountForm" class="select-form"
               v-on:submit="event => {
                 event.preventDefault();
                 for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
@@ -563,15 +554,14 @@
               <div class="relative flex-grow focus-within:z-10">
                 <label for="view-file-sel" class="sr-only">Choose an account</label>
                 <select 
-                  class="focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-darkerer tabular-nums"
+                  class="drop-select"
                   id="view-file-sel" ref="view-file-sel" 
                   v-model="selectedAccount"
                   v-on:change="viewAccountSubmitRef.focus();"
                 >
                   <option
-                    class="text-sm text-gray-400 hover:text-gray-300 hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums"
                     v-for="account in readableExistingExports" 
-                    v-bind:key="account" v-bind:value="account.id"
+                    class="drop-opt" v-bind:key="account" v-bind:value="account.id"
                   >
                     {{ account.nickname }}  ({{ account.missionCount }} missions)
                 </select>
@@ -632,7 +622,7 @@
 
                     <div class="relative flex flex-row items-center flex-grow focus-within:z-10">
                       <!-- Top level filter options -->
-                      <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      <select class="filter-select"
                         v-on:change="handleFilterChange"
                         v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
                         <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
@@ -640,7 +630,7 @@
                       </select>
 
                       <!-- Operator options -->
-                      <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      <select class="filter-select"
                         v-on:change="handleFilterChange"
                         v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
                         <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
@@ -648,7 +638,7 @@
                       </select>
 
                       <!-- Value options (Base) -->
-                      <select class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                      <select class="filter-select"
                         v-on:change="handleFilterChange"
                         v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] != 'launchDT' && topLevelFilterOptions[index] != 'returnDT'"
                         v-model="filterValues[index]" :id="'filter-value-' + index">
@@ -659,7 +649,7 @@
                         Min: 20 January 2021  
                         Max: Today-->
                       <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
-                        class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                        class="filter-select"
                         v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
                         v-on:change="handleFilterChange"
                         v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
@@ -699,7 +689,7 @@
 
                         <!-- Top level filter options -->
                         <select v-model="orFilterTopLevelOptions[index][orIndex]"
-                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          class="filter-select"
                           v-on:change="handleOrFilterChange" :id="'filter-top-' + index + '-' + orIndex">
                           <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                             {{ validOption.text }}
@@ -707,7 +697,7 @@
                         <!-- Operator options -->
                         <select
                           v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
-                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          class="filter-select"
                           v-on:change="handleOrFilterChange" :id="'filter-op-' + index + '-' + orIndex">
                           <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                             {{ validOperator.text }}
@@ -716,7 +706,7 @@
                         <!-- Value options -->
                         <select v-model="orFilterValues[index][orIndex]"
                           v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] != 'launchDT' && orFilterTopLevelOptions[index][orIndex] != 'returnDT'"
-                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          class="filter-select"
                           v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
                           <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                             {{ validValue.text }}
@@ -725,7 +715,7 @@
                           Min: 20 January 2021  
                           Max: Today + 5 days -->
                         <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
-                          class="focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem"
+                          class="filter-select"
                           v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
                           v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex"
                         >
@@ -783,19 +773,19 @@
             <span style="margin-left: 0.5rem;" class="font-bold text-gray-400">Missions: </span>
             <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event)">Collapse All</button>
             <span class="mr-5">
-              <label for="viewByDateCB" class="text-gray-400 mr-05rem">Separate missions by day</label>
+              <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
               <input id="viewByDateCB" type="checkbox" v-model="viewByDate"
-                class="rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
+                class="ext-opt-check"/>
             </span>
             <span class="mr-5">
-              <label for="viewMissionTimesCB" class="text-gray-400 mr-05rem">Show launch times</label>
+              <label for="viewMissionTimesCB" class="ext-opt-label">Show launch times</label>
               <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes"
-                class=" rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
+                class="ext-opt-check"/>
             </span>
             <span class="mr-5">
-              <label for="recolorDCCB" class="text-gray-400 mr-05rem">Re-color dubcaps</label>
+              <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
               <input id="recolorDCCB" type="checkbox" v-model="recolorDC"
-                class=" rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500"/>
+                class=" ext-opt-check"/>
             </span>
             <div ref="resultsDiv" class="relative h-screen">
               <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-lg font-mono text-gray-500 bg-darkest rounded-md" v-if="filteredMissions.length == 0">

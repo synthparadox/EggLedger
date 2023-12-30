@@ -41,9 +41,37 @@ hr {
 }
 
 .mission-view-rep {
-  @apply box-border h-11 w-11 p-1; /* box-border was previously border-box, which is not a valid class??? if this looks shitty, get rid of it */
+  @apply box-border h-11 w-11 p-1;
 }
 
 .mission-view-af-count-div {
   @apply text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ring-white ring-1 rounded-full bg-darkerer text-gray-400;
+}
+
+.fetch-button {
+  @apply -ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
+}
+
+.filter-select {
+  @apply focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm text-gray-400 border-gray-300 bg-darkest tabular-nums appearance-none mr-1rem mt-05rem
+}
+
+.ext-opt-label {
+  @apply text-gray-400 mr-05rem
+}
+
+.ext-opt-check {
+  @apply rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500
+}
+
+.drop-opt {
+  @apply text-sm text-gray-400 hover:text-gray-300 hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums
+}
+
+.drop-select {
+  @apply focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm border-gray-300 bg-darkerer tabular-nums
+}
+
+.select-form {
+ @apply mt-1 flex rounded-md shadow-sm 
 }
