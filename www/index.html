@@ -166,12 +166,12 @@
           >
           <div v-for="(message, i) in messages" :key="i" class="whitespace-pre">
             <span v-bind:class="message.isError ? 'text-red-700' : 'text-green-700'">{{ hhmmss(message.timestamp) }}|</span>
-            <template v-if="message.isError">
-              <span v-if="segment.color" :style="'color: #' + segment.color">{{ segment.text }}</span>
+            <template v-if="message.isError" v-for="segment in extractColorSegments(message.content)">
+              <span v-if="segment?.color" :style="'color: #' + segment?.color">{{ segment.text }}</span>
               <span class="text-red-700" v-else>{{ segment.text }}</span>
             </template>
             <template v-else v-for="segment in extractColorSegments(message.content)">
-              <span v-if="segment.color" :style="'color: #' + segment.color">{{ segment.text }}</span>
+              <span v-if="segment?.color" :style="'color: #' + segment?.color">{{ segment.text }}</span>
               <span v-else>{{ segment.text }}</span>
             </template>
           </div>
@@ -971,7 +971,7 @@
 
       //Daveed additions :^)
       // - doesDataExist(): bool
-      // - getexistingData(): []string
+      // - getExistingData(): []string
       // - filterWarningRead(): void
 
       // Interrupt worker if the page is reloaded or closed.
