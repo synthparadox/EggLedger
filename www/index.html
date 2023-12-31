@@ -66,20 +66,31 @@
                 fetchPlayerData();
               }"
             >
-              <div ref="playerIdSelectRef" class="relative flex-grow focus-within:z-10">
+              <div ref="playerIdSelectRef" class="tooltip-custom relative flex-grow focus-within:z-10">
                 <!-- Overlay to tag the input with the corresponding nickname (if the playerId in the input is known). -->
                 <div
                   v-if="nicknameForSelectedPlayerId"
                   class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
                   style="z-index: -20">
-                  <span class="invisible whitespace-pre">{{ playerId }}</span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == playerId)?.accountColor">{{
-                    nicknameForSelectedPlayerId }} {{ objectedExistingData.find(acc => acc.id == playerId)?.ebString ?? "???" }}</span>) 
+                  <span class="invisible whitespace-pre">
+                    {{ playerId }}</span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == playerId)?.accountColor">{{
+                    nicknameForSelectedPlayerId }} {{ objectedExistingData.find(acc => acc.id == playerId)?.ebString ?? "???" }}
+                  </span>) 
                 </div>
-
+                <div
+                  v-if="!isPlayerIdValid"
+                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
+                  style="z-index: -20"
+                >
+                  <span class="invisible whitespace-pre">
+                    {{ playerId }}</span> ( <span class="text-red-700">Invalid EID: {{getEidProblem(playerId)}}</span> )
+                  </span>
+                </div>
                 <input
                   ref="playerIdInputRef"
+                  id="playerIdInput"
                   type="text"
-                  class="drop-select"
+                  :class="'drop-select ' + (isPlayerIdValid ? 'border-gray-300' : 'border-red-700')"
                   placeholder="EI1234567890123456"
                   v-bind:value="playerId"
                   v-on:focus="openPlayerIdDropdown"
@@ -103,7 +114,7 @@
               </div>
               <button
                 v-if="idle" ref="playerIdSubmitRef" type="submit" class="fetch-button disabled:hover:darker_tab_hover"
-                v-bind:disabled="playerId.trim() === ''"
+                v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid"
               >
                 Fetch
               </button>
@@ -637,7 +648,7 @@
                 <input
                   ref="viewAccountInputRef"
                   type="text"
-                  class="drop-select"
+                  class="drop-select border-gray-300"
                   placeholder="Select an account"
                   v-bind:value="selectedAccount"
                   v-on:focus="openViewAccountDropdown"
@@ -1151,6 +1162,10 @@
             // ===== Player ID input and dropdown =====
             const knownAccounts = Vue.ref(previouslyKnownAccounts);
             const playerId = Vue.ref(previouslyKnownAccounts[0]?.id ?? '');
+            const isPlayerIdValid = Vue.computed(() => {
+              //Needs to be "" or match regex
+              return playerId.value === '' || /^EI[0-9]{16}$/.test(normalizePlayerId(playerId.value));
+            });
             Vue.watch(playerId, () => {
               if(playerId === null || playerId === undefined || playerId === '') return;
             });
@@ -1203,6 +1218,13 @@
               playerId.value = id;
               closePlayerIdDropdown();
             };
+            const getEidProblem = id => {
+              const normalizedId = normalizePlayerId(id).toUpperCase();
+              if (normalizedId.substring(0, 2) != 'EI') return 'should start with "EI"';
+              if (!/^EI[0-9]*$/.test(normalizedId) || normalizedId.length == 2) return 'should be EI + 16 digits';
+              if (normalizedId.length != 18) return 'expected 16 digits, found ' + (normalizedId.length - 2);
+              return '';
+            }
             // Close dropdown when clicking or focusing elsewhere.
             const handleMousedown = event => {
               const target = event.target;
@@ -2155,11 +2177,13 @@
 
               knownAccounts,
               playerId,
+              isPlayerIdValid,
               nicknameForSelectedPlayerId,
               playerIdSelectRef,
               playerIdInputRef,
               playerIdSubmitRef,
               playerIdDropdownOpen,
+              getEidProblem,
               openPlayerIdDropdown,
               closePlayerIdDropdown,
               selectPlayerId,
