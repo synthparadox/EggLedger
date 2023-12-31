@@ -1324,19 +1324,19 @@ func main() {
 		}
 	})
 
-	ui.MustBind("checkForUpdates", func() bool {
+	ui.MustBind("checkForUpdates", func() string {
 		log.Info("checking for updates...")
 		newVersion, err := checkForUpdates()
 		if err != nil {
 			log.Error(err)
-			return false
+			return ""
 		}
 		if newVersion == "" {
 			log.Infof("no new version found")
-			return false
+			return ""
 		} else {
 			log.Infof("new version found: %s", newVersion)
-			return true
+			return newVersion
 		}
 	})
 

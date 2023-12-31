@@ -824,7 +824,7 @@
                 <!-- Show loading gif while filter is being applied -->
                 <span v-if="dataBeingFiltered" class="text-green-700 mt-05rem">
                   <i>
-                    <img src="images/loading.gif" alt="Loading..." class="inline h-6 w-6 p-0.5 relative -top-px" />
+                    <img src="images/loading.gif" alt="Loading..." class="target-ico" />
                     Applying filter, please wait...
                   </i>
                 </span>
@@ -883,7 +883,10 @@
                                 type="button"
                                 v-on:click="viewSpecificMission(mission.missionId)">
                                 <span v-if="viewMissionTimes" :class="(recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'" v-html="mission.launchTime"></span>
-                                <span class="text-gray-400" v-html="'  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
+                                <span class="text-gray-400 ml-05rem">
+                                  <span :class="durationToClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
+                                  ({{mission.level}}<span style="color: gold;">★</span>)<img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
+                                </span>
                               </button>
                             </div>
                           </div>                        
@@ -898,7 +901,10 @@
                                 type="button" v-on:click="viewSpecificMission(mission.missionId)">
                                 <span :class="(recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'" v-html="padDateOut(groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])"></span>
                                 <span v-if="viewMissionTimes" :class="(recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'" v-html="' ' + mission.launchTime"></span>
-                                <span class="text-gray-400" v-html="'  ' + durToSpan(mission.durationType, shipToName(mission.ship)) + '  ' + levelToStars(mission.level) + targetImage(mission.target)"></span>
+                                <span class="text-gray-400 ml-05rem">
+                                  <span :class="durationToClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
+                                  ({{mission.level}}<span style="color: gold;">★</span>)<img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
+                                </span>
                               </button>
                             </div>
                           </div>
@@ -936,13 +942,13 @@
             class="url-link"
             >DavidArthurCole</a
           >
-          <span v-if="appHasUpdate" class="text-red-700">
+          <span v-if="appHasUpdate != ''" class="text-red-700">
             (<a
               v-external-link
-              href="https://github.com/DavidArthurCole/EggLedger/releases"
+              href="https://github.com/DavidArthurCole/EggLedger/releases/latest"
               target="_blank"
-              class="text-red-700 hover:text-red-800 underline"
-              >new version available!</a
+              class="text-red-700 hover:text-red-800 underline underline-offset-2"
+              >New version [{{appHasUpdate}}] available!</a
             >)</span
           >
         </footer>
@@ -1038,17 +1044,13 @@
           return year + "-" + month + "-" + day;
         }
 
-        function durToSpan(duration, shipName){
-          if(duration === "" || duration === null || duration === undefined){
-            return "";
-          }else{
-            switch(duration){
-              case 0: return `<span class="text-short">` + shipName + `</span>`;
-              case 1: return `<span class="text-standard">` + shipName + `</span>`;
-              case 2: return `<span class="text-extended">` + shipName + `</span>`;
-              case 3: return `<span class="text-tutorial">` + shipName + `</span>`;
-              default: return `<span style="color: red">` + shipName + `</span>`;
-            }
+        function durationToClass(duration){
+          switch(duration){
+            case 0: return 'text-short';
+            case 1: return 'text-standard';
+            case 2: return 'text-extended';
+            case 3: return 'text-tutorial';
+            default: return '';
           }
         }
 
@@ -1084,10 +1086,6 @@
               default: return "Unknown";
             }
           }
-        }
-
-        function levelToStars(level){
-          return level <= 0 ? "" : `(` + level + `<span style="color: gold;">★</span>)`;
         }
 
         function generateDurStyleClass(dur){
@@ -1284,32 +1282,19 @@
             );
 
             const extractColorSegments = (content) => {
-              const regex = /&([a-fA-F0-9]{6})<([^>]+)>/g;
-              const segments = [];
-              let lastIndex = 0;
-              let match;
-
+              const regex = /&([a-fA-F0-9]{6})<([^>]+)>/g, segments = [];
+              let lastIndex = 0, match;
               while ((match = regex.exec(content)) !== null) {
-                const color = match[1];
-                const text = match[2];
-
-                if (match.index > lastIndex) {
-                  segments.push({ text: content.substring(lastIndex, match.index) });
-                }
-
-                segments.push({ text, color });
+                if (match.index > lastIndex) segments.push({ text: content.substring(lastIndex, match.index) });
+                segments.push({ text: match[2], color: match[1] });
                 lastIndex = regex.lastIndex;
               }
-
-              if (lastIndex < content.length) {
-                segments.push({ text: content.substring(lastIndex) });
-              }
-
+              if (lastIndex < content.length) segments.push({ text: content.substring(lastIndex) });
               return segments;
             };
 
             // ===== Check for updates =====
-            const appHasUpdate = Vue.ref(false);
+            const appHasUpdate = Vue.ref("");
             Vue.onMounted(async () => {
               appHasUpdate.value = await window.checkForUpdates();
             });
@@ -2049,7 +2034,7 @@
                 }
                 if(target == 'GOLD_METEORITE' || target == 'TAU_CETI_GEODE' || target == 'SOLAR_TITANIUM') tier = 3;
                 const path = "images/artifacts/" + target + "/" + target + "_" + tier + ".png";
-                return `<img src="` + path + `" alt="` + target + `"ml-1rem class="inline h-6 w-6 p-0.5 relative -top-px">`;
+                return [path, target];
               }
             };
 
@@ -2181,9 +2166,8 @@
               viewAccountSubmitRef,
               viewEidGo,
               toggleElements,
-              durToSpan,
+              durationToClass,
               padDateOut,
-              levelToStars,
               shipToName,
               viewSpecificMission,
               targetImage,
