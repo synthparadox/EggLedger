@@ -1153,10 +1153,6 @@
             const playerId = Vue.ref(previouslyKnownAccounts[0]?.id ?? '');
             Vue.watch(playerId, () => {
               if(playerId === null || playerId === undefined || playerId === '') return;
-              //Reset the player ID if the EID is not valid
-              if(!playerId.value.match(/^EI[0-9]{16}$/i)){
-                playerId.value = '';
-              }
             });
             const nicknameForSelectedPlayerId = Vue.computed(() => {
               const id = normalizePlayerId(playerId.value);
