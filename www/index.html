@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" class="bg-darker">
   <head>
     <title>EggLedger</title>
     <link rel="icon" href="images/icon-64.png" />
@@ -16,7 +16,7 @@
           <div
             class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About]"
+              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About, UITab.Donate]"
               v-bind:key="tab"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
@@ -411,6 +411,35 @@
           </div>
         </div>
 
+        <div
+          v-show="activeTab === UITab.Donate"
+          class="flex-1 w-full mx-auto px-4 overflow-y-auto text-center items-center"
+        >
+          <div
+            class="border border-gray-300 rounded-md p-0.5"
+          >
+            <span class="text-gray-400 space-y-2">
+              <span class="text-lg underline underline-offset-2 mb-1rem">Hello</span><br />
+              Although I thoroughly enjoy developing this tool, it does take<br />
+              a lot of time and effort. If you find this tool, or any other tools<br />
+              I develop/support useful, please consider <a
+                v-external-link
+                href="https://www.buymeacoffee.com/davidarthurcole"
+                target="_blank"
+                class="file-link"
+                >buying me a coffee</a
+              >.<br />
+              to support continued development. Thank you. 🫶
+            </span><br />
+            <img 
+              src="images/coffee.gif"
+              alt="Coffee"
+              style="max-width: 20rem;"
+              class="mx-auto bg-transparent"
+            />
+          </div>
+        </div>
+
         <div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
           v-show="activeTab === UITab.ViewData">
           <div id="missionViewDiv" ref="missionViewDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
@@ -668,10 +697,8 @@
                 <!-- Warning (if not already seen) -->
                 <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4" style="max-width: 500px;">
                   <span class="font-bold underline mb-025rem">Warning:</span><br />
-                  The filter feature is experimental, and may not work as expected (especially with complicated combinations).<br />
-                  You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion.<br />
-                  Please use it carefully, and report any issues you encounter.<br />
-                  <br />
+                  The filter feature is experimental, and may not work as expected (especially with complicated combinations). You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion. Please use it carefully, and report any issues you encounter.
+                  <br /><br />
                   <button type="button" style="padding: 0.75rem;" class="btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
                 </div>
                 <div
@@ -990,6 +1017,7 @@
           Ledger: 'Ledger',
           ViewData: 'View Mission Data',
           About: 'About',
+          Donate: 'Donate',
         };
 
         const AppState = {
