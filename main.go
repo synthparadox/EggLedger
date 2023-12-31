@@ -148,6 +148,7 @@ type ExportAccount struct {
 	Nickname     string `json:"nickname"`
 	MissionCount int    `json:"missionCount"`
 	EBString     string `json:"ebString"`
+	AccountColor string `json:"accountColor"`
 }
 
 type RawPossibleTarget struct {
@@ -546,7 +547,9 @@ func main() {
 
 			divByTReps := 0
 			ebCopy := eb
-			for ebCopy > 1000 {
+			roleColor := ""
+			roleString := ""
+			for ebCopy > 1000 && divByTReps < 17 {
 				ebCopy /= 1000
 				divByTReps++
 			}
@@ -554,48 +557,212 @@ func main() {
 			switch divByTReps {
 			case 0:
 				ebAddendum = ""
+				roleColor = "d43500"
+				roleString = "Farmer"
 			case 1:
 				ebAddendum = "K"
+				if ebCopy < 10.0 {
+					roleColor = "d14400"
+					roleString = "Farmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "cd5500"
+					roleString = "Farmer III"
+				} else {
+					roleColor = "ca6800"
+					roleString = "Kilofarmer I"
+				}
 			case 2:
 				ebAddendum = "M"
+				if ebCopy < 10.0 {
+					roleColor = "c77a00"
+					roleString = "Kilofarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "c58a00"
+					roleString = "Kilofarmer III"
+				} else {
+					roleColor = "c49400"
+					roleString = "Megafarmer I"
+				}
 			case 3:
 				ebAddendum = "B"
+				if ebCopy < 10.0 {
+					roleColor = "c39f00"
+					roleString = "Megafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "c3a900"
+					roleString = "Megafarmer III"
+				} else {
+					roleColor = "c2b100"
+					roleString = "Gigafarmer I"
+				}
 			case 4:
 				ebAddendum = "T"
+				if ebCopy < 10.0 {
+					roleColor = "c2ba00"
+					roleString = "Gigafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "c2c200"
+					roleString = "Gigafarmer III"
+				} else {
+					roleColor = "aec300"
+					roleString = "Terafarmer I"
+				}
 			case 5:
 				ebAddendum = "q"
+				if ebCopy < 10.0 {
+					roleColor = "99c400"
+					roleString = "Terafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "85c600"
+					roleString = "Terafarmer III"
+				} else {
+					roleColor = "51ce00"
+					roleString = "Petafarmer I"
+				}
 			case 6:
 				ebAddendum = "Q"
+				if ebCopy < 10.0 {
+					roleColor = "16dc00"
+					roleString = "Petafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "00ec2e"
+					roleString = "Petafarmer III"
+				} else {
+					roleColor = "00fa68"
+					roleString = "Exafarmer I"
+				}
 			case 7:
 				ebAddendum = "s"
+				if ebCopy < 10.0 {
+					roleColor = "0afc9c"
+					roleString = "Exafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "1cf7ca"
+					roleString = "Exafarmer III"
+				} else {
+					roleColor = "2af3eb"
+					roleString = "Zettafarmer I"
+				}
 			case 8:
 				ebAddendum = "S"
+				if ebCopy < 10.0 {
+					roleColor = "35d9f0"
+					roleString = "Zettafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "40bced"
+					roleString = "Zettafarmer III"
+				} else {
+					roleColor = "46a8eb"
+					roleString = "Yottafarmer I"
+				}
 			case 9:
 				ebAddendum = "o"
+				if ebCopy < 10.0 {
+					roleColor = "4a9aea"
+					roleString = "Yottafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "4e8dea"
+					roleString = "Yottafarmer III"
+				} else {
+					roleColor = "527ce9"
+					roleString = "Xennafarmer I"
+				}
 			case 10:
 				ebAddendum = "N"
+				if ebCopy < 10.0 {
+					roleColor = "5463e8"
+					roleString = "Xennafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "6155e8"
+					roleString = "Xennafarmer III"
+				} else {
+					roleColor = "7952e9"
+					roleString = "Weccafarmer I"
+				}
 			case 11:
 				ebAddendum = "d"
+				if ebCopy < 10.0 {
+					roleColor = "8b4fe9"
+					roleString = "Weccafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "9d4aeb"
+					roleString = "Weccafarmer III"
+				} else {
+					roleColor = "b343ec"
+					roleString = "Vendafarmer I"
+				}
 			case 12:
 				ebAddendum = "U"
+				if ebCopy < 10.0 {
+					roleColor = "d636ef"
+					roleString = "Vendafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "f327e5"
+					roleString = "Vendafarmer III"
+				} else {
+					roleColor = "f915ba"
+					roleString = "Uadafarmer I"
+				}
 			case 13:
 				ebAddendum = "D"
+				if ebCopy < 10.0 {
+					roleColor = "fc0a9c"
+					roleString = "Uadafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "ff007d"
+					roleString = "Uadafarmer III"
+				} else {
+					roleColor = "f7005d"
+					roleString = "Treidafarmer I"
+				}
 			case 14:
 				ebAddendum = "Td"
+				if ebCopy < 10.0 {
+					roleColor = "f61fd2"
+					roleString = "Treidafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "9c4aea"
+					roleString = "Treidafarmer III"
+				} else {
+					roleColor = "5559e8"
+					roleString = "Quadafarmer I"
+				}
 			case 15:
 				ebAddendum = "qd"
+				if ebCopy < 10.0 {
+					roleColor = "4a9deb"
+					roleString = "Quadafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "2df0f2"
+					roleString = "Quadafarmer III"
+				} else {
+					roleColor = "00f759"
+					roleString = "Pendafarmer I"
+				}
 			case 16:
 				ebAddendum = "Qd"
-			case 17:
+				if ebCopy < 10.0 {
+					roleColor = "7ec700"
+					roleString = "Pendafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "c2bf00"
+					roleString = "Pendafarmer III"
+				} else {
+					roleColor = "c3a000"
+					roleString = "ExedaFarmer I"
+				}
+			default:
 				ebAddendum = "sd"
-			case 18:
-				ebAddendum = "Sd"
-			case 19:
-				ebAddendum = "Od"
-			case 20:
-				ebAddendum = "Nd"
-			case 21:
-				ebAddendum = "V"
+				if ebCopy < 10.0 {
+					roleColor = "c87200"
+					roleString = "Exedafarmer II"
+				} else if ebCopy < 100.0 {
+					roleColor = "d43500"
+					roleString = "Exedafarmer III"
+				} else {
+					roleColor = "546e7a"
+					roleString = "Infinifarmer"
+				}
 			}
 
 			//Print the EB with a maximum of 3 total numbers - i.e. 1.23K, 12.3K, 123K, etc.
@@ -611,12 +778,15 @@ func main() {
 
 			ebString := fmt.Sprintf(fmt.Sprintf("%%.%df", precision), ebCopy) + ebAddendum
 
-			msg := fmt.Sprintf("successfully fetched backup for %s", playerId)
+			msg := fmt.Sprintf("successfully fetched backup for &7a7a7a<%s>", playerId)
 			if nickname != "" {
-				msg += fmt.Sprintf(" (%s)", nickname)
+				msg += fmt.Sprintf(" (&%s<%s>)", roleColor, nickname)
 			}
-
 			pinfo(msg)
+
+			ebMsg := fmt.Sprintf("updated local database EB to &%s<%s>, role to &%s<%s>", roleColor, ebString, roleColor, roleString)
+			pinfo(ebMsg)
+
 			lastBackupTime := backup.GetSettings().GetLastBackupTime()
 			if lastBackupTime != 0 {
 				t := unixToTime(lastBackupTime)
@@ -624,12 +794,12 @@ func main() {
 				if t.After(now) {
 					t = now
 				}
-				msg := fmt.Sprintf("backup is from %s", humanize.Time(t))
+				msg := fmt.Sprintf("backup is from &7a7a7a<%s>", humanize.Time(t))
 				pinfo(msg)
 			} else {
 				perror("backup is from unknown time")
 			}
-			_storage.AddKnownAccount(Account{Id: playerId, Nickname: nickname, EarningsBonus: eb, EBString: ebString})
+			_storage.AddKnownAccount(Account{Id: playerId, Nickname: nickname, EarningsBonus: eb, EBString: ebString, AccountColor: roleColor})
 			_storage.Lock()
 			updateKnownAccounts(_storage.KnownAccounts)
 			_storage.Unlock()
@@ -638,6 +808,7 @@ func main() {
 			}
 
 			missions := fc.GetCompletedMissions()
+			inProgressMissions := fc.GetInProgressMissions()
 			existingMissionIds, err := db.RetrievePlayerCompleteMissionIds(playerId)
 			if err != nil {
 				perror(err)
@@ -657,8 +828,8 @@ func main() {
 					newMissionStartTimestamps = append(newMissionStartTimestamps, mission.GetStartTimeDerived())
 				}
 			}
-			pinfo(fmt.Sprintf("found %d completed missions, need to fetch %d",
-				len(missions), len(newMissionIds)))
+			pinfo(fmt.Sprintf("found &148c32<%d completed> missions, &14788c<%d in-progress> missions, need to fetch %d",
+				len(missions), len(inProgressMissions), len(newMissionIds)))
 
 			total := len(newMissionIds)
 			if total > 0 {
@@ -709,10 +880,11 @@ func main() {
 				}
 				if errored > 0 {
 					perror(fmt.Sprintf("%d of %d missions failed to fetch", errored, total))
+					pinfo("(performing another &7a7a7a<fetch> will fetch the failed missions most of the time)")
 					updateState(AppState_FAILED)
 					return
 				} else {
-					pinfo(fmt.Sprintf("successfully fetched %d missions", total))
+					pinfo(fmt.Sprintf("successfully fetched &148c32<%d missions>", total))
 				}
 			}
 
@@ -814,7 +986,7 @@ func main() {
 			}
 			xlsxFileRel, _ := filepath.Rel(_rootDir, xlsxFile)
 			csvFileRel, _ := filepath.Rel(_rootDir, csvFile)
-			updateExportedFiles([]string{xlsxFileRel, csvFileRel})
+			updateExportedFiles([]string{strings.TrimSpace(xlsxFileRel), strings.TrimSpace(csvFileRel)})
 
 			pinfo("done.")
 			updateState(AppState_SUCCESS)
@@ -848,7 +1020,7 @@ func main() {
 			if err != nil {
 				log.Error(err)
 			} else if len(ids) > 0 {
-				knownAccounts = append(knownAccounts, ExportAccount{Id: knownAccount.Id, Nickname: knownAccount.Nickname, MissionCount: len(ids), EBString: knownAccount.EBString})
+				knownAccounts = append(knownAccounts, ExportAccount{Id: knownAccount.Id, Nickname: knownAccount.Nickname, MissionCount: len(ids), EBString: knownAccount.EBString, AccountColor: knownAccount.AccountColor})
 			}
 		}
 		return knownAccounts

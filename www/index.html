@@ -72,8 +72,8 @@
                   v-if="nicknameForSelectedPlayerId"
                   class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
                   style="z-index: -20">
-                  <span class="invisible whitespace-pre">{{ playerId }}</span> ({{
-                  nicknameForSelectedPlayerId }} {{ objectedExistingData.find(acc => acc.id == playerId)?.ebString ?? "???" }} )
+                  <span class="invisible whitespace-pre">{{ playerId }}</span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == playerId)?.accountColor">{{
+                    nicknameForSelectedPlayerId }} {{ objectedExistingData.find(acc => acc.id == playerId)?.ebString ?? "???" }}</span>) 
                 </div>
 
                 <input
@@ -96,7 +96,8 @@
                     v-bind:key="account.id" class="drop-opt"
                     v-on:click="selectPlayerId(account.id)"
                   >
-                    {{ account.id }} ({{ account.nickname }} {{ objectedExistingData.find(acc => acc.id == account.id)?.ebString ?? "???" }})
+                    {{ account.id }} (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == account.id)?.accountColor">{{
+                      objectedExistingData.find(acc => acc.id == account.id)?.nickname }} {{ objectedExistingData.find(acc => acc.id == account.id)?.ebString ?? "???" }}</span>) 
                   </li>
                 </ul>
               </div>
@@ -163,13 +164,18 @@
             ref="messagesRef"
             class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-400 bg-darkest rounded-md"
           >
-            <div v-for="(message, i) in messages" v-bind:key="i" class="whitespace-pre">
-              <span v-bind:class="message.isError ? 'text-red-700' : 'text-green-700'"
-                >{{ hhmmss(message.timestamp) }}|</span
-              >
-              {{ message.content }}
-            </div>
+          <div v-for="(message, i) in messages" :key="i" class="whitespace-pre">
+            <span v-bind:class="message.isError ? 'text-red-700' : 'text-green-700'">{{ hhmmss(message.timestamp) }}|</span>
+            <template v-if="message.isError">
+              <span v-if="segment.color" :style="'color: #' + segment.color">{{ segment.text }}</span>
+              <span class="text-red-700" v-else>{{ segment.text }}</span>
+            </template>
+            <template v-else v-for="segment in extractColorSegments(message.content)">
+              <span v-if="segment.color" :style="'color: #' + segment.color">{{ segment.text }}</span>
+              <span v-else>{{ segment.text }}</span>
+            </template>
           </div>
+        </div>
         </div>
 
         <div
@@ -592,8 +598,11 @@
                   v-if="selectedAccount != null && objectedExistingData.find(acc => acc.id == selectedAccount) != null"
                   class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
                   style="z-index: -20">
-                  <span class="invisible whitespace-pre">{{ objectedExistingData.find(acc => acc.id == selectedAccount)?.id }}</span> ({{ objectedExistingData.find(acc => acc.id == selectedAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.ebString }} - {{
-                    objectedExistingData.find(acc => acc.id == selectedAccount)?.missionCount }} missions)
+                  <span class="invisible whitespace-pre">
+                    {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.id }}
+                  </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedAccount)?.accountColor" >
+                      {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.ebString }}
+                    </span> - {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.missionCount }} missions)
                 </div>
 
                 <input
@@ -615,12 +624,12 @@
                     v-bind:key="account.id" class="drop-opt"
                     v-on:click="selectViewAccount(account)"
                   >
-                    {{account.id}} ({{ account.nickname }} {{ account.ebString }} - {{ account.missionCount }} missions)
+                    {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
                   </li>
                 </ul>
               </div>
               <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-              v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedAccount === null || eidBeingLoaded)">
+              v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedAccount === null || selectedAccount == '' || objectedExistingData.find(a => a.id == selectedAccount) == null || eidBeingLoaded)">
                 View
               </button>
             </form>
@@ -832,23 +841,25 @@
               </form>
             </div>
             <hr class="mt-1rem invisible">
-            <span style="margin-left: 0.5rem;" class="font-bold text-gray-400">Missions: </span>
-            <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event)">Collapse All</button>
-            <span class="mr-5">
-              <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
-              <input id="viewByDateCB" type="checkbox" v-model="viewByDate"
-                class="ext-opt-check"/>
-            </span>
-            <span class="mr-5">
-              <label for="viewMissionTimesCB" class="ext-opt-label">Show launch times</label>
-              <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes"
-                class="ext-opt-check"/>
-            </span>
-            <span class="mr-5">
-              <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
-              <input id="recolorDCCB" type="checkbox" v-model="recolorDC"
-                class=" ext-opt-check"/>
-            </span>
+            <div style="margin-left: 0.5rem;">
+              <span class="font-bold text-gray-400">Missions: </span>
+              <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event)">Collapse All</button>
+              <span class="mr-5">
+                <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
+                <input id="viewByDateCB" type="checkbox" v-model="viewByDate"
+                  class="ext-opt-check"/>
+              </span>
+              <span class="mr-5">
+                <label for="viewMissionTimesCB" class="ext-opt-label">Show launch times</label>
+                <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes"
+                  class="ext-opt-check"/>
+              </span>
+              <span class="mr-5">
+                <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
+                <input id="recolorDCCB" type="checkbox" v-model="recolorDC"
+                  class=" ext-opt-check"/>
+              </span>
+            </div>
             <div ref="resultsDiv" class="relative h-screen">
               <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-lg font-mono text-gray-500 bg-darkest rounded-md" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
@@ -1114,6 +1125,13 @@
             // ===== Player ID input and dropdown =====
             const knownAccounts = Vue.ref(previouslyKnownAccounts);
             const playerId = Vue.ref(previouslyKnownAccounts[0]?.id ?? '');
+            Vue.watch(playerId, () => {
+              if(playerId === null || playerId === undefined || playerId === '') return;
+              //Reset the player ID if the EID is not valid
+              if(!playerId.value.match(/^EI[0-9]{16}$/i)){
+                playerId.value = '';
+              }
+            });
             const nicknameForSelectedPlayerId = Vue.computed(() => {
               const id = normalizePlayerId(playerId.value);
               for (const account of knownAccounts.value) {
@@ -1140,8 +1158,8 @@
               }
             };
             const selectViewAccount = account => {
-              selectedAccount.value = account.id;
               closeViewAccountDropdown();
+              selectedAccount.value = account.id;
             };
 
             const playerIdSelectRef = Vue.ref(null);
@@ -1265,6 +1283,31 @@
               { deep: true, flush: 'post' }
             );
 
+            const extractColorSegments = (content) => {
+              const regex = /&([a-fA-F0-9]{6})<([^>]+)>/g;
+              const segments = [];
+              let lastIndex = 0;
+              let match;
+
+              while ((match = regex.exec(content)) !== null) {
+                const color = match[1];
+                const text = match[2];
+
+                if (match.index > lastIndex) {
+                  segments.push({ text: content.substring(lastIndex, match.index) });
+                }
+
+                segments.push({ text, color });
+                lastIndex = regex.lastIndex;
+              }
+
+              if (lastIndex < content.length) {
+                segments.push({ text: content.substring(lastIndex) });
+              }
+
+              return segments;
+            };
+
             // ===== Check for updates =====
             const appHasUpdate = Vue.ref(false);
             Vue.onMounted(async () => {
@@ -1310,7 +1353,8 @@
                   id: account.id,
                   nickname: account.nickname,
                   missionCount: account.missionCount,
-                  ebString: (account.ebString && account.ebString != "" ? account.ebString : "???"),  
+                  ebString: (account.ebString && account.ebString != "" ? account.ebString : "???"),
+                  accountColor: account.accountColor
                 };
               }).sort((a, b) => { //sort by missionCount
                 if(a.missionCount > b.missionCount) return -1;
@@ -1438,6 +1482,13 @@
             });
 
             const selectedAccount = Vue.ref(null);
+            Vue.watch(selectedAccount, async () => {
+              if(selectedAccount.value === null || selectedAccount.value == "") return;
+              //Reset the input if it is not a valid EID
+              if(!/^EI[0-9]{16}$/.test(selectedAccount.value)){
+                selectedAccount.value = "";
+              }
+            });
             const eidBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
             const loadedAccountMissionsCount = Vue.ref(0);
@@ -1497,7 +1548,6 @@
 
             const viewEidGo = async () => {
               filterApplyTime.value = ""; //Reset the filter apply time
-              window.console.log("selectedAccount: " + selectedAccount.value);
               loadedAccountMissionsCount.value = objectedExistingData.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
               eidBeingLoaded.value = true;
               const loadValue = await window.viewEidGo(selectedAccount.value.toString());
@@ -2114,6 +2164,7 @@
 
               messagesRef,
               messages,
+              extractColorSegments,
               hhmmss,
 
               appHasUpdate,

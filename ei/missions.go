@@ -64,3 +64,17 @@ func (fc *EggIncFirstContactResponse) GetCompletedMissions() []*MissionInfo {
 	})
 	return completed
 }
+
+func (fc *EggIncFirstContactResponse) GetInProgressMissions() []*MissionInfo {
+	var inProgress []*MissionInfo
+	for _, mission := range fc.GetBackup().GetArtifactsDb().MissionInfos {
+		status := mission.GetStatus()
+		if status == MissionInfo_EXPLORING || status == MissionInfo_FUELING || status == MissionInfo_PREPARE_TO_LAUNCH {
+			inProgress = append(inProgress, mission)
+		}
+	}
+	sort.SliceStable(inProgress, func(i, j int) bool {
+		return inProgress[i].GetStartTimeDerived() < inProgress[j].GetStartTimeDerived()
+	})
+	return inProgress
+}

@@ -25,6 +25,7 @@ type Account struct {
 	Nickname      string  `json:"nickname"`
 	EarningsBonus float64 `json:"earningsBonus"`
 	EBString      string  `json:"ebString"`
+	AccountColor  string  `json:"accountColor"`
 }
 
 var (
