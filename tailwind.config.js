@@ -19,6 +19,8 @@ module.exports = {
         legendary: '#eeab42',
         dubcap: 'rgb(173, 10, 198)',
         dubcapdarker: 'rgb(120, 7, 138)',
+        selectedmission: 'rgb(10, 173, 82)',
+        selectedmissiondarker: 'rgb(7, 120, 56)',
       },
       height: {
         stretch: 'stretch',

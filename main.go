@@ -21,7 +21,7 @@ import (
 	"github.com/DavidArthurCole/EggLedger/db"
 	"github.com/DavidArthurCole/EggLedger/ei"
 	"github.com/DavidArthurCole/EggLedger/eiafx"
-	"github.com/DavidArthurCole/EggLedger/forkedlorca"
+	"github.com/davidarthurcole/lorca"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -62,7 +62,7 @@ const (
 )
 
 type UI struct {
-	forkedlorca.UI
+	lorca.UI
 }
 
 func (u UI) MustLoad(url string) {
@@ -395,9 +395,9 @@ func main() {
 		log.Info("starting app in dev mode")
 	}
 
-	chrome := forkedlorca.LocateChrome()
+	chrome := lorca.LocateChrome()
 	if chrome == "" {
-		forkedlorca.PromptDownload()
+		lorca.PromptDownload()
 		log.Fatal("unable to locate Chrome")
 		return
 	}
@@ -408,7 +408,7 @@ func main() {
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
-	u, err := forkedlorca.New("", "", 650, 650, args...)
+	u, err := lorca.New("", "", 650, 650, args...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -828,7 +828,7 @@ func main() {
 					newMissionStartTimestamps = append(newMissionStartTimestamps, mission.GetStartTimeDerived())
 				}
 			}
-			pinfo(fmt.Sprintf("found &148c32<%d completed> missions, &14788c<%d in-progress> missions, need to fetch %d",
+			pinfo(fmt.Sprintf("found &148c32<%d completed> missions, &148c32<%d in-progress> missions, &148c32<%d to fetch>",
 				len(missions), len(inProgressMissions), len(newMissionIds)))
 
 			total := len(newMissionIds)

@@ -44,12 +44,16 @@ hr {
   @apply box-border h-11 w-11 p-1;
 }
 
-.mission-view-af-count-div {
+.ledger-af-count {
   @apply text-xs absolute leading-1rem bottom-0 -right-1 h-1rem ring-white ring-1 rounded-full bg-darkerer text-gray-400;
 }
 
 .fetch-button {
   @apply -ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
+}
+
+.filter-container {
+  @apply relative flex flex-row items-center flex-grow
 }
 
 .filter-select {
@@ -90,4 +94,28 @@ hr {
 
 .target-ico {
   @apply inline h-6 w-6 p-0.5 relative -top-px
+}
+
+.ledger-underline {
+  @apply underline underline-offset-2
+}
+
+.filter-form {
+  @apply mt-05rem flex-1 px-2 py-1 shadow-sm block font-mono text-gray-500 bg-darkest rounded-md
+}
+
+.ledger-list {
+  @apply absolute z-10 mt-1 w-full bg-darkerer shadow-lg max-h-60 rounded-md py-1 text-gray-400 ring-1 ring-black ring-opacity-5 overflow-auto
+}
+
+.ledger-input-overlay {
+  @apply absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums
+}
+
+.ledger-af-link {
+  @apply relative block h-full w-full rounded-full
+}
+
+.ledger-af-repeat {
+  @apply flex flex-wrap justify-center mx-auto
 }

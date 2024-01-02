@@ -70,7 +70,7 @@
                 <!-- Overlay to tag the input with the corresponding nickname (if the playerId in the input is known). -->
                 <div
                   v-if="nicknameForSelectedPlayerId"
-                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
+                  class="ledger-input-overlay"
                   style="z-index: -20">
                   <span class="invisible whitespace-pre">
                     {{ playerId }}</span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == playerId)?.accountColor">{{
@@ -79,7 +79,7 @@
                 </div>
                 <div
                   v-if="!isPlayerIdValid"
-                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
+                  class="ledger-input-overlay"
                   style="z-index: -20"
                 >
                   <span class="invisible whitespace-pre">
@@ -99,7 +99,7 @@
 
                 <ul
                   v-if="playerIdDropdownOpen && knownAccounts.length > 0"
-                  class="absolute z-10 mt-1 w-full bg-darkerer shadow-lg max-h-60 rounded-md py-1 text-gray-400 ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
+                  class="ledger-list focus:outline-none sm:text-sm"
                   tabindex="-1"
                 >
                   <li
@@ -277,7 +277,7 @@
                     </ul>
                   </li>
                 </ul>
-                <span class="underline">Data for multiple accounts can coexist.</span>
+                <span class="ledger-underline">Data for multiple accounts can coexist.</span>
               </p>
             </div>
             <hr />
@@ -330,22 +330,28 @@
                     Choose Settings <img src="images/icon_settings.webp" alt="Settings Icon" class="game-btn-ico"/>
                   </li>
                   <li class="mt-1 mb-1">
-                    Choose <span class="p-0.5 text-xs rounded-md bg-privacy_blue w-4" style="padding-left: 10px; padding-right: 10px;"> Privacy &amp; Data </span>
+                    Choose &nbsp; <span class="p-0.5 text-xs rounded-md bg-privacy_blue w-4" style="padding-left: 10px; padding-right: 10px;"> Privacy &amp; Data </span>
+                  </li>
+                  <li class="mt1">
+                    Your EID is at the bottom
+                    <ul class="about-list-2">
+                      <li class="mt-1">
+                        <span class="ledger-underline">It should look like EI1234567890123456</span>. That's the
+                        letters "EI" followed by 16 digits.
+                      </li>
+                      <li class="mt-1 mb-1">
+                        Alternatively, if you choose Help
+                        <img
+                          src="images/icon_help.webp"
+                          alt="Help Icon"
+                          class="game-btn-ico"
+                        />
+                        in the main menu and click on &nbsp; <span class="p-0.5 text-xs rounded-md bg-data_loss_red w-4" style="padding-left: 10px; padding-right: 10px;"> Data Loss Issue </span> &nbsp; the game will auto-compose an email
+                        with your ID in the subject
+                      </li>
+                    </ul>
                   </li>
                 </ul>
-                Your ID is at the bottom.
-                <span class="underline">It should look like EI1234567890123456</span>; that's the
-                letters "EI" followed by 16 digits.
-              </p>
-              <p>
-                Alternatively, if you choose Help
-                <img
-                  src="images/icon_help.webp"
-                  alt="Help Icon"
-                  class="game-btn-ico"
-                />
-                in the main menu and click on <span class="p-0.5 text-xs rounded-md bg-data_loss_red w-4" style="padding-left: 10px; padding-right: 10px;"> Data Loss Issue </span>, the game will auto-compose an email
-                with your ID in the subject.
               </p>
             </div>
             <hr />
@@ -359,7 +365,7 @@
               <p>
                 The game, while active, backs up your game state to Egg, Inc.'s server every couple
                 of minutes if network condition allows, but these are mostly unpredictable.
-                <span class="underline"
+                <span class="ledger-underline"
                   >Force closing and reopening the game, or switching to another farm, can fairly
                   reliably trigger a new backup.</span
                 >
@@ -378,7 +384,7 @@
                 All configurations, data, and exported files are stored in the same directory as the EggLedger application.
               </p>
               <p>
-                <span class="underline">Make sure you put EggLedger in a directory of its own, and don't touch the "internal" directory</span> (or you risk data corruption).
+                <span class="ledger-underline">Make sure you put EggLedger in a directory of its own, and don't touch the "internal" directory</span> (or you risk data corruption).
               </p>
               <p>
                 If you want to uninstall EggLedger, just delete the directory, and it won't leave any trace on your system.
@@ -430,7 +436,7 @@
             class="border border-gray-300 rounded-md p-0.5"
           >
             <span class="text-gray-400 space-y-2">
-              <span class="text-lg underline underline-offset-2 mb-1rem">Hello</span><br />
+              <span class="text-lg ledger-underline mb-1rem">Hello</span><br />
               Although I thoroughly enjoy developing this tool, it does take<br />
               a lot of time and effort. If you find this tool, or any other tools<br />
               I develop/support useful, please consider <a
@@ -513,12 +519,12 @@
                   <div class="mission-view-div bg-blue-900">
                     Artifacts ({{ viewMissionData.artifactCount }})
                   </div>
-                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                  <div style="max-width: 20vw;" class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(af, afindex) in viewMissionData.artifacts">
-                      <a v-external-link :class="'tooltip-custom relative block h-full w-full rounded-full ' + afBackgroundClass(af)" 
+                      <a v-external-link :class="'ledger-af-link tooltip-custom ' + afBackgroundClass(af)" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(af, 1) + '/'">
                         <img class="h-full w-full" :alt="af.gameName" :src="specPath(af, 1)"/>
-                        <div v-if="af.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(af.count)">
+                        <div v-if="af.count > 1" :class="'ledger-af-count ' + numToDigClass(af.count)">
                           {{ af.count }}
                         </div>
                         <span class="text-sm tooltiptext-custom speech-bubble">
@@ -544,12 +550,12 @@
                   <div class="mission-view-div bg-fuchsia-900">
                     Eggfinity Stones ({{ viewMissionData.stoneCount }})
                   </div>
-                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                  <div style="max-width: 20vw;" class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(st, stindex) in viewMissionData.stones">
-                      <a v-external-link class="tooltip-custom relative block h-full w-full rounded-full bg-darker" 
+                      <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(st, 2) + '/'">
                         <img class="h-full w-full" :alt="st.gameName" :src="specPath(st, 2)"/>
-                        <div v-if="st.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(st.count)">
+                        <div v-if="st.count > 1" :class="'ledger-af-count ' + numToDigClass(st.count)">
                           {{ st.count }}
                         </div>
                         <span class="text-sm tooltiptext-custom speech-bubble">
@@ -572,12 +578,12 @@
                   <div class="mission-view-div text-gray-400 bg-darkerer">
                     Ingredients ({{ viewMissionData.ingredientCount }})
                   </div>
-                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                  <div style="max-width: 20vw;" class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(ing, ingindex) in viewMissionData.ingredients">
-                      <a v-external-link class="tooltip-custom relative block h-full w-full rounded-full bg-darker" 
+                      <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(ing, 1) + '/'">
                         <img class="h-full w-full" :alt="ing.gameName" :src="specPath(ing, 1)"/>
-                        <div v-if="ing.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(ing.count)">
+                        <div v-if="ing.count > 1" :class="'ledger-af-count ' + numToDigClass(ing.count)">
                           {{ ing.count }}
                         </div>
                         <span class="text-sm tooltiptext-custom speech-bubble">
@@ -595,12 +601,12 @@
                   <div class="mission-view-div text-gray-400 bg-darkerer">
                     Stone Fragments ({{ viewMissionData.stoneFragmentCount }})
                   </div>
-                  <div style="max-width: 20vw;" class="flex flex-wrap justify-center mx-auto">
+                  <div style="max-width: 20vw;" class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(sf, sfindex) in viewMissionData.stoneFragments">
-                      <a v-external-link class="tooltip-custom relative block h-full w-full rounded-full bg-darker" 
+                      <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
                         <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
-                        <div v-if="sf.count > 1" :class="'mission-view-af-count-div ' + numToDigClass(sf.count)">
+                        <div v-if="sf.count > 1" :class="'ledger-af-count ' + numToDigClass(sf.count)">
                           {{ sf.count }}
                         </div>
                         <span class="text-sm tooltiptext-custom speech-bubble">
@@ -615,7 +621,7 @@
                 <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
                 <div class="mt-2 text-xs text-gray-300 text-center">
                   Hover mouse over an item to show details.<br />
-                  Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="underline">
+                  Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="ledger-underline">
                     artifact explorer
                   </a> page.
                 </div>
@@ -636,7 +642,7 @@
                 <!-- Overlay to tag inmput with number of missions -->
                 <div
                   v-if="selectedAccount != null && objectedExistingData.find(acc => acc.id == selectedAccount) != null"
-                  class="absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums"
+                  class="ledger-input-overlay"
                   style="z-index: -20">
                   <span class="invisible whitespace-pre">
                     {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.id }}
@@ -656,7 +662,7 @@
                 >
                 <ul
                   v-if="viewAccountDropdownOpen && objectedExistingData.length > 0"
-                  class="absolute z-10 mt-1 w-full bg-darkerer shadow-lg max-h-60 rounded-md py-1 text-gray-400 ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
+                  class="ledger-list focus:outline-none sm:text-sm"
                   tabindex="-1"
                 >
                   <li
@@ -675,7 +681,7 @@
             </form>
           </div>
           <div class="text-center text-md mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView" v-else>
-            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
+            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
           <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
             <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="selectedAccount != null && selectedAccount == loadedEid && loadedAccountMissionsCount != (objectedExistingData.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
@@ -699,7 +705,7 @@
                 id="filterForm"
                 name="filterForm"
                 v-if="!hideFilter"
-                class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md"
+                class="filter-form text-xs"
                 v-on:submit="event => {
                   event.preventDefault();
                   applyFilter();
@@ -707,7 +713,7 @@
               >
                 <!-- Warning (if not already seen) -->
                 <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4" style="max-width: 500px;">
-                  <span class="font-bold underline mb-025rem">Warning:</span><br />
+                  <span class="font-bold ledger-underline mb-025rem">Warning:</span><br />
                   The filter feature is experimental, and may not work as expected (especially with complicated combinations). You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion. Please use it carefully, and report any issues you encounter.
                   <br /><br />
                   <button type="button" style="padding: 0.75rem;" class="btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
@@ -729,7 +735,7 @@
                       -- AND --
                     </div>
 
-                    <div class="relative flex flex-row items-center flex-grow focus-within:z-10">
+                    <div class="filter-container focus-within:z-10">
                       <!-- Top level filter options -->
                       <select class="filter-select"
                         v-on:change="handleFilterChange"
@@ -790,7 +796,7 @@
                         <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
                       </span>
                     </div>
-                    <div class="ml-2rem relative flex flex-row items-center flex-grow focus-within:z-10" 
+                    <div class="ml-2rem filter-container focus-within:z-10" 
                       v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
                       v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
                         <!-- Separator -->
@@ -882,6 +888,7 @@
             <div style="margin-left: 0.5rem;">
               <span class="font-bold text-gray-400">Missions: </span>
               <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event)">Collapse All</button>
+              <!-- Todo: See if these optiosn can be turned into a template-->
               <span class="mr-5">
                 <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
                 <input id="viewByDateCB" type="checkbox" v-model="viewByDate"
@@ -899,59 +906,52 @@
               </span>
             </div>
             <div ref="resultsDiv" class="relative h-screen">
-              <div class="mt-05rem flex-1 px-2 py-1 shadow-sm block text-lg font-mono text-gray-500 bg-darkest rounded-md" v-if="filteredMissions.length == 0">
+              <div class="filter-form text-lg" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
               </div>
               <div v-else id="missionListDiv" :style="'max-height: ' + /*( hideFilter ? '75' : '60')*/ calculateMaxMissionDivHeight() + '%'" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
                 <template v-for="(value, yIndex) in groupedMissions" :key="yIndex">
-                  <span :class="'text-lg font-bold underline y-header-' + groupedYearArr[yIndex]">{{ groupedYearArr[yIndex] }}</span> <button class="toggleButton text-lg text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex])">Collapse</button>
-                  <div :class="'mt-1 all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child'" 
+                  <span :class="'text-lg font-bold ledger-underline y-header-' + groupedYearArr[yIndex]">{{ groupedYearArr[yIndex] }}</span> <button class="toggleButton text-lg text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex])">Collapse</button>
+                  <div :class="'mt-1 atc y-' + groupedYearArr[yIndex] + '-c'" 
                     v-for="(subValue, mIndex) in value" :key="mIndex">
                     <div class="mt-1rem ml-2rem">
-                      <span class="text-base font-bold underline">{{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}</span> <button class="toggleButton text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex])">Collapse</button>
-                      <div :class="'all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child-' + groupedMonthsArr[yIndex][mIndex]" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
-                        <!-- View with date-->
-                        <div v-if="viewByDate" class="mt-1rem ml-2rem">
-                          <span class="text-sm font-bold underline">{{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}-{{ groupedDaysArr[yIndex][mIndex][dIndex] }}</span> <button class="toggleButton text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])">Collapse</button>
+                      <span class="text-base font-bold ledger-underline">{{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}</span> <button class="toggleButton text-base text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" v-on:click="toggleElements($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex])">Collapse</button>
+                      <div :class="'atc y-' + groupedYearArr[yIndex] + '-c-' + groupedMonthsArr[yIndex][mIndex]" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
+                        <div class="mt-1rem ml-2rem">
+                          <span v-if="viewByDate" class="text-sm font-bold ledger-underline">
+                            {{ groupedYearArr[yIndex] }}-{{ groupedMonthsArr[yIndex][mIndex] }}-{{ groupedDaysArr[yIndex][mIndex][dIndex] }}
+                          </span>
+                          <button v-if="viewByDate" class="toggleButton text-sm text-short mr-5 font-bold btn btn-outline-dark bg-transparent" type="button" 
+                            v-on:click="toggleElements($event, groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])"
+                          >Collapse</button>
                           <div class="mt-1rem mission-grid">
-                            <div :class="'text-sm mission-item all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child-' + groupedMonthsArr[yIndex][mIndex] + '-' + groupedDaysArr[yIndex][mIndex][dIndex]" 
-                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
+                            <div :class="'text-sm mission-item atc y-' + groupedYearArr[yIndex] + '-c-' + groupedMonthsArr[yIndex][mIndex] + '-' + groupedDaysArr[yIndex][mIndex][dIndex]" 
+                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex"
+                            >
                               <button 
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
-                                type="button"
-                                v-on:click="viewSpecificMission(mission.missionId)">
-                                <span v-if="viewMissionTimes" :class="(recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'" v-html="mission.launchTime"></span>
+                                type="button" v-on:click="viewSpecificMission(mission.missionId)"
+                              >
+                                <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
+                                  {{padDateOut(groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])}}
+                                </span>
+                                <span v-if="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
+                                  {{' ' + mission.launchTime}}
+                                </span>
                                 <span class="text-gray-400 ml-05rem">
-                                  <span :class="durationToClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
-                                  ({{mission.level}}<span style="color: gold;">★</span>)<img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
+                                  <span :class="durationToColorClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
+                                  <span v-if="mission.level != null && mission.level > 0"> ({{mission.level}}<span style="color: gold;">★</span>)</span>
+                                  <img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
                                 </span>
                               </button>
                             </div>
                           </div>                        
                         </div>
-                        <!-- View without date-->
-                        <div v-else class="mt-1rem ml-2rem">
-                          <div class="mt-1rem mission-grid">
-                            <div :class="'text-sm mission-item all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child-' + groupedMonthsArr[yIndex][mIndex] + '-' + groupedDaysArr[yIndex][mIndex][dIndex]" 
-                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
-                              <button 
-                                class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
-                                type="button" v-on:click="viewSpecificMission(mission.missionId)">
-                                <span :class="(recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'" v-html="padDateOut(groupedYearArr[yIndex], groupedMonthsArr[yIndex][mIndex], groupedDaysArr[yIndex][mIndex][dIndex])"></span>
-                                <span v-if="viewMissionTimes" :class="(recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'" v-html="' ' + mission.launchTime"></span>
-                                <span class="text-gray-400 ml-05rem">
-                                  <span :class="durationToClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
-                                  ({{mission.level}}<span style="color: gold;">★</span>)<img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>
                   <br/>
-                  <hr :class="'pt-3rem pb-3rem invisible mt-1 all-targetable-closeable year-' + groupedYearArr[yIndex] + '-child'">
+                  <hr :class="'pt-3rem pb-3rem invisible mt-1 atc y-' + groupedYearArr[yIndex] + '-c'">
                 </template>
               </div>
             </div>
@@ -985,7 +985,7 @@
               v-external-link
               href="https://github.com/DavidArthurCole/EggLedger/releases/latest"
               target="_blank"
-              class="text-red-700 hover:text-red-800 underline underline-offset-2"
+              class="text-red-700 hover:text-red-800 ledger-underline"
               >New version [{{appHasUpdate}}] available!</a
             >)</span
           >
@@ -1058,12 +1058,10 @@
         }
 
         function hhmmss(date) {
-          const hh = date.getHours().toString().padStart(2, '0');
-          const mm = date.getMinutes().toString().padStart(2, '0');
-          const ss = date.getSeconds().toString().padStart(2, '0');
-          return `${hh}:${mm}:${ss}`;
+          return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
         }
 
+        //Todo: Replace this DOM manipulation with Vue v-if statements.
         function toggleElements(event, year, month, day) {
           const self = event.target;
           const isAll = !((year || month || day));
@@ -1072,9 +1070,9 @@
 
           if(isAll) {
             for (const child of document.querySelectorAll(".toggleButton")) child.innerHTML = (self.innerHTML === "Expand All") ? "Expand" : "Collapse";
-            for (const child of document.querySelectorAll(".all-targetable-closeable")) child.style.display = newState;
-          } else if(document.getElementById('viewByDateCB').checked || !month) for (const child of document.querySelectorAll(".all-targetable-closeable" + ('.year-' + year + '-child' + (month ? '-' + month : '') + (day ? '-' + day : '')))) child.style.display = newState;
-          else for (const child of document.querySelectorAll("[class*='" + ('year-' + year + '-child' + (month ? '-' + month : '')) + "']")) child.style.display = newState;
+            for (const child of document.querySelectorAll(".atc")) child.style.display = newState;
+          } else if(document.getElementById('viewByDateCB').checked || !month) for (const child of document.querySelectorAll(".atc" + ('.y-' + year + '-c' + (month ? '-' + month : '') + (day ? '-' + day : '')))) child.style.display = newState;
+          else for (const child of document.querySelectorAll("[class*='" + ('y-' + year + '-c' + (month ? '-' + month : '')) + "']")) child.style.display = newState;
         }
 
         function padDateOut(year, month, day){
@@ -1083,7 +1081,7 @@
           return year + "-" + month + "-" + day;
         }
 
-        function durationToClass(duration){
+        function durationToColorClass(duration){
           switch(duration){
             case 0: return 'text-short';
             case 1: return 'text-standard';
@@ -1127,17 +1125,7 @@
           }
         }
 
-        function generateDurStyleClass(dur){
-          switch(dur){
-            case 0: return 'text-short';
-            case 1: return 'text-standard';
-            case 2: return 'text-extended';
-            case 3: return 'text-tutorial';
-            default: return '';
-          }
-        }
-
-        function generateDropStyleClass(drop){
+        function dropToColorClass(drop){
           switch(drop.rarity){
             case 0: return 'text-gray-400';
             case 1: return 'text-rare';
@@ -1490,6 +1478,7 @@
               //Toggle the hidden class on the overlay
               el.classList.add('hidden');
               viewMissionData.value = {};
+              missionBeingViewed.value = null;
             };
             const openOverlay = () => {
               const el = document.querySelector('.overlay');
@@ -1677,7 +1666,7 @@
                 case 'duration': return Array.from({ length: 4 }, (_, index) => ({
                     text: durToName(index),
                     value: index,
-                    styleClass: generateDurStyleClass(index)
+                    styleClass: durationToColorClass(index)
                   }));
                 case 'level': return Array.from({ length: 8 }, (_, index) => ({
                     text: index + '★',
@@ -1691,7 +1680,7 @@
                   const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
                     text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + ((artifact.displayName.toLowerCase().indexOf('stone') > -1 && artifact.displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ')')),
                     value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
-                    styleClass: generateDropStyleClass(artifact)
+                    styleClass: dropToColorClass(artifact)
                   }))
                   filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary'});
                   filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic'});
@@ -2102,6 +2091,7 @@
               return (num < 10 ? '0' : '') + num;
             }
 
+            const missionBeingViewed = Vue.ref(null);
             const viewSpecificMission = async (missionId) => {
               //Do not allow viewing a mission while data is being fetched - prevent collisions
               if(isFetching.value) return false; 
@@ -2113,6 +2103,8 @@
               const loadValue = await window.getShipDrops(loadedEid.value, missionId);
               if(loadValue == "") return;
               const allDrops = JSON.parse(loadValue);
+
+              missionBeingViewed.value = missionId;
 
               const artifacts = allDrops.filter(drop => drop.specType == "Artifact");
               const stones = allDrops.filter(drop => drop.specType == "Stone");
@@ -2212,9 +2204,10 @@
               viewAccountSelectRef,
               viewAccountDropdownOpen,
               viewAccountSubmitRef,
+              missionBeingViewed,
               viewEidGo,
               toggleElements,
-              durationToClass,
+              durationToColorClass,
               padDateOut,
               shipToName,
               viewSpecificMission,
