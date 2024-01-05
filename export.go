@@ -37,7 +37,7 @@ type mission struct {
 }
 
 /*
-These two were reated to cope with the fact that kevin can't count
+These two were created to cope with the fact that kevin can't count
 
 This replaces the GetTargetArtifact() method, which for a nil value,
 returns LUNAR_TOTEM, million dollar game devlopment right there
