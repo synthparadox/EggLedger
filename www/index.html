@@ -16,7 +16,7 @@
           <div
             class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About, UITab.Donate]"
+              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.Stats, UITab.About, UITab.Donate]"
               v-bind:key="tab"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
@@ -459,9 +459,44 @@
 
         <div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
           v-show="activeTab === UITab.ViewData">
-          <div id="missionViewDiv" ref="missionViewDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay">
+
+          <div id="dropSelectDiv" ref="dropSelectDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-drop">
+            <div id="innerDropSelectDiv" style="padding: 1rem;" style="max-height: 40vw; height: 40vw;"  class="bg-dark rounded-lg relative focus-within:z-10">
+              <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeDropFilterMenu()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              <input
+                id="drop-search"
+                type="text"
+                :class="'input-search'"
+                style="width: 90%" 
+                placeholder="Search..."
+                v-bind:value="dropSearchTerm"
+                v-on:focus="e => {e.preventDefault(); e.stopPropagation(); }"
+                v-on:input="dropSearchTerm = $event.target.value"
+              />
+              <div id="dropSelectContentDiv"
+                style="height: 50vh; max-width: 35vw; min-width: 20vw; margin-top: 10px;" class="text-gray-300 text-center overflow-auto"
+              >
+                <div v-for="drop in dropSelectList" v-bind:key="drop" class="drop-opt text-lg hover:bg-darker" v-on:click="e => {e.preventDefault(); selectDropFilter(drop); }">
+                  <span :class="(drop.styleClass ?? '') + ' text-lg'">
+                    {{ drop.text }}
+                  </span>
+                </div>
+                <div v-if="dropSelectList == [] || dropSelectList.length == 0">
+                  <span class="text-gray-400 text-lg">
+                    No results found.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="missionViewDiv" ref="missionViewDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
             <div id="innerMissionViewDiv" style="padding: 1rem;" style="max-height: 80vw;"  class="bg-dark rounded-lg relative"> <!-- I couldn't get this fucker to pad with p-1rem, I fucking hate tailwind -->
-              <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeOverlay()">
+              <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -630,38 +665,38 @@
               </div>
             </div>
           </div>
-          <div style="margin-top: 0px;" ref="selectViewAccountForm" v-if="doesDataExist">
+          <div style="margin-top: 0px;" ref="selectViewMissionsAccountForm" v-if="doesDataExist">
             <form 
               id="viewAccountForm" name="viewAccountForm" class="select-form"
               v-on:submit="event => {
                 event.preventDefault();
                 for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
-                viewEidGo();
+                viewMissionsOfEid();
               }">
-              <div ref="viewAccountSelectRef" class="relative flex-grow focus-within:z-10">
+              <div ref="viewMissionAccountSelectRef" class="relative flex-grow focus-within:z-10">
                 <!-- Overlay to tag inmput with number of missions -->
                 <div
-                  v-if="selectedAccount != null && objectedExistingData.find(acc => acc.id == selectedAccount) != null"
+                  v-if="selectedMissionAccount != null && objectedExistingData.find(acc => acc.id == selectedMissionAccount) != null"
                   class="ledger-input-overlay"
                   style="z-index: -20">
                   <span class="invisible whitespace-pre">
-                    {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.id }}
-                  </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedAccount)?.accountColor" >
-                      {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.ebString }}
-                    </span> - {{ objectedExistingData.find(acc => acc.id == selectedAccount)?.missionCount }} missions)
+                    {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.id }}
+                  </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.accountColor" >
+                      {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.ebString }}
+                    </span> - {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount }} missions)
                 </div>
 
                 <input
-                  ref="viewAccountInputRef"
+                  ref="viewMissionAccountInputRef"
                   type="text"
                   class="drop-select border-gray-300"
                   placeholder="Select an account"
-                  v-bind:value="selectedAccount"
-                  v-on:focus="openViewAccountDropdown"
-                  v-on:input="selectedAccount = $event.target.value"
+                  v-bind:value="selectedMissionAccount"
+                  v-on:focus="openMissionsViewAccountDropdown"
+                  v-on:input="selectedMissionAccount = $event.target.value"
                 >
                 <ul
-                  v-if="viewAccountDropdownOpen && objectedExistingData.length > 0"
+                  v-if="viewMissionAccountDropdownOpen && objectedExistingData.length > 0"
                   class="ledger-list focus:outline-none sm:text-sm"
                   tabindex="-1"
                 >
@@ -675,7 +710,7 @@
                 </ul>
               </div>
               <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-              v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedAccount === null || selectedAccount == '' || objectedExistingData.find(a => a.id == selectedAccount) == null || eidBeingLoaded)">
+              v-if="idle" ref="viewMissionAccountSubmitRef" type="submit" v-bind:disabled="(selectedMissionAccount === null || selectedMissionAccount == '' || objectedExistingData.find(a => a.id == selectedMissionAccount) == null || eidMissionsBeingLoaded)">
                 View
               </button>
             </form>
@@ -684,7 +719,7 @@
             <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
           <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-            <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="selectedAccount != null && selectedAccount == loadedEid && loadedAccountMissionsCount != (objectedExistingData.find(acc => acc.id == selectedAccount)?.missionCount ?? 0)">
+            <div class="mt-1rem" style="margin-bottom: 1rem;" v-if="selectedMissionAccount != null && selectedMissionAccount == loadedEid && loadedAccountMissionsCount != (objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount ?? 0)">
               <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4"> You are viewing outdated data - click <span class="text-gray-500">View</span> again to fix this.</span>
             </div>
             <div ref="filterRef">
@@ -737,7 +772,7 @@
 
                     <div class="filter-container focus-within:z-10">
                       <!-- Top level filter options -->
-                      <select class="filter-select"
+                      <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
                         v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
                         <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
@@ -745,7 +780,7 @@
                       </select>
 
                       <!-- Operator options -->
-                      <select class="filter-select"
+                      <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
                         v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
                         <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
@@ -753,18 +788,26 @@
                       </select>
 
                       <!-- Value options (Base) -->
-                      <select class="filter-select"
+                      <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
-                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] != 'launchDT' && topLevelFilterOptions[index] != 'returnDT'"
+                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] != 'launchDT' && topLevelFilterOptions[index] != 'returnDT' && topLevelFilterOptions[index] != 'drops'"
                         v-model="filterValues[index]" :id="'filter-value-' + index">
                         <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
                       </select>
-                      <!-- Launch/Return Date Selectors - 
+
+                      <!-- Drop Selectors
+                        opens a custom modal -->
+                      <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
+                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'drops'"
+                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
+                        v-model="dFilterValues[index]" :id="'filter-value-' + index">
+
+                      <!-- Value options - Launch/Return Date Selectors
                         Min: 20 January 2021  
                         Max: Today-->
                       <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
-                        class="filter-select"
+                        class="filter-select border-gray-300 text-gray-400"
                         v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
                         v-on:change="handleFilterChange"
                         v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
@@ -804,15 +847,16 @@
 
                         <!-- Top level filter options -->
                         <select v-model="orFilterTopLevelOptions[index][orIndex]"
-                          class="filter-select"
+                          class="filter-select border-gray-300 text-gray-400"
                           v-on:change="handleOrFilterChange" :id="'filter-top-' + index + '-' + orIndex">
                           <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                             {{ validOption.text }}
                         </select>
+
                         <!-- Operator options -->
                         <select
                           v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
-                          class="filter-select"
+                          class="filter-select border-gray-300 text-gray-400"
                           v-on:change="handleOrFilterChange" :id="'filter-op-' + index + '-' + orIndex">
                           <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                             {{ validOperator.text }}
@@ -820,17 +864,27 @@
 
                         <!-- Value options -->
                         <select v-model="orFilterValues[index][orIndex]"
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] != 'launchDT' && orFilterTopLevelOptions[index][orIndex] != 'returnDT'"
-                          class="filter-select"
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] != 'launchDT' && orFilterTopLevelOptions[index][orIndex] != 'returnDT' && orFilterTopLevelOptions[index][orIndex] != 'drops'"
+                          class="filter-select border-gray-300 text-gray-400"
                           v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
                           <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                             {{ validValue.text }}
                         </select>
-                        <!-- Launch/Return Date Selectors - 
+
+                        <!-- Drop Selectors
+                          opens a custom modal -->
+                        <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, orIndex);}"
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'drops'"
+                          class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
+                          v-bind:value="dOrFilterValues[index][orIndex]" readonly
+                          :id="'filter-value-' + index + '-' + orIndex"
+                        >
+
+                        <!-- Launch/Return Date Selectors
                           Min: 20 January 2021  
                           Max: Today + 5 days -->
                         <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
-                          class="filter-select"
+                          class="filter-select border-gray-300 text-gray-400"
                           v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
                           v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex"
                         >
@@ -960,6 +1014,61 @@
           
         </div>
 
+        <!-- Stats tab -->
+        <div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
+          v-show="activeTab === UITab.Stats">
+          <div style="margin-top: 0px;" ref="selectViewStatsAccountForm" v-if="doesDataExist">
+            <form 
+              id="viewStatsAccountForm" name="viewStatsAccountForm" class="select-form"
+              v-on:submit="event => {
+                event.preventDefault();
+                viewStatsOfEid(); //Todo: Implement, with statsBeingLoaded
+              }">
+              <div ref="viewStatsAccountSelectRef" class="relative flex-grow focus-within:z-10">
+                <!-- Overlay to tag inmput with number of missions -->
+                <div
+                  v-if="selectedStatsAccount != null && objectedExistingData.find(acc => acc.id == selectedStatsAccount) != null"
+                  class="ledger-input-overlay"
+                  style="z-index: -20">
+                  <span class="invisible whitespace-pre">
+                    {{ objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.id }}
+                  </span> 
+                  (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.accountColor" >
+                      {{ objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.ebString }}
+                  </span>)
+                </div>
+
+                <input
+                  ref="viewAccountInputRef"
+                  type="text"
+                  class="drop-select border-gray-300"
+                  placeholder="Select an account"
+                  v-bind:value="selectedStatsAccount"
+                  v-on:focus="openStatsViewAccountDropdown"
+                  v-on:input="selectedStatsAccount = $event.target.value"
+                >
+                <ul
+                  v-if="viewStatsAccountDropdownOpen && objectedExistingData.length > 0"
+                  class="ledger-list focus:outline-none sm:text-sm"
+                  tabindex="-1"
+                >
+                  <li
+                    v-for="account in objectedExistingData"
+                    v-bind:key="account.id" class="drop-opt"
+                    v-on:click="selectViewStatsAccount(account)"
+                  >
+                    {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span>)
+                  </li>
+                </ul>
+              </div>
+              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
+              v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedStatsAccount === null || selectedStatsAccount == '' || objectedExistingData.find(a => a.id == selectedStatsAccount) == null || statsBeingLoaded)">
+                View
+              </button>
+            </form>
+          </div>
+        </div>
+
         <footer class="text-center text-sm text-gray-500">
           <a
             v-external-link
@@ -1028,6 +1137,7 @@
         const UITab = {
           Ledger: 'Ledger',
           ViewData: 'View Mission Data',
+          Stats: 'Stats',
           About: 'About',
           Donate: 'Donate',
         };
@@ -1156,9 +1266,6 @@
               //Needs to be "" or match regex
               return playerId.value === '' || /^EI[0-9]{16}$/.test(normalizePlayerId(playerId.value));
             });
-            Vue.watch(playerId, () => {
-              if(playerId === null || playerId === undefined || playerId === '') return;
-            });
             const nicknameForSelectedPlayerId = Vue.computed(() => {
               const id = normalizePlayerId(playerId.value);
               for (const account of knownAccounts.value) {
@@ -1169,24 +1276,109 @@
               return null;
             });
 
-            const viewAccountSelectRef = Vue.ref(null);
-            const viewAccountInputRef = Vue.ref(null);
-            const viewAccountSubmitRef = Vue.ref(null);
-            const viewAccountDropdownOpen = Vue.ref(false);
-            const openViewAccountDropdown = () => {
-              viewAccountDropdownOpen.value = true;
+            const selectedMissionAccount = Vue.ref(null);
+            Vue.watch(selectedMissionAccount, async () => {
+              if(selectedMissionAccount.value === null || selectedMissionAccount.value == "") return;
+              //Reset the input if it is not a valid EID
+              if(!/^EI[0-9]{16}$/.test(selectedMissionAccount.value)){
+                selectedMissionAccount.value = "";
+              }
+            });
+            const selectedStatsAccount = Vue.ref(null);
+            Vue.watch(selectedStatsAccount, async () => {
+              if(selectedStatsAccount.value === null || selectedStatsAccount.value == "") return;
+              //Reset the input if it is not a valid EID
+              if(!/^EI[0-9]{16}$/.test(selectedStatsAccount.value)){
+                selectedStatsAccount.value = "";
+              }
+            });
+
+            const dropSelectList = Vue.ref([]);
+            const dropFilterSelectedIndex = Vue.ref(null);
+            const dropFilterSelectedOrIndex = Vue.ref(null);
+            const dropFilterMenuOpen = Vue.ref(false);
+            const openDropFilterMenu = (index, orIndex) => {
+              dropSelectList.value = getFilterValueOptions('drops');
+              dropFilterSelectedIndex.value = index;
+              dropFilterSelectedOrIndex.value = orIndex ?? null;
+              dropFilterMenuOpen.value = true;
+              const el = document.querySelector('.overlay-drop');
+              el.style.display = 'flex';
+              //Toggle the hidden class on the overlay
+              el.classList.remove('hidden');
+              document.getElementById('drop-search').focus();
             };
-            const closeViewAccountDropdown = () => {
-              viewAccountDropdownOpen.value = false;
-              if (playerId.value.trim() !== '' && viewAccountSubmitRef.value !== null) {
-                viewAccountSubmitRef.value.focus();
+            const closeDropFilterMenu = () => {
+              dropSearchTerm.value = null;
+              dropFilterSelectedIndex.value = null;
+              dropFilterSelectedOrIndex.value = null;
+              dropFilterMenuOpen.value = false;
+              const el = document.querySelector('.overlay-drop');
+              el.style.display = 'none';
+              //Toggle the hidden class on the overlay
+              el.classList.add('hidden');
+            };
+            const dropSearchTerm = Vue.ref(null);
+            Vue.watch(dropSearchTerm, () => {
+              dropSelectList.value = getFilterValueOptions('drops').filter(drop => drop.text.toLowerCase().includes(dropSearchTerm.value.toLowerCase()));
+            });
+            const selectDropFilter = (drop) => {
+              const newValue = drop.value.toString().split('.')[0];
+              if(dropFilterSelectedIndex.value != null){
+                if(dropFilterSelectedOrIndex.value == null){
+                  filterValues.value[dropFilterSelectedIndex.value] = newValue;
+                  dFilterValues.value[dropFilterSelectedIndex.value] = drop.text;
+                  handleFilterChange(`filter-value-${dropFilterSelectedIndex.value}`);
+                  document.getElementById(`filter-value-${dropFilterSelectedIndex.value}`).size = drop.text.length;
+                }else{
+                  orFilterValues.value[dropFilterSelectedIndex.value][dropFilterSelectedOrIndex.value] = newValue;
+                  dOrFilterValues.value[dropFilterSelectedIndex.value][dropFilterSelectedOrIndex.value] = drop.text;
+                  handleOrFilterChange(`filter-value-${dropFilterSelectedIndex.value}-${dropFilterSelectedOrIndex.value}`);
+                  document.getElementById(`filter-value-${dropFilterSelectedIndex.value}-${dropFilterSelectedOrIndex.value}`).size = drop.text.length;
+                }
+              }
+              closeDropFilterMenu();
+            };
+
+            const statsBeingLoaded = Vue.ref(false);
+            const viewStatsAccountSelectRef = Vue.ref(null);
+            const viewStatsAccountInputRef = Vue.ref(null);
+            const viewStatsAccountSubmitRef = Vue.ref(null);
+            const viewStatsAccountDropdownOpen = Vue.ref(false);
+            const openStatsViewAccountDropdown = () => {
+              viewStatsAccountDropdownOpen.value = true;
+            };
+            const closeStatsViewAccountDropdown = () => {
+              viewStatsAccountDropdownOpen.value = false;
+              if (selectedStatsAccount.value != null && selectedStatsAccount.value.trim() !== '' && viewStatsAccountSubmitRef.value !== null) {
+                viewStatsAccountSubmitRef.value.focus();
               } else {
-                viewAccountInputRef.value?.blur();
+                viewStatsAccountInputRef.value?.blur();
+              }
+            };
+            const selectViewStatsAccount = account => {
+              closeStatsViewAccountDropdown();
+              selectedStatsAccount.value = account.id;
+            };
+
+            const viewMissionAccountSelectRef = Vue.ref(null);
+            const viewMissionAccountInputRef = Vue.ref(null);
+            const viewMissionAccountSubmitRef = Vue.ref(null);
+            const viewMissionAccountDropdownOpen = Vue.ref(false);
+            const openMissionsViewAccountDropdown = () => {
+              viewMissionAccountDropdownOpen.value = true;
+            };
+            const closeMissionsViewAccountDropdown = () => {
+              viewMissionAccountDropdownOpen.value = false;
+              if (selectedMissionAccount.value != null && selectedMissionAccount.value.trim() !== '' && viewMissionAccountSubmitRef.value !== null) {
+                viewMissionAccountSubmitRef.value.focus();
+              } else {
+                viewMissionAccountInputRef.value?.blur();
               }
             };
             const selectViewAccount = account => {
-              closeViewAccountDropdown();
-              selectedAccount.value = account.id;
+              closeMissionsViewAccountDropdown();
+              selectedMissionAccount.value = account.id;
             };
 
             const playerIdSelectRef = Vue.ref(null);
@@ -1221,26 +1413,42 @@
               if (!playerIdSelectRef.value?.contains(target)) {
                 closePlayerIdDropdown();
               }
-              if(!viewAccountSelectRef.value?.contains(target)) {
-                closeViewAccountDropdown();
+              if(!viewMissionAccountSelectRef.value?.contains(target)) {
+                closeMissionsViewAccountDropdown();
+              }
+              if(!viewStatsAccountSelectRef.value?.contains(target)) {
+                closeStatsViewAccountDropdown();
               }
             };
-            const handleFocus = () => {
+
+            //I spent three fucking hours trying to figure out why I couldn't type into a fucking input. It was this. Fucking. Kill. Me.
+            /*const handleFocus = (event) => {
               const active = document.activeElement;
+
+              // Check if the active element is the input, do nothing
+              if (active.tagName.toLowerCase() === 'input' && active.type !== 'text') {
+                return;
+              }
+
+              // Check and close dropdowns as needed
               if (!playerIdSelectRef.value?.contains(active)) {
                 closePlayerIdDropdown();
               }
-              if(!viewAccountSelectRef.value?.contains(active)) {
-                closeViewAccountDropdown();
+              if (!viewMissionAccountSelectRef.value?.contains(active)) {
+                closeMissionsViewAccountDropdown();
               }
-            };
+              if (!viewStatsAccountSelectRef.value?.contains(active)) {
+                closeStatsViewAccountDropdown();
+              }
+            };*/
+
             Vue.onMounted(() => {
               window.addEventListener('mousedown', handleMousedown);
-              window.addEventListener('focus', handleFocus, true);
+              //window.addEventListener('focus', handleFocus, true);
             });
             Vue.onUnmounted(() => {
               window.removeEventListener('mousedown', handleMousedown);
-              window.removeEventListener('focus', handleFocus);
+              //window.removeEventListener('focus', handleFocus);
             });
 
             const isFetching = Vue.ref(false);
@@ -1419,14 +1627,15 @@
             };
             const properCase = (string) => {
               string = string.toLowerCase();
-              //Capitalize the first letter of each word, unless it is 'of' or 'the'
+              // Capitalize the first letter of each word, unless it is 'of' or 'the'
               const words = string.split(" ");
               for (let i = 0; i < words.length; i++) {
-                if(words[i] !== "of" && words[i] !== "the"){
+                if (words[i] !== "of" && words[i] !== "the") {
                   words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
                 }
               }
-              return words.join(" ");
+              const finalString = words.join(" ");
+              return finalString.charAt(0).toUpperCase() + finalString.slice(1);
             };
             const boundEffectString = (str) => {
               const effRegex = /\[(.*?)\]/g;
@@ -1474,16 +1683,16 @@
             const afExplorerName = (drop, addend) => {
               return drop.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(drop.level) + addend);
             };
-            const closeOverlay = () => {
-              const el = document.querySelector('.overlay');
+            const closeMissionOverlay = () => {
+              const el = document.querySelector('.overlay-mission');
               el.style.display = 'none';
               //Toggle the hidden class on the overlay
               el.classList.add('hidden');
               viewMissionData.value = {};
               missionBeingViewed.value = null;
             };
-            const openOverlay = () => {
-              const el = document.querySelector('.overlay');
+            const openMissionOverlay = () => {
+              const el = document.querySelector('.overlay-mission');
               el.style.display = 'flex';
               //Toggle the hidden class on the overlay
               el.classList.remove('hidden');
@@ -1503,15 +1712,7 @@
               refreshExistingData();
             });
 
-            const selectedAccount = Vue.ref(null);
-            Vue.watch(selectedAccount, async () => {
-              if(selectedAccount.value === null || selectedAccount.value == "") return;
-              //Reset the input if it is not a valid EID
-              if(!/^EI[0-9]{16}$/.test(selectedAccount.value)){
-                selectedAccount.value = "";
-              }
-            });
-            const eidBeingLoaded = Vue.ref(false);
+            const eidMissionsBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
             const loadedAccountMissionsCount = Vue.ref(0);
             const allLoadedMissions = Vue.ref(null);
@@ -1568,22 +1769,23 @@
               }
             };
 
-            const viewEidGo = async () => {
+            const viewMissionsOfEid = async () => {
               filterApplyTime.value = ""; //Reset the filter apply time
-              loadedAccountMissionsCount.value = objectedExistingData.value.find(acc => acc.id == selectedAccount.value.toString())?.missionCount ?? 0;
-              eidBeingLoaded.value = true;
-              const loadValue = await window.viewEidGo(selectedAccount.value.toString());
+              loadedAccountMissionsCount.value = objectedExistingData.value.find(acc => acc.id == selectedMissionAccount.value.toString())?.missionCount ?? 0;
+              eidMissionsBeingLoaded.value = true;
+              const loadValue = await window.viewEidGo(selectedMissionAccount.value.toString());
               if (loadValue !== "") {
                 allLoadedMissions.value = JSON.parse(loadValue);
                 filteredMissions.value = allLoadedMissions.value;
-                loadedEid.value = selectedAccount.value.toString();
+                loadedEid.value = selectedMissionAccount.value.toString();
               }
-              eidBeingLoaded.value = false;
+              eidMissionsBeingLoaded.value = false;
             };
 
             //==============================================
             // Filter stuff :^)
             //==============================================
+
             const filterApplyTime = Vue.ref("");
             const filterConditionsCount = Vue.ref(1);
             const topLevelFilterOptions = Vue.ref([]);
@@ -1594,6 +1796,29 @@
             const orFilterTopLevelOptions = Vue.ref([[]]);
             const orFilterOperators = Vue.ref([[]]);
             const orFilterValues = Vue.ref([[]]);
+
+            const dFilterValues = Vue.ref([]);
+            const dOrFilterValues = Vue.ref([[]]);
+            //When filterValues changes, keep dFilterValues in sync in terms of size
+            Vue.watch(filterValues, () => {
+              dFilterValues.value = filterValues.value.map((val, index) => {
+                if(val == null) return null;
+                if(val == "") return "";
+                if(filterTopLevelOptions.value[index].value == 'duration') return parseInt(val);
+                return val;
+              });
+            });
+            //When orFilterValues changes, keep dOrFilterValues in sync in terms of size
+            Vue.watch(orFilterValues, () => {
+              dOrFilterValues.value = orFilterValues.value.map((orVal, index) => {
+                return orVal.map((val, orIndex) => {
+                  if(val == null) return null;
+                  if(val == "") return "";
+                  if(orFilterTopLevelOptions.value[index][orIndex].value == 'duration') return parseInt(val);
+                  return val;
+                });
+              });
+            });
 
             const dataFilter = Vue.ref([]);
             const orDataFilter = Vue.ref([[]]);
@@ -1686,7 +1911,7 @@
                   }))
                   filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary'});
                   filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic'});
-                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare'});   
+                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare'});
                   return filteredConfigs;
                 }
                 case 'dubcap': return [{ text: 'True', value: 'true' },{ text: 'False', value: 'false' }];
@@ -1719,16 +1944,17 @@
               const existingBorder = el ? 'border-' + el.classList.toString().match(/ border-(.*?)(\s|"|'|$)/)[1].trim() : '';
               const existingText =  el ? 'text-' + el.classList.toString().replace('text-sm', ' ').match(/ text-(.*?)(\s|"|'|$)/)[1].trim() : ''; 
               const isDrops = isOr ? orFilterTopLevelOptions.value[index][orIndex] == 'drops' : topLevelFilterOptions.value[index] == 'drops';
+              const dropsValue = isOr ? orFilterValues.value[index][orIndex] : filterValues.value[index];
               const isDuration = isOr ? orFilterTopLevelOptions.value[index][orIndex] == 'duration' : topLevelFilterOptions.value[index] == 'duration';
               var newBorder = '', newText = '';
 
-              if(isDrops &&  el.value != ''){
-                switch(el.value.split("_")[ 2]) {
+              if(isDrops && dropsValue != null && dropsValue != ''){
+                switch(dropsValue.split("_")[ 2]) {
                   case "0": newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
                   case "1": newBorder = 'border-rare'; newText = 'text-rare'; break;
                   case "2": newBorder = 'border-epic'; newText = 'text-epic'; break;
                   case "3": newBorder = 'border-legendary'; newText = 'text-legendary'; break;
-                  default: newBorder = 'border-gray-300'; newText = 'text-gray-40 0'; break;
+                  default: newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
                 }
               } else if(isDuration && el.value != ''){
                 switch(el.value){
@@ -1787,7 +2013,7 @@
             };
 
             const handleFilterChange = (event) => {
-              const targetEl = event.target;
+              const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
               if(targetEl.oldValue == null) { 
                 updateFilterConditionsCount(); 
@@ -1802,7 +2028,7 @@
             };
 
             const handleOrFilterChange = (event) => {
-              const targetEl = event.target;
+              const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
               const index = parseInt(targetId.split("-")[2]);
               const orIndex = parseInt(targetId.split("-").pop());   
@@ -1872,11 +2098,13 @@
                 topLevelFilterOptions.value[i] = topLevelFilterOptions.value[i + 1];
                 filterOperators.value[i] = filterOperators.value[i + 1];
                 filterValues.value[i] = filterValues.value[i + 1];
+                dFilterValues.value[i] = dFilterValues.value[i + 1];
               
                 orFilterConditionsCount.value[i] = orFilterConditionsCount.value[i + 1];
                 orFilterTopLevelOptions.value[i] = orFilterTopLevelOptions.value[i + 1];
                 orFilterOperators.value[i] = orFilterOperators.value[i + 1];
                 orFilterValues.value[i] = orFilterValues.value[i + 1];
+                dOrFilterValues.value[i] = dOrFilterValues.value[i + 1];
               }
               updateFilterConditionsCount();
               updateFilterNoReCount();
@@ -1894,6 +2122,7 @@
                 orFilterTopLevelOptions.value[index][i] = orFilterTopLevelOptions.value[index][i + 1];
                 orFilterOperators.value[index][i] = orFilterOperators.value[index][i + 1];
                 orFilterValues.value[index][i] = orFilterValues.value[index][i + 1];
+                dOrFilterValues.value[index][i] = dOrFilterValues.value[index][i + 1];
               }
               orFilterConditionsCount.value[index] -= 1;
               if(orFilterConditionsCount.value[index] == 0) orFilterConditionsCount.value[index] = null;
@@ -2015,12 +2244,12 @@
               var index = 0;
               for(const filter of filters){
                 var filterPassed = true;
-                if(filter.topLevel != null && filter.op != null && filter.val != null){
+                if(filter.topLevel != null && filter.op != null && (filter.val != null || filter.topLevel == 'target' ) ){
                   filterPassed = await testMissionAgainstFilter(mission, filter);
                   if(!filterPassed) {
                     if(orFilters[index] != null){
                       for(const orFilter of orFilters[index]){
-                        if(orFilter.topLevel != null && orFilter.op != null && orFilter.val != null){
+                        if(orFilter.topLevel != null && orFilter.op != null && (orFilter.val != null || orFilter.topLevel == 'target')){
                           filterPassed = await testMissionAgainstFilter(mission, orFilter);
                           if(filterPassed) break;
                         }
@@ -2075,7 +2304,7 @@
               }
             };
 
-            //Set it up so that if a click is performed outside of the 'viewMissionDiv', closeOverlay() is called
+            //Set it up so that if a click is performed outside of the 'viewMissionDiv', closeMissionOverlay() is called
             Vue.onMounted(() => {
               const largerDiv = document.getElementById('missionViewDiv');
               largerDiv.addEventListener('click', function(event) {
@@ -2084,7 +2313,20 @@
                 const divRect = innerDiv.getBoundingClientRect();
                 const clickX = event.clientX;
                 const clickY = event.clientY;
-                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeOverlay();
+                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeMissionOverlay();
+              });
+            });
+
+            //Set it up so that if a click is performed outside of the 'dropSelectDiv', closeDropFilterMenu() is called
+            Vue.onMounted(() => {
+              const largerDiv = document.getElementById('dropSelectDiv');
+              largerDiv.addEventListener('click', function(event) {
+                if(this.classList.contains('hidden')) return;
+                const innerDiv = document.getElementById('innerDropSelectDiv');
+                const divRect = innerDiv.getBoundingClientRect();
+                const clickX = event.clientX;
+                const clickY = event.clientY;
+                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeDropFilterMenu();
               });
             });
 
@@ -2155,7 +2397,7 @@
                 nextMission: nextMission
               };
               viewMissionData.value = newMissionViewData;
-              openOverlay();
+              openMissionOverlay();
             };
 
             return {
@@ -2200,25 +2442,34 @@
               doesDataExist,
               existingData,
               objectedExistingData,
-              selectedAccount,
-              eidBeingLoaded,
-              viewAccountInputRef,
-              viewAccountSelectRef,
-              viewAccountDropdownOpen,
-              viewAccountSubmitRef,
+              selectedMissionAccount,
+              eidMissionsBeingLoaded,
+              viewMissionAccountInputRef,
+              viewMissionAccountSelectRef,
+              viewMissionAccountDropdownOpen,
+              viewMissionAccountSubmitRef,
               missionBeingViewed,
-              viewEidGo,
+              viewMissionsOfEid,
               toggleElements,
               durationToColorClass,
               padDateOut,
               shipToName,
               viewSpecificMission,
               targetImage,
-              closeOverlay,
+              closeMissionOverlay,
               refreshExistingData,
-              openViewAccountDropdown,
+              openMissionsViewAccountDropdown,
               selectViewAccount,
-              closeViewAccountDropdown,
+              closeMissionsViewAccountDropdown,
+              statsBeingLoaded,
+              selectedStatsAccount,
+              viewStatsAccountSelectRef,
+              viewStatsAccountDropdownOpen,
+              viewStatsAccountInputRef,
+              viewStatsAccountSubmitRef,
+              openStatsViewAccountDropdown,
+              closeStatsViewAccountDropdown,
+              selectViewStatsAccount,
 
               //View specific mission
               viewByDate,
@@ -2280,6 +2531,16 @@
               filterWarningRead,
               hideFilterWarning,
               dismissFilterWarning,
+              dropFilterSelectedIndex,
+              dropFilterMenuOpen,
+              dropSelectList,
+              dropFilterSelectedOrIndex,
+              dropSearchTerm,
+              dFilterValues,
+              dOrFilterValues,
+              openDropFilterMenu,
+              closeDropFilterMenu,
+              selectDropFilter,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,
