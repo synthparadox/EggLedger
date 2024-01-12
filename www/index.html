@@ -16,7 +16,7 @@
           <div
             class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.Stats, UITab.About, UITab.Donate]"
+              v-for="tab in [UITab.Ledger, UITab.ViewData, /*UITab.Stats,*/ UITab.About, UITab.Donate]"
               v-bind:key="tab"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
@@ -941,7 +941,7 @@
             <hr class="mt-1rem invisible">
             <div style="margin-left: 0.5rem;">
               <span class="font-bold text-gray-400">Missions: </span>
-              <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base toggle-link" type="button" v-on:click="toggleElements($event)">Collapse All</button>
+              <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base toggle-link" type="button" v-on:click="toggleElements($event)">{{(allVisible ? 'Collapse All' : 'Expand All')}}</button>
               <span class="mr-5">
                 <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
                 <input id="viewByDateCB" type="checkbox" v-model="viewByDate" class="ext-opt-check"/>
@@ -961,34 +961,33 @@
               </div>
               <div v-else id="missionListDiv" :style="'max-height: ' + calculateMaxMissionDivHeight() + '%'" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
                 <template v-for="(value, yI) in groupedMissions" :key="yI">
-                  <span :class="'text-lg font-bold mr-05rem ledger-underline y-header-' + gYA[yI]">{{ gYA[yI] }}</span>
+                  <span :class="'text-lg font-bold mr-05rem ledger-underline'">{{ gYA[yI].year }}</span>
                   <button class="tb-c text-lg toggle-link" type="button" v-on:click="toggleElements($event, gYA[yI])">
-                    Collapse
+                    {{(gYA[yI].enabled ? 'Collapse' : 'Expand')}}
                   </button>
-                  <div :class="'mt-1 atc y-' + gYA[yI] + '-c'" 
-                    v-for="(subValue, mI) in value" :key="mI">
+                  <div v-if="gYA[yI].enabled" v-for="(subValue, mI) in value" :key="mI">
                     <div class="mt-1rem ml-2rem">
-                      <span class="text-base font-bold mr-05rem ledger-underline">{{ gYA[yI] }}-{{ gMA[yI][mI] }}</span>
+                      <span class="text-base font-bold mr-05rem ledger-underline">{{ gYA[yI].year }}-{{ gMA[yI][mI].month }}</span>
                       <button class="tb-c text-base toggle-link" type="button" v-on:click="toggleElements($event, gYA[yI], gMA[yI][mI])">
-                        Collapse
+                       {{(gMA[yI][mI].enabled ? 'Collapse' : 'Expand')}}
                       </button>
-                      <div :class="'atc y-' + gYA[yI] + '-c-' + gMA[yI][mI]" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
+                      <div v-if="gMA[yI][mI].enabled" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
                         <div class="mt-1rem ml-2rem">
                           <span v-if="viewByDate" class="text-sm font-bold ledger-underline">
-                            {{ gYA[yI] }}-{{ gMA[yI][mI] }}-{{ gDA[yI][mI][dIndex] }}
+                            {{ gYA[yI].year }}-{{ gMA[yI][mI].month }}-{{ gDA[yI][mI][dIndex].day }}
                           </span> <button v-if="viewByDate" class="tb-c text-sm mr-05rem toggle-link" type="button" v-on:click="toggleElements($event, gYA[yI], gMA[yI][mI], gDA[yI][mI][dIndex])">
-                            Collapse
+                            {{(gDA[yI][mI][dIndex].enabled ? 'Collapse' : 'Expand')}}
                           </button>
                           <div class="mt-1rem mission-grid">
-                            <div :class="'text-sm mission-item atc y-' + gYA[yI] + '-c-' + gMA[yI][mI] + '-' + gDA[yI][mI][dIndex]" 
-                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex"
-                            >
+                            <div v-if="(viewByDate && gDA[yI][mI][dIndex].enabled) || (!viewByDate && gMA[yI][mI].enabled)"
+                              class="text-sm mission-item"
+                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
                               <button 
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                 type="button" v-on:click="viewSpecificMission(mission.missionId)"
                               >
                                 <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
-                                  {{padDateOut(gYA[yI], gMA[yI][mI], gDA[yI][mI][dIndex])}}
+                                  {{padDateOut(gYA[yI].year, gMA[yI][mI].month, gDA[yI][mI][dIndex].day)}}
                                 </span>
                                 <span v-if="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
                                   {{' ' + mission.launchTime}}
@@ -1006,7 +1005,7 @@
                     </div>
                   </div>
                   <br/>
-                  <hr :class="'pt-3rem pb-3rem invisible mt-1 atc y-' + gYA[yI] + '-c'">
+                  <hr v-if="gYA[yI].enabled" class="pt-3rem pb-3rem invisible mt-1">
                 </template>
               </div>
             </div>
@@ -1015,7 +1014,7 @@
         </div>
 
         <!-- Stats tab -->
-        <div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
+        <!--<div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
           v-show="activeTab === UITab.Stats">
           <div style="margin-top: 0px;" ref="selectViewStatsAccountForm" v-if="doesDataExist">
             <form 
@@ -1025,7 +1024,6 @@
                 viewStatsOfEid(); //Todo: Implement, with statsBeingLoaded
               }">
               <div ref="viewStatsAccountSelectRef" class="relative flex-grow focus-within:z-10">
-                <!-- Overlay to tag inmput with number of missions -->
                 <div
                   v-if="selectedStatsAccount != null && objectedExistingData.find(acc => acc.id == selectedStatsAccount) != null"
                   class="ledger-input-overlay"
@@ -1068,6 +1066,7 @@
             </form>
           </div>
         </div>
+      -->
 
         <footer class="text-center text-sm text-gray-500">
           <a
@@ -1137,7 +1136,7 @@
         const UITab = {
           Ledger: 'Ledger',
           ViewData: 'View Mission Data',
-          Stats: 'Stats',
+          /*Stats: 'Stats',*/
           About: 'About',
           Donate: 'Donate',
         };
@@ -1170,21 +1169,6 @@
 
         function hhmmss(date) {
           return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
-        }
-
-        //Todo: Replace this DOM manipulation with Vue v-if statements.
-        // Use { { (conditon ? 'Collapse' : 'Expand'  ) } } for inner text
-        function toggleElements(event, year, month, day) {
-          const self = event.target;
-          const isAll = !((year || month || day));
-          const newState = (self.innerHTML.indexOf("Collapse") > -1) ? "none" : "block";
-          self.innerHTML = ((self.innerHTML.indexOf("Expand") > -1) ? "Collapse" : "Expand") + (isAll ? " All" : "");
-
-          if(isAll) {
-            for (const child of document.querySelectorAll(".tb-c")) child.innerHTML = (self.innerHTML === "Expand All") ? "Expand" : "Collapse";
-            for (const child of document.querySelectorAll(".atc")) child.style.display = newState;
-          } else if(document.getElementById('viewByDateCB').checked || !month) for (const child of document.querySelectorAll(".atc" + ('.y-' + year + '-c' + (month ? '-' + month : '') + (day ? '-' + day : '')))) child.style.display = newState;
-          else for (const child of document.querySelectorAll("[class*='" + ('y-' + year + '-c' + (month ? '-' + month : '')) + "']")) child.style.display = newState;
         }
 
         function padDateOut(year, month, day){
@@ -1293,11 +1277,51 @@
               }
             });
 
+
+            // I spent three fucking hours trying to figure out why I couldn't type into a fucking input. 
+            // It was this. Fucking. Kill. Me.
+            // The handleFocus event listener gets nuked globally when the drop selector opens
+            const handleFocus = () => {
+              const active = document.activeElement;
+              if (!playerIdSelectRef?.value?.contains(active)) {
+                closePlayerIdDropdown();
+              }
+              if (!viewMissionAccountSelectRef?.value?.contains(active)) {
+                closeMissionsViewAccountDropdown();
+              }
+              if (!viewStatsAccountSelectRef?.value?.contains(active)) {
+                closeStatsViewAccountDropdown();
+              }
+            };
+
+            const handleMousedown = event => {
+              const target = event.target;
+              if (!playerIdSelectRef.value?.contains(target)) {
+                closePlayerIdDropdown();
+              }
+              if (!viewMissionAccountSelectRef?.value?.contains(target)) {
+                closeMissionsViewAccountDropdown();
+              }
+              if (!viewStatsAccountSelectRef?.value?.contains(target)) {
+                closeStatsViewAccountDropdown();
+              }
+            };
+
+            Vue.onMounted(() => {
+              window.addEventListener('mousedown', handleMousedown);
+              window.addEventListener('focus', handleFocus, true);
+            });
+            Vue.onUnmounted(() => {
+              window.removeEventListener('mousedown', handleMousedown);
+              window.removeEventListener('focus', handleFocus, true);
+            });
+
             const dropSelectList = Vue.ref([]);
             const dropFilterSelectedIndex = Vue.ref(null);
             const dropFilterSelectedOrIndex = Vue.ref(null);
             const dropFilterMenuOpen = Vue.ref(false);
             const openDropFilterMenu = (index, orIndex) => {
+              window.removeEventListener('focus', handleFocus, true);
               dropSelectList.value = getFilterValueOptions('drops');
               dropFilterSelectedIndex.value = index;
               dropFilterSelectedOrIndex.value = orIndex ?? null;
@@ -1309,7 +1333,8 @@
               document.getElementById('drop-search').focus();
             };
             const closeDropFilterMenu = () => {
-              dropSearchTerm.value = null;
+              window.addEventListener('focus', handleFocus, true);
+              dropSearchTerm.value = "";
               dropFilterSelectedIndex.value = null;
               dropFilterSelectedOrIndex.value = null;
               dropFilterMenuOpen.value = false;
@@ -1318,7 +1343,7 @@
               //Toggle the hidden class on the overlay
               el.classList.add('hidden');
             };
-            const dropSearchTerm = Vue.ref(null);
+            const dropSearchTerm = Vue.ref("");
             Vue.watch(dropSearchTerm, () => {
               dropSelectList.value = getFilterValueOptions('drops').filter(drop => drop.text.toLowerCase().includes(dropSearchTerm.value.toLowerCase()));
             });
@@ -1407,49 +1432,6 @@
               if (normalizedId.length != 18) return 'expected 16 digits, found ' + (normalizedId.length - 2);
               return '';
             }
-            // Close dropdown when clicking or focusing elsewhere.
-            const handleMousedown = event => {
-              const target = event.target;
-              if (!playerIdSelectRef.value?.contains(target)) {
-                closePlayerIdDropdown();
-              }
-              if(!viewMissionAccountSelectRef.value?.contains(target)) {
-                closeMissionsViewAccountDropdown();
-              }
-              if(!viewStatsAccountSelectRef.value?.contains(target)) {
-                closeStatsViewAccountDropdown();
-              }
-            };
-
-            //I spent three fucking hours trying to figure out why I couldn't type into a fucking input. It was this. Fucking. Kill. Me.
-            /*const handleFocus = (event) => {
-              const active = document.activeElement;
-
-              // Check if the active element is the input, do nothing
-              if (active.tagName.toLowerCase() === 'input' && active.type !== 'text') {
-                return;
-              }
-
-              // Check and close dropdowns as needed
-              if (!playerIdSelectRef.value?.contains(active)) {
-                closePlayerIdDropdown();
-              }
-              if (!viewMissionAccountSelectRef.value?.contains(active)) {
-                closeMissionsViewAccountDropdown();
-              }
-              if (!viewStatsAccountSelectRef.value?.contains(active)) {
-                closeStatsViewAccountDropdown();
-              }
-            };*/
-
-            Vue.onMounted(() => {
-              window.addEventListener('mousedown', handleMousedown);
-              //window.addEventListener('focus', handleFocus, true);
-            });
-            Vue.onUnmounted(() => {
-              window.removeEventListener('mousedown', handleMousedown);
-              //window.removeEventListener('focus', handleFocus);
-            });
 
             const isFetching = Vue.ref(false);
             const fetchPlayerData = async () => {
@@ -1725,13 +1707,15 @@
 
               // Generate a list of all the years that have missions
               const uniqueYears = [...new Set(filteredMissions.value.map(mission => mission.launchYear))].reverse();
-              gYA.value = uniqueYears;
+              //Make a copy of the uniqueYears array, and add an enabled property to each year
+              gYA.value = uniqueYears.map(year => { return { year: year, enabled: true}; });
 
               // Create a 2D array storing months used in each year
               const uniqueMonthsArr = uniqueYears.map(year =>
                 [...new Set(filteredMissions.value.filter(mission => mission.launchYear === year).map(mission => mission.launchMonth))].reverse()
               );
-              gMA.value = uniqueMonthsArr;
+              //Make a copy of the uniqueMonthsArr array, and add an enabled property to each month
+              gMA.value = uniqueMonthsArr.map(year => year.map(month => { return { month: month, enabled: true}; }));
 
               // Create a 3D array storing days used in each month
               const uniqueDaysArr = uniqueYears.map((year, yI) =>
@@ -1743,7 +1727,8 @@
                   )].reverse()
                 )
               );
-              gDA.value = uniqueDaysArr;
+              //Make a copy of the uniqueDaysArr array, and add an enabled property to each day
+              gDA.value = uniqueDaysArr.map((year, yI) => year.map((month, mI) => month.map(day => { return { day: day, enabled: true}; })));
 
               // Create a 4D array storing all missions in each day
               return uniqueYears.map((year, yI) =>
@@ -1756,6 +1741,31 @@
                 )
               );
             });
+
+            const allVisible = Vue.ref(true);
+            function toggleElements(event, passedYear, passedMonth, passedDay) {
+              if(passedYear){
+                const year = gYA.value[gYA.value.indexOf(passedYear)];
+                if(passedMonth){
+                  const month = gMA.value[gYA.value.indexOf(passedYear)][gMA.value[gYA.value.indexOf(passedYear)].indexOf(passedMonth)];
+                  if(passedDay){
+                    const day = gDA.value[gYA.value.indexOf(passedYear)][gMA.value[gYA.value.indexOf(passedYear)].indexOf(passedMonth)][gDA.value[gYA.value.indexOf(passedYear)][gMA.value[gYA.value.indexOf(passedYear)].indexOf(passedMonth)].indexOf(passedDay)];
+                    day.enabled = !day.enabled;
+                  } else month.enabled = !month.enabled;
+                } else year.enabled = !year.enabled;
+              } else { //Toggle all
+                allVisible.value = !allVisible.value;
+                for (const year of gYA.value) {
+                  year.enabled = allVisible.value;
+                  for (const month of gMA.value[gYA.value.indexOf(year)]) {
+                    month.enabled = allVisible.value;
+                    for (const day of gDA.value[gYA.value.indexOf(year)][gMA.value[gYA.value.indexOf(year)].indexOf(month)]) {
+                      day.enabled = allVisible.value;
+                    }
+                  }
+                }
+              }
+            }
 
             const calculateMaxMissionDivHeight = () => {
               if(hideFilter.value) return '80';
@@ -1773,14 +1783,20 @@
               filterApplyTime.value = ""; //Reset the filter apply time
               loadedAccountMissionsCount.value = objectedExistingData.value.find(acc => acc.id == selectedMissionAccount.value.toString())?.missionCount ?? 0;
               eidMissionsBeingLoaded.value = true;
-              const loadValue = await window.viewEidGo(selectedMissionAccount.value.toString());
-              if (loadValue !== "") {
-                allLoadedMissions.value = JSON.parse(loadValue);
+              const missionsLoadValue = await window.viewMissionsEID(selectedMissionAccount.value.toString());
+              if (missionsLoadValue !== "") {
+                allLoadedMissions.value = JSON.parse(missionsLoadValue);
                 filteredMissions.value = allLoadedMissions.value;
                 loadedEid.value = selectedMissionAccount.value.toString();
               }
               eidMissionsBeingLoaded.value = false;
             };
+
+            /*const viewStatsOfEid = async () => {
+              if(selectedStatsAccount.value == null || selectedStatsAccount == '' || !selectedStatsAccount.value.test(/^EI[0-9]{16}$/i)) return;
+              statsBeingLoaded.value = true;
+              const statsLoadValue = await window.viewStatsEID(selectedStatsAccount.value.toString());
+            }*/
 
             //==============================================
             // Filter stuff :^)
@@ -2498,6 +2514,7 @@
               gYA,
               gMA,
               gDA,
+              allVisible,
 
               //Filter
               dataFilter,

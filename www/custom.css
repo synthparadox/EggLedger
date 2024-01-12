@@ -40,9 +40,9 @@
 
 .speech-bubble {
   position: relative;
-  padding: 10px; /* Adjust the padding to your preference */
-  margin: 10px auto; /* Center the bubble horizontally */
-  border-radius: 5px; /* Rounded corners for the bubble */
+  padding: 10px;
+  margin: 10px auto;
+  border-radius: 5px;
   background-color: rgba(33, 37, 41, 0.95);
 }
 

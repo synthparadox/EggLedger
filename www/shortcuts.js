@@ -35,7 +35,7 @@ const altCodes = new Set([
 
 function preventDefaultShortcuts(event) {
   let prevent = false;
-  if (navigator.userAgent.match(/Mac OS X/)) {
+  if (RegExp(/Mac OS X/).exec(navigator.userAgent)) {
     if (event.metaKey) {
       if (event.keyCode > 48 && event.keyCode <= 57)
         // 1-9

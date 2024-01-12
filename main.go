@@ -132,6 +132,18 @@ type LoadedMission struct {
 	TargetInt      int32                        `json:"targetInt"`
 }
 
+type StatsReport struct {
+	DubCapsSent int32       `json:"dubCapsSent"`
+	ShipsSent   []StatsShip `json:"shipsSent"`
+}
+
+type StatsShip struct {
+	MissiondId   string                       `json:"missionId"`
+	Ship         *ei.MissionInfo_Spaceship    `json:"ship"`
+	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
+	Level        int32                        `json:"level"`
+}
+
 type MissionDrop struct {
 	Id           int32   `json:"id"`
 	SpecType     string  `json:"specType"`
@@ -318,6 +330,47 @@ func isDubCap(mission *ei.CompleteMissionResponse) bool {
 	}
 }
 
+func countDubCaps(eid string) (int32, error) {
+	if len(_nominalShipCapacities) == 0 {
+		initNominalShipCapacities()
+	}
+	count := int32(0)
+	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
+	if err != nil {
+		log.Error(err)
+		return 0, err
+	}
+	for _, completeMission := range completeMissions {
+		if isDubCap(completeMission) {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func viewStatsMissionsOfId(eid string) ([]StatsShip, error) {
+
+	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	//Array of StatsShip
+	missionArr := []StatsShip{}
+
+	for _, completeMission := range completeMissions {
+		info := completeMission.Info
+		missionInst := StatsShip{
+			MissiondId:   info.GetIdentifier(),
+			Ship:         info.Ship,
+			DurationType: info.DurationType,
+			Level:        int32(info.GetLevel()),
+		}
+		missionArr = append(missionArr, missionInst)
+	}
+	return missionArr, nil
+}
+
 func viewMissionsOfId(eid string) (string, error) {
 
 	if len(_nominalShipCapacities) == 0 {
@@ -330,7 +383,7 @@ func viewMissionsOfId(eid string) (string, error) {
 		log.Error(err)
 		return "", err
 	}
-	//Array of FileMission
+	//Array of LoadedMission
 	missionArr := []LoadedMission{}
 
 	for _, completeMission := range completeMissions {
@@ -371,7 +424,7 @@ func viewMissionsOfId(eid string) (string, error) {
 		missionArr = append(missionArr, missionInst)
 	}
 
-	// Convert the array of FileMissionYear to a JSON string
+	// Convert the array of LoadedMissionYear to a JSON string
 	jsonData, err := json.Marshal(missionArr)
 	if err != nil {
 		log.Error(err)
@@ -1026,13 +1079,49 @@ func main() {
 		return knownAccounts
 	})
 
-	ui.MustBind("viewEidGo", func(eid string) string {
-		if fileMissionYears, err := viewMissionsOfId(eid); err != nil {
+	ui.MustBind("viewMissionsEID", func(eid string) string {
+		if LoadedMissionYears, err := viewMissionsOfId(eid); err != nil {
 			log.Error(err)
 			return ""
 		} else {
-			return fileMissionYears
+			return LoadedMissionYears
 		}
+	})
+
+	ui.MustBind("viewStatsEID", func(eid string) string {
+		if !w.TryAcquire(1) {
+			perror("already fetching player data, cannot accept new work")
+			return ""
+		}
+		defer w.Release(1)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		w.ctxlock.Lock()
+		w.ctx = ctx
+		w.cancel = cancel
+		w.ctxlock.Unlock()
+
+		/*fc, err := fetchFirstContactWithContext(w.ctx, eid)
+		if err != nil {
+			return ""
+		}*/
+
+		report := StatsReport{}
+
+		shipsSent, shipsErr := viewStatsMissionsOfId(eid)
+		if shipsErr != nil {
+			return ""
+		}
+		report.ShipsSent = shipsSent
+
+		dubCapsCount, dcErr := countDubCaps(eid)
+		if dcErr != nil {
+			return ""
+		}
+		report.DubCapsSent = dubCapsCount
+
+		//backup := fc.GetBackup()
+		return ""
 	})
 
 	ui.MustBind("getTargetName", func(target int) string {
