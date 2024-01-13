@@ -69,6 +69,7 @@ module.exports = {
         'rare': 'radial-gradient(#a8dfff,#8dd5ff,#3a9dfc)',
         'epic': 'radial-gradient(#ce81f7,#b958ed,#8819c2)',
         'legendary': 'radial-gradient(#fcdd6a, #ffdb58, #e09143)',
+        'common': 'radial-gradient(#443e45, #443e45, #443e45)',
       },
       borderColor: {
         "dark_tab": "#111211",

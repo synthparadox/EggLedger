@@ -132,18 +132,6 @@ type LoadedMission struct {
 	TargetInt      int32                        `json:"targetInt"`
 }
 
-type StatsReport struct {
-	DubCapsSent int32       `json:"dubCapsSent"`
-	ShipsSent   []StatsShip `json:"shipsSent"`
-}
-
-type StatsShip struct {
-	MissiondId   string                       `json:"missionId"`
-	Ship         *ei.MissionInfo_Spaceship    `json:"ship"`
-	DurationType *ei.MissionInfo_DurationType `json:"durationType"`
-	Level        int32                        `json:"level"`
-}
-
 type MissionDrop struct {
 	Id           int32   `json:"id"`
 	SpecType     string  `json:"specType"`
@@ -166,11 +154,13 @@ type ExportAccount struct {
 type RawPossibleTarget struct {
 	Name        ei.ArtifactSpec_Name `json:"name"`
 	DisplayName string               `json:"displayName"`
+	ImageString string               `json:"imageString"`
 }
 
 type PossibleTarget struct {
 	DisplayName string `json:"displayName"`
 	Id          int32  `json:"id"`
+	ImageString string `json:"imageString"`
 }
 
 type PossibleMission struct {
@@ -328,47 +318,6 @@ func isDubCap(mission *ei.CompleteMissionResponse) bool {
 	} else {
 		return false
 	}
-}
-
-func countDubCaps(eid string) (int32, error) {
-	if len(_nominalShipCapacities) == 0 {
-		initNominalShipCapacities()
-	}
-	count := int32(0)
-	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
-	if err != nil {
-		log.Error(err)
-		return 0, err
-	}
-	for _, completeMission := range completeMissions {
-		if isDubCap(completeMission) {
-			count++
-		}
-	}
-	return count, nil
-}
-
-func viewStatsMissionsOfId(eid string) ([]StatsShip, error) {
-
-	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
-	if err != nil {
-		log.Error(err)
-		return nil, err
-	}
-	//Array of StatsShip
-	missionArr := []StatsShip{}
-
-	for _, completeMission := range completeMissions {
-		info := completeMission.Info
-		missionInst := StatsShip{
-			MissiondId:   info.GetIdentifier(),
-			Ship:         info.Ship,
-			DurationType: info.DurationType,
-			Level:        int32(info.GetLevel()),
-		}
-		missionArr = append(missionArr, missionInst)
-	}
-	return missionArr, nil
 }
 
 func viewMissionsOfId(eid string) (string, error) {
@@ -1088,42 +1037,6 @@ func main() {
 		}
 	})
 
-	ui.MustBind("viewStatsEID", func(eid string) string {
-		if !w.TryAcquire(1) {
-			perror("already fetching player data, cannot accept new work")
-			return ""
-		}
-		defer w.Release(1)
-
-		ctx, cancel := context.WithCancel(context.Background())
-		w.ctxlock.Lock()
-		w.ctx = ctx
-		w.cancel = cancel
-		w.ctxlock.Unlock()
-
-		/*fc, err := fetchFirstContactWithContext(w.ctx, eid)
-		if err != nil {
-			return ""
-		}*/
-
-		report := StatsReport{}
-
-		shipsSent, shipsErr := viewStatsMissionsOfId(eid)
-		if shipsErr != nil {
-			return ""
-		}
-		report.ShipsSent = shipsSent
-
-		dubCapsCount, dcErr := countDubCaps(eid)
-		if dcErr != nil {
-			return ""
-		}
-		report.DubCapsSent = dubCapsCount
-
-		//backup := fc.GetBackup()
-		return ""
-	})
-
 	ui.MustBind("getTargetName", func(target int) string {
 		return ei.ArtifactSpec_Name_name[int32(target)]
 	})
@@ -1216,50 +1129,50 @@ func main() {
 	*/
 	ui.MustBind("getPossibleTargets", func() string {
 		PossibleTargetsRaw := []RawPossibleTarget{
-			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted"},
-			{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan"},
-			{Name: ei.ArtifactSpec_TACHYON_DEFLECTOR, DisplayName: "Tachyon Deflectors"},
-			{Name: ei.ArtifactSpec_SHIP_IN_A_BOTTLE, DisplayName: "Ships in a Bottle"},
-			{Name: ei.ArtifactSpec_TITANIUM_ACTUATOR, DisplayName: "Titanium Actuators"},
-			{Name: ei.ArtifactSpec_DILITHIUM_MONOCLE, DisplayName: "Dilithium Monocles"},
-			{Name: ei.ArtifactSpec_QUANTUM_METRONOME, DisplayName: "Quantum Metronomes"},
-			{Name: ei.ArtifactSpec_PHOENIX_FEATHER, DisplayName: "Phoenix Feathers"},
-			{Name: ei.ArtifactSpec_THE_CHALICE, DisplayName: "Chalices"},
-			{Name: ei.ArtifactSpec_INTERSTELLAR_COMPASS, DisplayName: "Interstellar Compasses"},
-			{Name: ei.ArtifactSpec_CARVED_RAINSTICK, DisplayName: "Carved Rainsticks"},
-			{Name: ei.ArtifactSpec_BEAK_OF_MIDAS, DisplayName: "Beaks of Midas"},
-			{Name: ei.ArtifactSpec_MERCURYS_LENS, DisplayName: "Mercury's Lenses"},
-			{Name: ei.ArtifactSpec_NEODYMIUM_MEDALLION, DisplayName: "Neodymium Medallions"},
-			{Name: ei.ArtifactSpec_ORNATE_GUSSET, DisplayName: "Gussets"},
-			{Name: ei.ArtifactSpec_TUNGSTEN_ANKH, DisplayName: "Tungsten Ankhs"},
-			{Name: ei.ArtifactSpec_AURELIAN_BROOCH, DisplayName: "Aurelian Brooches"},
-			{Name: ei.ArtifactSpec_VIAL_MARTIAN_DUST, DisplayName: "Vials of Martian Dust"},
-			{Name: ei.ArtifactSpec_DEMETERS_NECKLACE, DisplayName: "Demeters Necklaces"},
-			{Name: ei.ArtifactSpec_LUNAR_TOTEM, DisplayName: "Lunar Totems"},
-			{Name: ei.ArtifactSpec_PUZZLE_CUBE, DisplayName: "Puzzle Cubes"},
-			{Name: ei.ArtifactSpec_PROPHECY_STONE, DisplayName: "Prophecy Stones"},
-			{Name: ei.ArtifactSpec_CLARITY_STONE, DisplayName: "Clarity Stones"},
-			{Name: ei.ArtifactSpec_DILITHIUM_STONE, DisplayName: "Dilithium Stones"},
-			{Name: ei.ArtifactSpec_LIFE_STONE, DisplayName: "Life Stones"},
-			{Name: ei.ArtifactSpec_QUANTUM_STONE, DisplayName: "Quantum Stones"},
-			{Name: ei.ArtifactSpec_SOUL_STONE, DisplayName: "Soul Stones"},
-			{Name: ei.ArtifactSpec_TERRA_STONE, DisplayName: "Terra Stones"},
-			{Name: ei.ArtifactSpec_TACHYON_STONE, DisplayName: "Tachyon Stones"},
-			{Name: ei.ArtifactSpec_LUNAR_STONE, DisplayName: "Lunar Stones"},
-			{Name: ei.ArtifactSpec_SHELL_STONE, DisplayName: "Shell Stones"},
-			{Name: ei.ArtifactSpec_SOLAR_TITANIUM, DisplayName: "Solar Titanium"},
-			{Name: ei.ArtifactSpec_TAU_CETI_GEODE, DisplayName: "Geodes"},
-			{Name: ei.ArtifactSpec_GOLD_METEORITE, DisplayName: "Gold Meteorites"},
-			{Name: ei.ArtifactSpec_PROPHECY_STONE_FRAGMENT, DisplayName: "Prophecy Stone Fragments"},
-			{Name: ei.ArtifactSpec_CLARITY_STONE_FRAGMENT, DisplayName: "Clarity Stone Fragments"},
-			{Name: ei.ArtifactSpec_LIFE_STONE_FRAGMENT, DisplayName: "Life Stone Fragments"},
-			{Name: ei.ArtifactSpec_TERRA_STONE_FRAGMENT, DisplayName: "Terra Stone Fragments"},
-			{Name: ei.ArtifactSpec_DILITHIUM_STONE_FRAGMENT, DisplayName: "Dilithium Stone Fragments"},
-			{Name: ei.ArtifactSpec_SOUL_STONE_FRAGMENT, DisplayName: "Soul Stone Fragments"},
-			{Name: ei.ArtifactSpec_QUANTUM_STONE_FRAGMENT, DisplayName: "Quantum Stone Fragments"},
-			{Name: ei.ArtifactSpec_TACHYON_STONE_FRAGMENT, DisplayName: "Tachyon Stone Fragments"},
-			{Name: ei.ArtifactSpec_SHELL_STONE_FRAGMENT, DisplayName: "Shell Stone Fragments"},
-			{Name: ei.ArtifactSpec_LUNAR_STONE_FRAGMENT, DisplayName: "Lunar Stone Fragments"},
+			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted", ImageString: ""},
+			{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan", ImageString: "bob_target.png"},
+			{Name: ei.ArtifactSpec_TACHYON_DEFLECTOR, DisplayName: "Tachyon Deflectors", ImageString: "deflector_target.png"},
+			{Name: ei.ArtifactSpec_SHIP_IN_A_BOTTLE, DisplayName: "Ships in a Bottle", ImageString: "siab_target.png"},
+			{Name: ei.ArtifactSpec_TITANIUM_ACTUATOR, DisplayName: "Titanium Actuators", ImageString: "actuator_target.png"},
+			{Name: ei.ArtifactSpec_DILITHIUM_MONOCLE, DisplayName: "Dilithium Monocles", ImageString: "monocle_target.png"},
+			{Name: ei.ArtifactSpec_QUANTUM_METRONOME, DisplayName: "Quantum Metronomes", ImageString: "metronome_target.png"},
+			{Name: ei.ArtifactSpec_PHOENIX_FEATHER, DisplayName: "Phoenix Feathers", ImageString: "feather_target.png"},
+			{Name: ei.ArtifactSpec_THE_CHALICE, DisplayName: "Chalices", ImageString: "chalice_target.png"},
+			{Name: ei.ArtifactSpec_INTERSTELLAR_COMPASS, DisplayName: "Interstellar Compasses", ImageString: "compass_target.png"},
+			{Name: ei.ArtifactSpec_CARVED_RAINSTICK, DisplayName: "Carved Rainsticks", ImageString: "rainstick_target.png"},
+			{Name: ei.ArtifactSpec_BEAK_OF_MIDAS, DisplayName: "Beaks of Midas", ImageString: "beak_target.png"},
+			{Name: ei.ArtifactSpec_MERCURYS_LENS, DisplayName: "Mercury's Lenses", ImageString: "lens_target.png"},
+			{Name: ei.ArtifactSpec_NEODYMIUM_MEDALLION, DisplayName: "Neodymium Medallions", ImageString: "medallion_target.png"},
+			{Name: ei.ArtifactSpec_ORNATE_GUSSET, DisplayName: "Gussets", ImageString: "gusset_target.png"},
+			{Name: ei.ArtifactSpec_TUNGSTEN_ANKH, DisplayName: "Tungsten Ankhs", ImageString: "ankh_target.png"},
+			{Name: ei.ArtifactSpec_AURELIAN_BROOCH, DisplayName: "Aurelian Brooches", ImageString: "brooch_target.png"},
+			{Name: ei.ArtifactSpec_VIAL_MARTIAN_DUST, DisplayName: "Vials of Martian Dust", ImageString: "vial_target.png"},
+			{Name: ei.ArtifactSpec_DEMETERS_NECKLACE, DisplayName: "Demeters Necklaces", ImageString: "necklace_target.png"},
+			{Name: ei.ArtifactSpec_LUNAR_TOTEM, DisplayName: "Lunar Totems", ImageString: "totem_target.png"},
+			{Name: ei.ArtifactSpec_PUZZLE_CUBE, DisplayName: "Puzzle Cubes", ImageString: "cube_target.png"},
+			{Name: ei.ArtifactSpec_PROPHECY_STONE, DisplayName: "Prophecy Stones", ImageString: "prophecy_target.png"},
+			{Name: ei.ArtifactSpec_CLARITY_STONE, DisplayName: "Clarity Stones", ImageString: "clarity_target.png"},
+			{Name: ei.ArtifactSpec_DILITHIUM_STONE, DisplayName: "Dilithium Stones", ImageString: "dilithium_target.png"},
+			{Name: ei.ArtifactSpec_LIFE_STONE, DisplayName: "Life Stones", ImageString: "life_target.png"},
+			{Name: ei.ArtifactSpec_QUANTUM_STONE, DisplayName: "Quantum Stones", ImageString: "quantum_target.png"},
+			{Name: ei.ArtifactSpec_SOUL_STONE, DisplayName: "Soul Stones", ImageString: "soul_target.png"},
+			{Name: ei.ArtifactSpec_TERRA_STONE, DisplayName: "Terra Stones", ImageString: "terra_target.png"},
+			{Name: ei.ArtifactSpec_TACHYON_STONE, DisplayName: "Tachyon Stones", ImageString: "tachyon_target.png"},
+			{Name: ei.ArtifactSpec_LUNAR_STONE, DisplayName: "Lunar Stones", ImageString: "lunar_target.png"},
+			{Name: ei.ArtifactSpec_SHELL_STONE, DisplayName: "Shell Stones", ImageString: "shell_target.png"},
+			{Name: ei.ArtifactSpec_SOLAR_TITANIUM, DisplayName: "Solar Titanium", ImageString: "titanium_target.png"},
+			{Name: ei.ArtifactSpec_TAU_CETI_GEODE, DisplayName: "Geodes", ImageString: "geode_target.png"},
+			{Name: ei.ArtifactSpec_GOLD_METEORITE, DisplayName: "Gold Meteorites", ImageString: "gold_target.png"},
+			{Name: ei.ArtifactSpec_PROPHECY_STONE_FRAGMENT, DisplayName: "Prophecy Stone Fragments", ImageString: "prophecy_frag_target.png"},
+			{Name: ei.ArtifactSpec_CLARITY_STONE_FRAGMENT, DisplayName: "Clarity Stone Fragments", ImageString: "clarity_frag_target.png"},
+			{Name: ei.ArtifactSpec_LIFE_STONE_FRAGMENT, DisplayName: "Life Stone Fragments", ImageString: "life_frag_target.png"},
+			{Name: ei.ArtifactSpec_TERRA_STONE_FRAGMENT, DisplayName: "Terra Stone Fragments", ImageString: "terra_frag_target.png"},
+			{Name: ei.ArtifactSpec_DILITHIUM_STONE_FRAGMENT, DisplayName: "Dilithium Stone Fragments", ImageString: "dilithium_frag_target.png"},
+			{Name: ei.ArtifactSpec_SOUL_STONE_FRAGMENT, DisplayName: "Soul Stone Fragments", ImageString: "soul_frag_target.png"},
+			{Name: ei.ArtifactSpec_QUANTUM_STONE_FRAGMENT, DisplayName: "Quantum Stone Fragments", ImageString: "quantum_frag_target.png"},
+			{Name: ei.ArtifactSpec_TACHYON_STONE_FRAGMENT, DisplayName: "Tachyon Stone Fragments", ImageString: "tachyon_frag_target.png"},
+			{Name: ei.ArtifactSpec_SHELL_STONE_FRAGMENT, DisplayName: "Shell Stone Fragments", ImageString: "shell_frag_target.png"},
+			{Name: ei.ArtifactSpec_LUNAR_STONE_FRAGMENT, DisplayName: "Lunar Stone Fragments", ImageString: "lunar_frag_target.png"},
 		}
 
 		// Convert the array to PossibleTarget
@@ -1270,6 +1183,7 @@ func main() {
 			possibleTarget := PossibleTarget{
 				DisplayName: rawTarget.DisplayName,
 				Id:          int32(rawTarget.Name),
+				ImageString: rawTarget.ImageString,
 			}
 			possibleTargets = append(possibleTargets, possibleTarget)
 		}

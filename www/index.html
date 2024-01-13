@@ -16,7 +16,7 @@
           <div
             class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.ViewData, /*UITab.Stats,*/ UITab.About, UITab.Donate]"
+              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About, UITab.Donate]"
               v-bind:key="tab"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
@@ -461,7 +461,7 @@
           v-show="activeTab === UITab.ViewData">
 
           <div id="dropSelectDiv" ref="dropSelectDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-drop">
-            <div id="innerDropSelectDiv" style="padding: 1rem;" style="max-height: 40vw; height: 40vw;"  class="bg-dark rounded-lg relative focus-within:z-10">
+            <div id="innerDropSelectDiv" style="padding: 1rem;"  class="bg-dark rounded-lg relative focus-within:z-10">
               <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeDropFilterMenu()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -480,13 +480,51 @@
               <div id="dropSelectContentDiv"
                 style="height: 50vh; max-width: 35vw; min-width: 20vw; margin-top: 10px;" class="text-gray-300 text-center overflow-auto"
               >
-                <div v-for="drop in dropSelectList" v-bind:key="drop" class="drop-opt text-lg hover:bg-darker" v-on:click="e => {e.preventDefault(); selectDropFilter(drop); }">
-                  <span :class="(drop.styleClass ?? '') + ' text-lg'">
+                <div v-for="drop in dropSelectList" v-bind:key="drop" class="drop-opt text-md hover:bg-darker flex items-center justify-center text-center relative" v-on:click="e => {e.preventDefault(); selectDropFilter(drop); }">
+                  <img class="mr-1rem" v-if="drop.imagePath != null && drop.imagePath != ''" :alt="drop.text" :src="`images/${drop.imagePath}`" 
+                    :style="'max-width: 30px;' + (drop.rarityGif ? 'background: url(' + drop.rarityGif + ') center center no-repeat; background-size: cover;' : '')"
+                  />
+                  <span :class="(drop.styleClass ?? '') + ' text-md'">
                     {{ drop.text }}
                   </span>
                 </div>
                 <div v-if="dropSelectList == [] || dropSelectList.length == 0">
-                  <span class="text-gray-400 text-lg">
+                  <span class="text-gray-400 text-md">
+                    No results found.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="targetSelectDiv" ref="targetSelectDiv" style="height: 100vh; width: 100vw;" class="z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-target">
+            <div id="innerTargetSelectDiv" style="padding: 1rem;"  class="bg-dark rounded-lg relative focus-within:z-10">
+              <button class="absolute top-2 right-2 text-gray-300  hover:text-gray-300" v-on:click="closeTargetFilterMenu()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              <input
+                id="target-search"
+                type="text"
+                :class="'input-search'"
+                style="width: 90%" 
+                placeholder="Search..."
+                v-bind:value="targetSearchTerm"
+                v-on:focus="e => {e.preventDefault(); e.stopPropagation(); }"
+                v-on:input="targetSearchTerm = $event.target.value"
+              />
+              <div id="targetSelectContentDiv"
+                style="height: 50vh; max-width: 35vw; min-width: 20vw; margin-top: 10px;" class="text-gray-300 text-center overflow-auto"
+              >
+                <div v-for="target in targetSelectList" v-bind:key="target" class="drop-opt text-md hover:bg-darker flex items-center justify-center text-center relative" v-on:click="e => {e.preventDefault(); selectTargetFilter(target); }">
+                  <img class="mr-1rem" v-if="target.imagePath != null && target.imagePath != ''" :alt="target.text" :src="`images/targets/${target.imagePath}`" style="max-width: 30px;"/>
+                  <span class="text-gray-400">
+                    {{ target.text }}
+                  </span>
+                </div>
+                <div v-if="targetSelectList == [] || targetSelectList.length == 0">
+                  <span class="text-gray-400 text-md">
                     No results found.
                   </span>
                 </div>
@@ -587,7 +625,7 @@
                   </div>
                   <div style="max-width: 20vw;" class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(st, stindex) in viewMissionData.stones">
-                      <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
+                      <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(st, 2) + '/'">
                         <img class="h-full w-full" :alt="st.gameName" :src="specPath(st, 2)"/>
                         <div v-if="st.count > 1" :class="'ledger-af-count ' + numToDigClass(st.count)">
@@ -615,7 +653,7 @@
                   </div>
                   <div style="max-width: 20vw;" class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(ing, ingindex) in viewMissionData.ingredients">
-                      <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
+                      <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(ing, 1) + '/'">
                         <img class="h-full w-full" :alt="ing.gameName" :src="specPath(ing, 1)"/>
                         <div v-if="ing.count > 1" :class="'ledger-af-count ' + numToDigClass(ing.count)">
@@ -790,7 +828,7 @@
                       <!-- Value options (Base) -->
                       <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
-                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] != 'launchDT' && topLevelFilterOptions[index] != 'returnDT' && topLevelFilterOptions[index] != 'drops'"
+                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && isBaseFilter(topLevelFilterOptions[index])"
                         v-model="filterValues[index]" :id="'filter-value-' + index">
                         <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
@@ -801,7 +839,16 @@
                       <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
                         v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'drops'"
                         class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
-                        v-model="dFilterValues[index]" :id="'filter-value-' + index">
+                        v-model="dFilterValues[index]" :id="'filter-value-' + index"
+                      >
+
+                      <!-- Target Selectors
+                        opens a custom modal -->
+                      <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
+                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'target'"
+                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
+                        v-model="dFilterValues[index]" :id="'filter-value-' + index"
+                      >
 
                       <!-- Value options - Launch/Return Date Selectors
                         Min: 20 January 2021  
@@ -864,7 +911,7 @@
 
                         <!-- Value options -->
                         <select v-model="orFilterValues[index][orIndex]"
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] != 'launchDT' && orFilterTopLevelOptions[index][orIndex] != 'returnDT' && orFilterTopLevelOptions[index][orIndex] != 'drops'"
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && isBaseFilter(orFilterTopLevelOptions[index][orIndex])"
                           class="filter-select border-gray-300 text-gray-400"
                           v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
                           <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
@@ -875,6 +922,15 @@
                           opens a custom modal -->
                         <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, orIndex);}"
                           v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'drops'"
+                          class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
+                          v-bind:value="dOrFilterValues[index][orIndex]" readonly
+                          :id="'filter-value-' + index + '-' + orIndex"
+                        >
+
+                        <!-- Target Selectors
+                          opens a custom modal -->
+                        <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
+                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'target'"
                           class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
                           v-bind:value="dOrFilterValues[index][orIndex]" readonly
                           :id="'filter-value-' + index + '-' + orIndex"
@@ -954,6 +1010,10 @@
                 <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
                 <input id="recolorDCCB" type="checkbox" v-model="recolorDC" class=" ext-opt-check"/>
               </span>
+              <span class="mr-5">
+                <label for="useGifsForRarity" class="ext-opt-label">Particle GIFs for rarity</label>
+                <input id="useGifsForRarity" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
+              </span>
             </div>
             <div ref="resultsDiv" class="relative h-screen">
               <div class="filter-form text-lg" v-if="filteredMissions.length == 0">
@@ -993,7 +1053,7 @@
                                   {{' ' + mission.launchTime}}
                                 </span>
                                 <span class="text-gray-400 ml-05rem">
-                                  <span :class="durationToColorClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
+                                  <span :class="durToTextClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
                                   <span v-if="mission.level != null && mission.level > 0"> ({{mission.level}}<span style="color: gold;">★</span>)</span>
                                   <img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
                                 </span>
@@ -1010,63 +1070,7 @@
               </div>
             </div>
           </div>
-          
         </div>
-
-        <!-- Stats tab -->
-        <!--<div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker"
-          v-show="activeTab === UITab.Stats">
-          <div style="margin-top: 0px;" ref="selectViewStatsAccountForm" v-if="doesDataExist">
-            <form 
-              id="viewStatsAccountForm" name="viewStatsAccountForm" class="select-form"
-              v-on:submit="event => {
-                event.preventDefault();
-                viewStatsOfEid(); //Todo: Implement, with statsBeingLoaded
-              }">
-              <div ref="viewStatsAccountSelectRef" class="relative flex-grow focus-within:z-10">
-                <div
-                  v-if="selectedStatsAccount != null && objectedExistingData.find(acc => acc.id == selectedStatsAccount) != null"
-                  class="ledger-input-overlay"
-                  style="z-index: -20">
-                  <span class="invisible whitespace-pre">
-                    {{ objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.id }}
-                  </span> 
-                  (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.accountColor" >
-                      {{ objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedStatsAccount)?.ebString }}
-                  </span>)
-                </div>
-
-                <input
-                  ref="viewAccountInputRef"
-                  type="text"
-                  class="drop-select border-gray-300"
-                  placeholder="Select an account"
-                  v-bind:value="selectedStatsAccount"
-                  v-on:focus="openStatsViewAccountDropdown"
-                  v-on:input="selectedStatsAccount = $event.target.value"
-                >
-                <ul
-                  v-if="viewStatsAccountDropdownOpen && objectedExistingData.length > 0"
-                  class="ledger-list focus:outline-none sm:text-sm"
-                  tabindex="-1"
-                >
-                  <li
-                    v-for="account in objectedExistingData"
-                    v-bind:key="account.id" class="drop-opt"
-                    v-on:click="selectViewStatsAccount(account)"
-                  >
-                    {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span>)
-                  </li>
-                </ul>
-              </div>
-              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-              v-if="idle" ref="viewAccountSubmitRef" type="submit" v-bind:disabled="(selectedStatsAccount === null || selectedStatsAccount == '' || objectedExistingData.find(a => a.id == selectedStatsAccount) == null || statsBeingLoaded)">
-                View
-              </button>
-            </form>
-          </div>
-        </div>
-      -->
 
         <footer class="text-center text-sm text-gray-500">
           <a
@@ -1136,7 +1140,6 @@
         const UITab = {
           Ledger: 'Ledger',
           ViewData: 'View Mission Data',
-          /*Stats: 'Stats',*/
           About: 'About',
           Donate: 'Donate',
         };
@@ -1177,16 +1180,6 @@
           return year + "-" + month + "-" + day;
         }
 
-        function durationToColorClass(duration){
-          switch(duration){
-            case 0: return 'text-short';
-            case 1: return 'text-standard';
-            case 2: return 'text-extended';
-            case 3: return 'text-tutorial';
-            default: return '';
-          }
-        }
-
         function durToName(dur){
           if(dur === "" || dur === null || dur === undefined){
             return "";
@@ -1221,15 +1214,14 @@
           }
         }
 
-        function dropToColorClass(drop){
-          switch(drop.rarity){
-            case 0: return 'text-gray-400';
-            case 1: return 'text-rare';
-            case 2: return 'text-epic';
-            case 3: return 'text-legendary';
-            default: return 'text-gray-400';
-          }
-        }
+        const isBaseFilter = (filterOp) => {
+          return(
+            filterOp != 'launchDT' &&
+            filterOp != 'returnDT' &&
+            filterOp != 'drops' &&
+            filterOp != 'target'
+          );
+        };
 
         const filterWarningRead = Vue.ref((await window.filterWarningRead()) ?? false);
         const hideFilterWarning = Vue.ref(false);
@@ -1246,36 +1238,11 @@
             // ===== Player ID input and dropdown =====
             const knownAccounts = Vue.ref(previouslyKnownAccounts);
             const playerId = Vue.ref(previouslyKnownAccounts[0]?.id ?? '');
-            const isPlayerIdValid = Vue.computed(() => {
-              //Needs to be "" or match regex
-              return playerId.value === '' || /^EI[0-9]{16}$/.test(normalizePlayerId(playerId.value));
-            });
-            const nicknameForSelectedPlayerId = Vue.computed(() => {
-              const id = normalizePlayerId(playerId.value);
-              for (const account of knownAccounts.value) {
-                if (account.id === id) {
-                  return account.nickname;
-                }
-              }
-              return null;
-            });
+            const isPlayerIdValid = Vue.computed(() => { return /(^$)|(^EI[0-9]{16}$)/.test(normalizePlayerId(playerId.value)); });
+            const nicknameForSelectedPlayerId = Vue.computed(() => { return knownAccounts.value.find(acc => acc.id === normalizePlayerId(playerId.value))?.nickname ?? '';});
 
             const selectedMissionAccount = Vue.ref(null);
-            Vue.watch(selectedMissionAccount, async () => {
-              if(selectedMissionAccount.value === null || selectedMissionAccount.value == "") return;
-              //Reset the input if it is not a valid EID
-              if(!/^EI[0-9]{16}$/.test(selectedMissionAccount.value)){
-                selectedMissionAccount.value = "";
-              }
-            });
-            const selectedStatsAccount = Vue.ref(null);
-            Vue.watch(selectedStatsAccount, async () => {
-              if(selectedStatsAccount.value === null || selectedStatsAccount.value == "") return;
-              //Reset the input if it is not a valid EID
-              if(!/^EI[0-9]{16}$/.test(selectedStatsAccount.value)){
-                selectedStatsAccount.value = "";
-              }
-            });
+            Vue.watch(selectedMissionAccount, async () => { if(!/^EI[0-9]{16}$/.test(selectedMissionAccount?.value ?? "")) selectedMissionAccount.value = ""; });
 
 
             // I spent three fucking hours trying to figure out why I couldn't type into a fucking input. 
@@ -1283,28 +1250,14 @@
             // The handleFocus event listener gets nuked globally when the drop selector opens
             const handleFocus = () => {
               const active = document.activeElement;
-              if (!playerIdSelectRef?.value?.contains(active)) {
-                closePlayerIdDropdown();
-              }
-              if (!viewMissionAccountSelectRef?.value?.contains(active)) {
-                closeMissionsViewAccountDropdown();
-              }
-              if (!viewStatsAccountSelectRef?.value?.contains(active)) {
-                closeStatsViewAccountDropdown();
-              }
+              if (!playerIdSelectRef?.value?.contains(active)) closePlayerIdDropdown();
+              if (!viewMissionAccountSelectRef?.value?.contains(active)) closeMissionsViewAccountDropdown();
             };
 
             const handleMousedown = event => {
               const target = event.target;
-              if (!playerIdSelectRef.value?.contains(target)) {
-                closePlayerIdDropdown();
-              }
-              if (!viewMissionAccountSelectRef?.value?.contains(target)) {
-                closeMissionsViewAccountDropdown();
-              }
-              if (!viewStatsAccountSelectRef?.value?.contains(target)) {
-                closeStatsViewAccountDropdown();
-              }
+              if (!playerIdSelectRef.value?.contains(target)) closePlayerIdDropdown();
+              if (!viewMissionAccountSelectRef?.value?.contains(target)) closeMissionsViewAccountDropdown();
             };
 
             Vue.onMounted(() => {
@@ -1315,6 +1268,55 @@
               window.removeEventListener('mousedown', handleMousedown);
               window.removeEventListener('focus', handleFocus, true);
             });
+
+            const targetSelectList = Vue.ref([]);
+            const targetFilterSelectedIndex = Vue.ref(null);
+            const targetFilterSelectedOrIndex = Vue.ref(null);
+            const targetFilterMenuOpen = Vue.ref(false);
+            const openTargetFilterMenu = (index, orIndex) => {
+              window.removeEventListener('focus', handleFocus, true);
+              targetSelectList.value = getFilterValueOptions('target');
+              targetFilterSelectedIndex.value = index;
+              targetFilterSelectedOrIndex.value = orIndex ?? null;
+              targetFilterMenuOpen.value = true;
+              const el = document.querySelector('.overlay-target');
+              el.style.display = 'flex';
+              //Toggle the hidden class on the overlay
+              el.classList.remove('hidden');
+              document.getElementById('target-search').focus();
+            };
+            const closeTargetFilterMenu = () => {
+              window.addEventListener('focus', handleFocus, true);
+              targetSearchTerm.value = "";
+              targetFilterSelectedIndex.value = null;
+              targetFilterSelectedOrIndex.value = null;
+              targetFilterMenuOpen.value = false;
+              const el = document.querySelector('.overlay-target');
+              el.style.display = 'none';
+              //Toggle the hidden class on the overlay
+              el.classList.add('hidden');
+            };
+            const targetSearchTerm = Vue.ref("");
+            Vue.watch(targetSearchTerm, () => {
+              targetSelectList.value = getFilterValueOptions('target').filter(target => target.text.toLowerCase().includes(targetSearchTerm.value.toLowerCase()));
+            });
+            const selectTargetFilter = (target) => {
+              const newValue = target.value.toString().split('.')[0];
+              if(targetFilterSelectedIndex.value != null){
+                if(targetFilterSelectedOrIndex.value == null){
+                  filterValues.value[targetFilterSelectedIndex.value] = newValue;
+                  dFilterValues.value[targetFilterSelectedIndex.value] = target.text;
+                  handleFilterChange(`filter-value-${targetFilterSelectedIndex.value}`);
+                  document.getElementById(`filter-value-${targetFilterSelectedIndex.value}`).size = target.text.length;
+                }else{
+                  orFilterValues.value[targetFilterSelectedIndex.value][targetFilterSelectedOrIndex.value] = newValue;
+                  dOrFilterValues.value[targetFilterSelectedIndex.value][targetFilterSelectedOrIndex.value] = target.text;
+                  handleOrFilterChange(`filter-value-${targetFilterSelectedIndex.value}-${targetFilterSelectedOrIndex.value}`);
+                  document.getElementById(`filter-value-${targetFilterSelectedIndex.value}-${targetFilterSelectedOrIndex.value}`).size = target.text.length;
+                }
+              }
+              closeTargetFilterMenu();
+            };
 
             const dropSelectList = Vue.ref([]);
             const dropFilterSelectedIndex = Vue.ref(null);
@@ -1365,41 +1367,15 @@
               closeDropFilterMenu();
             };
 
-            const statsBeingLoaded = Vue.ref(false);
-            const viewStatsAccountSelectRef = Vue.ref(null);
-            const viewStatsAccountInputRef = Vue.ref(null);
-            const viewStatsAccountSubmitRef = Vue.ref(null);
-            const viewStatsAccountDropdownOpen = Vue.ref(false);
-            const openStatsViewAccountDropdown = () => {
-              viewStatsAccountDropdownOpen.value = true;
-            };
-            const closeStatsViewAccountDropdown = () => {
-              viewStatsAccountDropdownOpen.value = false;
-              if (selectedStatsAccount.value != null && selectedStatsAccount.value.trim() !== '' && viewStatsAccountSubmitRef.value !== null) {
-                viewStatsAccountSubmitRef.value.focus();
-              } else {
-                viewStatsAccountInputRef.value?.blur();
-              }
-            };
-            const selectViewStatsAccount = account => {
-              closeStatsViewAccountDropdown();
-              selectedStatsAccount.value = account.id;
-            };
-
             const viewMissionAccountSelectRef = Vue.ref(null);
             const viewMissionAccountInputRef = Vue.ref(null);
             const viewMissionAccountSubmitRef = Vue.ref(null);
             const viewMissionAccountDropdownOpen = Vue.ref(false);
-            const openMissionsViewAccountDropdown = () => {
-              viewMissionAccountDropdownOpen.value = true;
-            };
+            const openMissionsViewAccountDropdown = () => { viewMissionAccountDropdownOpen.value = true; };
             const closeMissionsViewAccountDropdown = () => {
               viewMissionAccountDropdownOpen.value = false;
-              if (selectedMissionAccount.value != null && selectedMissionAccount.value.trim() !== '' && viewMissionAccountSubmitRef.value !== null) {
-                viewMissionAccountSubmitRef.value.focus();
-              } else {
-                viewMissionAccountInputRef.value?.blur();
-              }
+              if (selectedMissionAccount.value != null && selectedMissionAccount.value.trim() !== '' && viewMissionAccountSubmitRef.value !== null) viewMissionAccountSubmitRef.value.focus();
+              else viewMissionAccountInputRef.value?.blur();
             };
             const selectViewAccount = account => {
               closeMissionsViewAccountDropdown();
@@ -1410,16 +1386,11 @@
             const playerIdInputRef = Vue.ref(null);
             const playerIdSubmitRef = Vue.ref(null);
             const playerIdDropdownOpen = Vue.ref(false);
-            const openPlayerIdDropdown = () => {
-              playerIdDropdownOpen.value = true;
-            };
+            const openPlayerIdDropdown = () => { playerIdDropdownOpen.value = true; };
             const closePlayerIdDropdown = () => {
               playerIdDropdownOpen.value = false;
-              if (playerId.value.trim() !== '' && playerIdSubmitRef.value !== null) {
-                playerIdSubmitRef.value.focus();
-              } else {
-                playerIdInputRef.value?.blur();
-              }
+              if (playerId.value.trim() !== '' && playerIdSubmitRef.value !== null) playerIdSubmitRef.value.focus();
+              else playerIdInputRef.value?.blur();
             };
             const selectPlayerId = id => {
               playerId.value = id;
@@ -1555,6 +1526,7 @@
             const viewByDate = Vue.ref(false);
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
+            const useGifsForRarity = Vue.ref(true);
             const viewMissionData = Vue.ref({});
             const doesDataExist = Vue.ref(false);
             const existingData = Vue.ref([]); //Empty array of strings
@@ -1619,12 +1591,10 @@
               const finalString = words.join(" ");
               return finalString.charAt(0).toUpperCase() + finalString.slice(1);
             };
+            //Return three strings in an array, the first is the string before the effect, the second is the effect, and the third is the string after the effect
             const boundEffectString = (str) => {
-              const effRegex = /\[(.*?)\]/g;
-              const match = effRegex.exec(str);
-              if(!match) return ["?", "?", "?"];
-              //Return three strings in an array, the first is the string before the effect, the second is the effect, and the third is the string after the effect
-              return [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)];
+              const match = /\[(.*?)\]/g.exec(str);
+              return (!match ? ["?", "?", "?"] : [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)]);
             };
             const durToTextClass = (dur) => {
               switch(dur){
@@ -1635,17 +1605,8 @@
                 default: return "";
               }
             };
-            const afRarityClass = (drop) => {
-              if(drop.specType != 'Artifact') return "";
-              switch(drop.rarity){
-                case 1: return "text-rare";
-                case 2: return "text-epic";
-                case 3: return "text-legendary";
-                default: return "";
-              }
-            };
-            const afRarityText = (drop) => {
-              if(drop.specType != 'Artifact') return "";
+            const afRarityText = (drop, bypass) => {
+              if(drop.specType != 'Artifact' && !bypass) return "";
               switch(drop.rarity){
                 case 1: return "Rare";
                 case 2: return "Epic";
@@ -1653,13 +1614,18 @@
                 default: return "";
               }
             };
+            const afRarityClass = (drop, bypass) => {
+              if(drop.specType != 'Artifact' && !bypass) return "";
+              const rarity = afRarityText(drop, bypass ?? false);
+              return (rarity == "" ? "" : "text-" + rarity.toLowerCase());
+            };
             const afBackgroundClass = (af) => {
               switch (af.rarity) {
-                case 0: return 'bg-darkerer';
-                case 1: return 'bg-rare';
-                case 2: return 'bg-epic';
-                case 3: return 'bg-legendary';
-                default: return 'bg-darkerer';
+                case 0: return 'bg-common';
+                case 1: return (useGifsForRarity.value ? "bg-cover bg-rare-animated" : 'bg-rare');
+                case 2: return (useGifsForRarity.value ? "bg-cover bg-epic-animated" : 'bg-epic')
+                case 3: return (useGifsForRarity.value ? "bg-cover bg-legendary-animated" : 'bg-legendary');
+                default: return 'bg-common';
               }
             };
             const afExplorerName = (drop, addend) => {
@@ -1683,6 +1649,20 @@
               const fixedName = spec.name.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
               return "images/artifacts/" + fixedName + "/" + fixedName + "_" + (parseInt(spec.level) + addend) + ".png";
             };
+            const dropPath = (drop) => {
+              const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
+              const fixedName = drop.protoName.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
+              return "artifacts/" + fixedName + "/" + fixedName + "_" + (drop.level + 1 + addendum) + ".png";
+            };
+            const dropRarityPath = (drop) => {
+              switch(drop.rarity){
+                case 0: return "";
+                case 1: return "images/rare.gif";
+                case 2: return "images/epic.gif";
+                case 3: return "images/legendary.gif";
+                default: return "";
+              }
+            }
             const refreshExistingData = async () => {
               doesDataExist.value = await window.doesDataExist();
               if(doesDataExist.value) existingData.value = await window.getExistingData();
@@ -1791,12 +1771,6 @@
               }
               eidMissionsBeingLoaded.value = false;
             };
-
-            /*const viewStatsOfEid = async () => {
-              if(selectedStatsAccount.value == null || selectedStatsAccount == '' || !selectedStatsAccount.value.test(/^EI[0-9]{16}$/i)) return;
-              statsBeingLoaded.value = true;
-              const statsLoadValue = await window.viewStatsEID(selectedStatsAccount.value.toString());
-            }*/
 
             //==============================================
             // Filter stuff :^)
@@ -1909,7 +1883,7 @@
                 case 'duration': return Array.from({ length: 4 }, (_, index) => ({
                     text: durToName(index),
                     value: index,
-                    styleClass: durationToColorClass(index)
+                    styleClass: durToTextClass(index)
                   }));
                 case 'level': return Array.from({ length: 8 }, (_, index) => ({
                     text: index + '★',
@@ -1917,20 +1891,24 @@
                   }));
                 case 'target': return possibleTargets.value.map(target => ({
                     text: target.displayName,
-                    value: target.id
+                    value: target.id,
+                    imagePath: target.imageString
                   }));
                 case 'drops': {
                   const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
                     text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + ((artifact.displayName.toLowerCase().indexOf('stone') > -1 && artifact.displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ')')),
                     value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
-                    styleClass: dropToColorClass(artifact)
+                    styleClass: (afRarityClass(artifact, true) != "" ? afRarityClass(artifact, true) : 'text-gray-400'),
+                    imagePath: dropPath(artifact),
+                    rarityGif: dropRarityPath(artifact),
                   }))
-                  filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary'});
-                  filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic'});
-                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare'});
+                  filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary', imagePath: 'legendary.gif'});
+                  filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic', imagePath: 'epic.gif'});
+                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare', imagePath: 'rare.gif'});
                   return filteredConfigs;
                 }
                 case 'dubcap': return [{ text: 'True', value: 'true' },{ text: 'False', value: 'false' }];
+                default: return [];
               }
             }
 
@@ -2036,10 +2014,13 @@
                 targetEl.oldValue = targetEl.value;
               } else updateFilterNoReCount(); 
               updateValueStyling(targetEl, false);
-              if(targetId.indexOf('filter-top-') > -1 && targetEl.value == '') {
+              if(targetId.indexOf('filter-top-') > -1) {
                 const index = parseInt(targetId.split("-").pop());
-                filterOperators[index] = null;
-                filterValues[index] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(filterOperators.value[index]) == -1) filterOperators[index] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(filterValues.value[index]) == -1) {
+                  filterValues.value[index] = null;
+                  dFilterValues.value[index] = null;
+                }
               }
             };
 
@@ -2050,9 +2031,12 @@
               const orIndex = parseInt(targetId.split("-").pop());   
               updateFilterNoReCount();
               updateValueStyling(targetEl, true);
-              if(targetId.indexOf('filter-top-') > -1 && targetEl.value == '') {
-                orFilterOperators[index][orIndex] = null;
-                orFilterValues[index][orIndex] = null;
+              if(targetId.indexOf('filter-top-') > -1) {
+                if(getFilterValueOptions(targetEl.value).indexOf(orFilterOperators.value[index][orIndex]) == -1) orFilterOperators[index][orIndex] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(orFilterValues.value[index][orIndex]) == -1) {
+                  orFilterValues.value[index][orIndex] = null;
+                  dOrFilterValues.value[index][orIndex] = null;
+                }
               }
             };
 
@@ -2346,6 +2330,19 @@
               });
             });
 
+            //Set it up so that if a click is performed outside of the 'targetSelectDiv, closeTargetFilterMenu() is called
+            Vue.onMounted(() => {
+              const largerDiv = document.getElementById('targetSelectDiv');
+              largerDiv.addEventListener('click', function(event) {
+                if(this.classList.contains('hidden')) return;
+                const innerDiv = document.getElementById('innerTargetSelectDiv');
+                const divRect = innerDiv.getBoundingClientRect();
+                const clickX = event.clientX;
+                const clickY = event.clientY;
+                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeTargetFilterMenu();
+              });
+            });
+
             const padNumber = (num) => {
               num = parseInt(num.toString()); //Make sure it's a number
               return (num < 10 ? '0' : '') + num;
@@ -2467,7 +2464,6 @@
               missionBeingViewed,
               viewMissionsOfEid,
               toggleElements,
-              durationToColorClass,
               padDateOut,
               shipToName,
               viewSpecificMission,
@@ -2477,20 +2473,12 @@
               openMissionsViewAccountDropdown,
               selectViewAccount,
               closeMissionsViewAccountDropdown,
-              statsBeingLoaded,
-              selectedStatsAccount,
-              viewStatsAccountSelectRef,
-              viewStatsAccountDropdownOpen,
-              viewStatsAccountInputRef,
-              viewStatsAccountSubmitRef,
-              openStatsViewAccountDropdown,
-              closeStatsViewAccountDropdown,
-              selectViewStatsAccount,
 
               //View specific mission
               viewByDate,
               viewMissionTimes,
               recolorDC,
+              useGifsForRarity,
               loadedAccountMissionsCount,
               loadedEid,
               allLoadedMissions,
@@ -2506,6 +2494,8 @@
               afBackgroundClass,
               afExplorerName,
               specPath,
+              dropPath,
+              dropRarityPath,
               groupedSpecType,
               numToDigClass,
               properCase,
@@ -2558,6 +2548,15 @@
               openDropFilterMenu,
               closeDropFilterMenu,
               selectDropFilter,
+              isBaseFilter,
+              targetSelectList,
+              targetFilterSelectedIndex,
+              targetFilterSelectedOrIndex,
+              targetFilterMenuOpen,
+              openTargetFilterMenu,
+              closeTargetFilterMenu,
+              selectTargetFilter,
+              targetSearchTerm,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,

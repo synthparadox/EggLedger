@@ -9,8 +9,23 @@
   box-sizing: border-box;
 }
 
-.overlay-mission, .overlay-drop {
+.overlay-mission, .overlay-drop, .overlay-target {
   background: rgba(0, 0, 0, 0.5);
+}
+
+.bg-rare-animated {
+  background: url('images/rare.gif') center center no-repeat;
+  background-size: 38px 38px;
+}
+
+.bg-epic-animated {
+  background: url('images/epic.gif') center center no-repeat;
+  background-size: 36px 36px;
+}
+
+.bg-legendary-animated {
+  background: url('images/legendary.gif') center center no-repeat;
+  background-size: 36px 36px;
 }
 
 .tooltip-custom {
