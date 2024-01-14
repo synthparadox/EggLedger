@@ -1129,7 +1129,7 @@ func main() {
 	*/
 	ui.MustBind("getPossibleTargets", func() string {
 		PossibleTargetsRaw := []RawPossibleTarget{
-			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted", ImageString: ""},
+			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted", ImageString: "none.png"},
 			{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan", ImageString: "bob_target.png"},
 			{Name: ei.ArtifactSpec_TACHYON_DEFLECTOR, DisplayName: "Tachyon Deflectors", ImageString: "deflector_target.png"},
 			{Name: ei.ArtifactSpec_SHIP_IN_A_BOTTLE, DisplayName: "Ships in a Bottle", ImageString: "siab_target.png"},
@@ -1177,7 +1177,7 @@ func main() {
 
 		// Convert the array to PossibleTarget
 		possibleTargets := []PossibleTarget{
-			{DisplayName: "None (Pre 1.27)", Id: -1},
+			{DisplayName: "None (Pre 1.27)", Id: -1, ImageString: "none.png"},
 		}
 		for _, rawTarget := range PossibleTargetsRaw {
 			possibleTarget := PossibleTarget{
