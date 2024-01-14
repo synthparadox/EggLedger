@@ -8,3 +8,7 @@
 node_modules/
 /www/index_pcss.hash
 tailwind.config.hash
+
+# Ignore custom-tailored files
+daveedbuild.sh
+daveedbuild.sh~

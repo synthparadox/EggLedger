@@ -22,27 +22,30 @@ module.exports = {
         selectedmission: 'rgb(10, 173, 82)',
         selectedmissiondarker: 'rgb(7, 120, 56)',
       },
+      zIndex: {
+        eidoverlay: '-20',
+      },
+      padding: {
+        '1rem:' : '1rem',
+      },
       height: {
         stretch: 'stretch',
         '1rem': '1rem',
+        'half': '50%',
+        'half-vh': '50vh',
+        '9/10': '90%',
+      },
+      maxHeight: {
+        '6/10': '60%',
       },
       width: {
         'onedig': '1rem',
         'twodig': '1.25rem',
         'threedig': '1.5rem',
+        '9/10': '90%',
       },
-      lineHeight: {
-        '1rem': '1rem'
-      },
-      spacing: {
-        '025rem': '0.25rem',
-        '05rem': '0.5rem',
-        '1rem': '1rem',
-        '2rem': '2rem',
-        '3rem': '3rem',
-      },
-      fontSize: {
-        'star': '1.4rem',
+      minWidth: {
+        'selectpop': '15vw',
       },
       maxWidth: {
         '8xl': '88rem',
@@ -50,6 +53,23 @@ module.exports = {
         '10xl': '104rem',
         '11xl': '112rem',
         '12xl': '120rem',
+        '20vw': '20vw',
+        '500p': '500px',
+      },
+      lineHeight: {
+        '1rem': '1rem'
+      },
+      spacing: {
+        '0i': '0 !important',
+        '025rem': '0.25rem',
+        '05rem': '0.5rem',
+        '075rem': '0.75rem',
+        '1rem': '1rem',
+        '2rem': '2rem',
+        '3rem': '3rem',
+      },
+      fontSize: {
+        'star': '1.4rem',
       },
       backgroundColor: {
         'white': '#ffffff',
