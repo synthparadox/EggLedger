@@ -141,6 +141,7 @@ type MissionDrop struct {
 	Level        int32   `json:"level"`
 	Rarity       int32   `json:"rarity"`
 	Quality      float64 `json:"quality"`
+	IVOrder      int32   `json:"ivOrder"`
 }
 
 type ExportAccount struct {
@@ -1244,6 +1245,7 @@ func main() {
 				Level:    int32(*drop.Spec.Level),
 				Rarity:   int32(*drop.Spec.Rarity),
 				Quality:  foundQuality,
+				IVOrder:  int32(spec.Name.InventoryVisualizerOrder()),
 			}
 			switch {
 			case strings.Contains(missionDrop.Name, "_FRAGMENT"):

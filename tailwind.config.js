@@ -41,7 +41,10 @@ module.exports = {
       width: {
         'onedig': '1rem',
         'twodig': '1.25rem',
-        'threedig': '1.5rem',
+        'threedig': '1.6rem',
+        'fourdig': '2rem',
+        'fivedig': '2.35rem',
+        'sixdig': '2.7rem',
         '9/10': '90%',
       },
       minWidth: {
@@ -54,6 +57,7 @@ module.exports = {
         '11xl': '112rem',
         '12xl': '120rem',
         '20vw': '20vw',
+        '70vw': '70vw',
         '500p': '500px',
       },
       lineHeight: {

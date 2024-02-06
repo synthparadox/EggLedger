@@ -127,7 +127,7 @@
                 missionProgress.eta }}
               </div>
               <div class="h-3 relative rounded-full overflow-hidden mt-1">
-                <div class="w-full h-full bg-gray-200 absolute"></div>
+                <div class="w-full h-full bg-dark absolute"></div>
                 <div class="h-full absolute rounded-full bg-green-500"
                   v-bind:style="{ width: missionProgress.finishedPercentage }"
                 ></div>
@@ -1018,86 +1018,190 @@
         </div>
 
         <div v-show="activeTab === UITab.LifetimeDrops" class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
-          <div class="mt-0i" ref="selectLifetimeAccountForm" v-if="doesDataExist">
-            <form
-              id="lifetimeAccountForm" name="lifetimeAccountForm" class="select-form"
-              v-on:submit="event => {
-                event.preventDefault();
-                viewLifetimeDropsOfEid();
-            }">
-            <!-- lifetimeAccountSelectRef, lifetimeAccountInputRef, openLifetimeAccountDropdown, lifetimeAccountDropdownOpen, selectLifetimeAccount, viewLifetimeAccountSubmitRef -->
-              <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
-                <!-- Overlay to tag inmput with number of missions -->
-                <div v-if="selectedLifetimeAccount != null && objectedExistingData.find(acc => acc.id == selectedLifetimeAccount) != null" class="ledger-input-overlay">
-                  <span class="invisible whitespace-pre">
-                    {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.id }}
-                  </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.accountColor" >
-                      {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.ebString }}
-                    </span> - {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.missionCount }} missions)
-                </div>
+          <form
+            v-if="doesDataExist"
+            id="lifetimeAccountForm" name="lifetimeAccountForm" class="select-form"
+            v-on:submit="event => {
+              event.preventDefault();
+              viewLifetimeDropsOfEid();
+          }">
+          <!-- lifetimeAccountSelectRef, lifetimeAccountInputRef, openLifetimeAccountDropdown, lifetimeAccountDropdownOpen, selectLifetimeAccount, viewLifetimeAccountSubmitRef -->
+            <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
+              <!-- Overlay to tag inmput with number of missions -->
+              <div v-if="selectedLifetimeAccount != null && objectedExistingData.find(acc => acc.id == selectedLifetimeAccount) != null" class="ledger-input-overlay">
+                <span class="invisible whitespace-pre">
+                  {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.id }}
+                </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.accountColor" >
+                    {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.ebString }}
+                  </span> - {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.missionCount }} missions)
+              </div>
 
-                <input
-                  ref="lifetimeAccountInputRef"
-                  type="text"
-                  class="drop-select border-gray-300"
-                  placeholder="Select an account"
-                  v-bind:value="selectedLifetimeAccount"
-                  v-on:focus="openLifetimeAccountDropdown"
-                  v-on:input="selectedLifetimeAccount = $event.target.value"
+              <input
+                ref="lifetimeAccountInputRef"
+                type="text"
+                class="drop-select border-gray-300"
+                placeholder="Select an account"
+                v-bind:value="selectedLifetimeAccount"
+                v-on:focus="openLifetimeAccountDropdown"
+                v-on:input="selectedLifetimeAccount = $event.target.value"
+              >
+              <ul
+                v-if="lifetimeAccountDropdownOpen && objectedExistingData.length > 0"
+                class="ledger-list focus:outline-none sm:text-sm"
+                tabindex="-1"
+              >
+                <li
+                  v-for="account in objectedExistingData"
+                  v-bind:key="account.id" class="drop-opt"
+                  v-on:click="selectLifetimeAccount(account)"
                 >
-                <ul
-                  v-if="lifetimeAccountDropdownOpen && objectedExistingData.length > 0"
-                  class="ledger-list focus:outline-none sm:text-sm"
-                  tabindex="-1"
-                >
-                  <li
-                    v-for="account in objectedExistingData"
-                    v-bind:key="account.id" class="drop-opt"
-                    v-on:click="selectLifetimeAccount(account)"
-                  >
-                    {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
-                  </li>
-                </ul>
-              </div>
-              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-              v-if="idle" ref="viewLifetimeAccountSubmitRef" type="submit" v-bind:disabled="(selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || eidMissionsBeingLoaded)">
-                View
-              </button>
-            </form>
-            <div class="mt-1rem mb-1rem">
-              <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4">
-                This will load all missions for the selected account, and may take a <i>long while</i>.
-              </span>
+                  {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
+                </li>
+              </ul>
             </div>
-            <div v-if="lifetimeState !== LifetimeLoadState.Idle" class="text-gray-400">
-              <div v-if="lifetimeState == LifetimeLoadState.FetchingIds">
-                Fetching mission IDs...
-              </div>
-              <div v-else-if="lifetimeState === LifetimeLoadState.LoadingMissionData">
-                Loading missions... {{ lifetimeDropsLoadedProgress.loadedCount }}/{{ lifetimeDropsLoadedProgress.totalCount }}
-              </div>
-              <div v-else-if="lifetimeState === LifetimeLoadState.CoalescingMissionData">
-                Coalescing missions... {{ lifetimeDropsLoadedProgress.loadedCount }}/{{ lifetimeDropsLoadedProgress.totalCount }}
-              </div>
-              <div v-else-if="lifetimeState === LifetimeLoadState.Success">
-                <span class="text-green-500">Success</span>
-              </div>
-              <div v-else-if="lifetimeState === LifetimeLoadState.Failed">
-                <span class="text-red-700">Failed</span>
+            <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
+            v-if="idle" ref="viewLifetimeAccountSubmitRef" type="submit" v-bind:disabled="(selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || eidMissionsBeingLoaded)">
+              View
+            </button>
+          </form>
+          <div class="h-14 px-2 py-1 text-sm text-gray-400 bg-darkest rounded-md tabular-nums">
+            <div v-if="doesDataExist && lifetimeState !== LifetimeLoadState.Idle">
+              <div>
+                Status: <span :class="getLifetimeStatusColor()">{{ getLifetimeStatusText() }}</span>
               </div>
               <div class="h-3 relative rounded-full overflow-hidden mt-1">
-                <div class="w-full h-full bg-gray-200 absolute"></div>
+                <div class="w-full h-full bg-dark absolute"></div>
                 <div class="h-full absolute rounded-full bg-green-500"
                   v-bind:style="{ width: lifetimeDropsLoadedProgress.percentageDone }"
                 ></div>
               </div>
             </div>
-            <div v-if="lifetimeDrops.length > 0 && !lifetimeDropsBeingLoaded"
-              class="mt-05rem px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md text-center overflow-auto">
-              <span class="ledger-underline">Data Coalesced from {{ objectedExistingData.find(a => a.id == selectedLifetimeAccount).missionCount }} Missions</span>
+          </div>
+          <div class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
+            <div class="mt-4" v-if="doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded">
+              <span class="ledger-underline text-base text-gray-500">Data Coalesced from {{ lifetimeDrops.missionCount }} Missions</span>
+              <div>
+                <span>Sort method:</span>
+                <br/>
+                <span class="mr-5">
+                  <label for="lifetimeSortDefault" class="ext-opt-label">Default</label>
+                  <input id="lifetimeSortDefault" type="radio" v-model="lifetimeSortMethod" value="default" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="lifetimeSortIV" class="ext-opt-label">Inventory Visualizer</label>
+                  <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="lifetimeSortRarity" class="ext-opt-label">Random</label>
+                  <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
+                </span>
+              </div>
+              <!-- Artifacts -->
+              <div v-if="lifetimeDrops.artifactCount > 0">
+                <div class="mission-view-div bg-blue-900 text-gray-300">
+                  Artifacts ({{ lifetimeDrops.artifactCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(af, afindex) in lifetimeDrops.artifacts">
+                    <a v-external-link :class="'ledger-af-link tooltip-custom ' + afBackgroundClass(af)" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(af, 1) + '/'">
+                      <img class="h-full w-full" :alt="af.gameName" :src="specPath(af, 1)"/>
+                      <div v-if="af.count > 1" :class="'ledger-af-count ' + numToDigClass(af.count)">
+                        {{ af.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ af.gameName }} (T{{parseInt(af.level) + 1}})
+                        <span :class="afRarityClass(af)">
+                          {{ afRarityText(af) }}
+                        </span>
+                        × {{ af.count }} <br />
+                        {{ boundEffectString(af.effectString)[0] }}
+                        <span class="text-sm text-green-500">
+                          {{ boundEffectString(af.effectString)[1] }}
+                        </span>
+                        {{ boundEffectString(af.effectString)[2] }}
+                      </span>
+                    </a>
+                  </div>
+                </div>
+                <br />
+              </div>
+
+              <!-- Stones -->
+              <div v-if="lifetimeDrops.stoneCount > 0">
+                <div class="mission-view-div bg-fuchsia-900 text-gray-300">
+                  Eggfinity Stones ({{ lifetimeDrops.stoneCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(st, stindex) in lifetimeDrops.stones">
+                    <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(st, 2) + '/'">
+                      <img class="h-full w-full" :alt="st.gameName" :src="specPath(st, 2)"/>
+                      <div v-if="st.count > 1" :class="'ledger-af-count ' + numToDigClass(st.count)">
+                        {{ st.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ st.gameName }} (T{{parseInt(st.level) + 2}})
+                        × {{ st.count }} <br />
+                        {{ boundEffectString(st.effectString)[0] }}
+                        <span class="text-sm text-green-500">
+                          {{ boundEffectString(st.effectString)[1] }}
+                        </span>
+                        {{ boundEffectString(st.effectString)[2] }}
+                      </span>
+                    </a>
+                  </div>
+                </div>
+                <br />
+              </div>
+
+              <!-- Ingredients -->
+              <div v-if="lifetimeDrops.ingredientCount > 0">
+                <div class="mission-view-div text-gray-400 bg-darkerer">
+                  Ingredients ({{ lifetimeDrops.ingredientCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(ing, ingindex) in lifetimeDrops.ingredients">
+                    <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(ing, 1) + '/'">
+                      <img class="h-full w-full" :alt="ing.gameName" :src="specPath(ing, 1)"/>
+                      <div v-if="ing.count > 1" :class="'ledger-af-count ' + numToDigClass(ing.count)">
+                        {{ ing.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ ing.gameName }} (T{{parseInt(ing.level) + 1}})
+                        × {{ ing.count }}
+                      </span>
+                    </a>
+                  </div>
+                </div>
+                <br />
+              </div>
+
+              <!-- Stone Fragments -->
+              <div v-if="lifetimeDrops.stoneFragmentCount > 0">
+                <div class="mission-view-div text-gray-400 bg-darkerer">
+                  Stone Fragments ({{ lifetimeDrops.stoneFragmentCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(sf, sfindex) in lifetimeDrops.stoneFragments">
+                    <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
+                      <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
+                      <div v-if="sf.count > 1" :class="'ledger-af-count ' + numToDigClass(sf.count)">
+                        {{ sf.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ sf.gameName }} (T{{parseInt(sf.level) + 1}})
+                        × {{ sf.count }} <br />
+                    </a>
+                  </div>
+                  <br />
+                </div>
+              </div>
             </div>
           </div>
-          <div class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView" v-else>
+          <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
             <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
         </div>
@@ -1425,9 +1529,55 @@
               closeLifetimeAccountDropdown();
               selectedLifetimeAccount.value = account.id;
             };
-
-
-            const lifetimeDrops = Vue.ref([]);
+            const lifetimeDrops = Vue.ref(null);
+            const lifetimeSortMethod = Vue.ref("default");
+            Vue.watch(lifetimeSortMethod, () => reSortLifetime());
+            const reSortLifetime = () => {
+              if(lifetimeDrops.value != null && lifetimeDrops.value.artifacts != null && lifetimeDrops.value.stones != null && lifetimeDrops.value.stoneFragments != null && lifetimeDrops.value.ingredients != null){
+                var useThisFunc;
+                switch(lifetimeSortMethod.value){
+                  case 'default':
+                    useThisFunc = sortGroupAlreadyCombed;
+                    break;
+                  case 'iv':
+                    useThisFunc = inventoryVisualizerSort;
+                    break;
+                  case 'random':
+                    useThisFunc = shuffle;
+                    break;
+                }
+                lifetimeDrops.value.artifacts = useThisFunc(lifetimeDrops.value.artifacts);
+                lifetimeDrops.value.stones = useThisFunc(lifetimeDrops.value.stones);
+                lifetimeDrops.value.stoneFragments = useThisFunc(lifetimeDrops.value.stoneFragments);
+                lifetimeDrops.value.ingredients = useThisFunc(lifetimeDrops.value.ingredients);
+              }
+            };
+            const getLifetimeStatusColor = () => {
+              switch(lifetimeState.value){
+                case LifetimeLoadState.Success:
+                  return "text-green-500";
+                case LifetimeLoadState.Failed:
+                  return "text-red-700";
+                default:
+                  return "text-gray-300";
+              }
+            };
+            const getLifetimeStatusText = () => {
+              switch(lifetimeState.value){
+                case LifetimeLoadState.FetchingIds:
+                  return "Fetching mission IDs...";
+                case LifetimeLoadState.LoadingMissionData:
+                  return "Loading missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
+                case LifetimeLoadState.CoalescingMissionData:
+                  return "Coalescing missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
+                case LifetimeLoadState.Success:
+                  return "Success";
+                case LifetimeLoadState.Failed:
+                  return "Failed";
+                default:
+                  return "Idle";
+              }
+            };
             const lifetimeState = Vue.ref(LifetimeLoadState.Idle);
             const lifetimeDropsBeingLoaded = Vue.ref(false);
             const lifetimeDropsLoadedProgress = Vue.ref({
@@ -1436,6 +1586,12 @@
               totalCount: 0,
             });
             const viewLifetimeDropsOfEid = async () => {
+              lifetimeDrops.value = null;
+              lifetimeDropsLoadedProgress.value = {
+                percentageDone: '0%',
+                loadedCount: 0,
+                totalCount: 0,
+              };
               lifetimeDropsBeingLoaded.value = true;
               lifetimeState.value = LifetimeLoadState.FetchingIds;
               const idsJson = await window.getMissionIds(selectedLifetimeAccount.value);
@@ -1456,13 +1612,49 @@
                 lifetimeDropsLoadedProgress.value.percentageDone = `${(missions.length / ids.length) * 100}%`;
                 lifetimeDropsLoadedProgress.value.loadedCount++;
               }
+              lifetimeDrops.value = {
+                artifacts: [],
+                stones: [],
+                stoneFragments: [],
+                ingredients: [],
+                missionCount: missions.length,
+              };
               lifetimeState.value = LifetimeLoadState.CoalescingMissionData;
-              // TODO: Coalesce the artifacts, stones, and stone fragments from each mission in missions
-              //  To match a coalesce for [x] - level, id, and rarity
-              //  If two [x] have the same level, id, and rarity, they are the same, add their .quantity together
+              lifetimeDrops.value.percentageDone = '0%';
+              lifetimeDrops.value.loadedCount = 0;
+              // Coalesce the artifacts, stones, stone fragments, and ingredients from each mission in missions
+              // To match a coalesce for [x] - level, id, and rarity
+              // If two [x] have the same level, id, and rarity, they are the same, add their .count together
+              for(const cMission of missions){
+                cMission.artifacts.forEach(artifact => mergeItems(lifetimeDrops.value.artifacts, artifact));
+                cMission.stones.forEach(stone => mergeItems(lifetimeDrops.value.stones, stone));
+                cMission.stoneFragments.forEach(stoneFragment => mergeItems(lifetimeDrops.value.stoneFragments, stoneFragment));
+                cMission.ingredients.forEach(ingredient => mergeItems(lifetimeDrops.value.ingredients, ingredient));
+                lifetimeDropsLoadedProgress.value.loadedCount++;
+                lifetimeDropsLoadedProgress.value.percentageDone = `${(lifetimeDropsLoadedProgress.value.loadedCount / ids.length) * 100}%`;
+              }
+              //Re-run group sorting
+              reSortLifetime();
+              //Sum all counts to detemrine aritfactCount, stoneCount, stoneFragmentCount, and ingredientCount
+              lifetimeDrops.value.artifactCount = lifetimeDrops.value.artifacts.map(artifact => artifact.count).reduce((acc, cur) => acc + cur, 0);
+              lifetimeDrops.value.stoneCount = lifetimeDrops.value.stones.map(stone => stone.count).reduce((acc, cur) => acc + cur, 0);
+              lifetimeDrops.value.stoneFragmentCount = lifetimeDrops.value.stoneFragments.map(fragment => fragment.count).reduce((acc, cur) => acc + cur, 0);
+              lifetimeDrops.value.ingredientCount = lifetimeDrops.value.ingredients.map(ingredient => ingredient.count).reduce((acc, cur) => acc + cur, 0);
+
+              lifetimeState.value = LifetimeLoadState.Success;
 
               lifetimeDropsBeingLoaded.value = false;
             };
+
+            const mergeItems = (targetArray, item) => {
+              const existingItem = targetArray.find(existingItem =>
+                existingItem.id === item.id &&
+                existingItem.level === item.level &&
+                existingItem.rarity === item.rarity
+              );
+              if (existingItem) existingItem.count += item.count;
+              else targetArray.push(item);
+            }
 
             const viewMissionAccountSelectRef = Vue.ref(null);
             const viewMissionAccountInputRef = Vue.ref(null);
@@ -1656,23 +1848,42 @@
                 return acc;
               }, {});
             };
-            const sortedGroupedSpecType = (collection) => {
-              return Object.values(groupedSpecType(collection)).sort((a, b) => {
+            const sortedGroupedSpecType = (collection) => {return sortGroupAlreadyCombed(Object.values(groupedSpecType(collection)));};
+            const sortGroupAlreadyCombed = (collection) => {
+              return collection.sort((a, b) => {
                 if(a.level > b.level) return -1;
                 if(a.level < b.level) return 1;
                 if(a.rarity > b.rarity) return -1;
                 if(a.rarity < b.rarity) return 1;
+                if(a.id > b.id) return -1;
+                if(a.id < b.id) return 1;
                 if(a.quality < b.quality) return -1;
                 if(a.quality > b.quality) return 1;
                 return 0;
               }).reverse();
             };
+            const inventoryVisualizerSort = (collection) => {
+              return collection.sort((a, b) => {
+                if(a.rarity > b.rarity) return -1;
+                if(a.rarity < b.rarity) return 1;
+                if(a.ivOrder > b.ivOrder) return -1;
+                if(a.ivOrder < b.ivOrder) return 1;
+                if(a.level > b.level) return -1;
+                if(a.level < b.level) return 1;
+                return 0;
+              });
+            };
+            const shuffle = (collection) => {
+              return collection.sort(() => Math.random() - 0.5);
+            };
             const numToDigClass = (num) => {
               const parsedNum = parseInt(num.toString());
               switch (true) {
-                case parsedNum <= 9: return "w-onedig";
-                case parsedNum > 9 && parsedNum <= 99: return "w-twodig";
+                case parsedNum > 99999: return "w-sixdig";
+                case parsedNum > 9999: return "w-fivedig";
+                case parsedNum > 999: return "w-fourdig";
                 case parsedNum > 99: return "w-threedig";
+                case parsedNum > 9: return "w-twodig";
                 default: return "w-onedig";
               }
             };
@@ -2573,6 +2784,9 @@
               lifetimeDropsLoadedProgress,
               viewLifetimeDropsOfEid,
               lifetimeState,
+              lifetimeSortMethod,
+              getLifetimeStatusColor,
+              getLifetimeStatusText,
 
               //View all missions
               doesDataExist,
