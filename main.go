@@ -1028,6 +1028,20 @@ func main() {
 		return knownAccounts
 	})
 
+	ui.MustBind("getMissionIds", func(playerId string) string {
+		ids, err := db.RetrievePlayerCompleteMissionIds(playerId)
+		if err != nil {
+			log.Error(err)
+		}
+		//Return a JSON string of the mission IDs
+		jsonData, err := json.Marshal(ids)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+		return string(jsonData)
+	})
+
 	ui.MustBind("viewMissionsEID", func(eid string) string {
 		if LoadedMissionYears, err := viewMissionsOfId(eid); err != nil {
 			log.Error(err)
