@@ -35,17 +35,26 @@ module.exports = {
         'half-vh': '50vh',
         '9/10': '90%',
       },
+      minHeight: {
+        '7': '1.75rem',
+      },
       maxHeight: {
         '6/10': '60%',
+        '80vw': '80vw',
+        '70vh': '70vh',
       },
       width: {
         'onedig': '1rem',
         'twodig': '1.25rem',
-        'threedig': '1.5rem',
+        'threedig': '1.6rem',
+        'fourdig': '2rem',
+        'fivedig': '2.35rem',
+        'sixdig': '2.7rem',
         '9/10': '90%',
       },
       minWidth: {
         'selectpop': '15vw',
+        '30vw': '30vw',
       },
       maxWidth: {
         '8xl': '88rem',
@@ -54,7 +63,9 @@ module.exports = {
         '11xl': '112rem',
         '12xl': '120rem',
         '20vw': '20vw',
+        '70vw': '70vw',
         '500p': '500px',
+        '35vw': '35vw',
       },
       lineHeight: {
         '1rem': '1rem'
@@ -68,8 +79,15 @@ module.exports = {
         '2rem': '2rem',
         '3rem': '3rem',
       },
+      margin: {
+        '075rem': '0.75rem',
+        '05rem': '0.5rem',
+      },
       fontSize: {
         'star': '1.4rem',
+        'xl': ['1.125rem', {
+          lineHeight: '1.75rem',
+        }],
       },
       backgroundColor: {
         'white': '#ffffff',
@@ -102,7 +120,7 @@ module.exports = {
         'short': "rgb(69, 159, 246)",
         'standard': "rgb(139, 93, 246)",
         'extended': "rgb(246, 168, 35)",
-      }
+      },
     },
   },
   plugins: [require('@tailwindcss/forms')],

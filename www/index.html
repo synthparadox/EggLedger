@@ -15,7 +15,7 @@
         <div class="h-11 flex-shrink-0 bg-dark">
           <div class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.About, UITab.Donate]"
+              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.LifetimeDrops, UITab.About, UITab.Donate]"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
               v-on:click="activeTab = tab" v-bind:key="tab">
@@ -105,7 +105,7 @@
               </div>
               <button
                 v-if="idle" ref="playerIdSubmitRef" type="submit" class="fetch-button disabled:hover:darker_tab_hover"
-                v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid"
+                v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid || lifetimeDropsBeingLoaded || eidMissionsBeingLoaded"
               >
                 Fetch
               </button>
@@ -127,7 +127,7 @@
                 missionProgress.eta }}
               </div>
               <div class="h-3 relative rounded-full overflow-hidden mt-1">
-                <div class="w-full h-full bg-gray-200 absolute"></div>
+                <div class="w-full h-full bg-dark absolute"></div>
                 <div class="h-full absolute rounded-full bg-green-500"
                   v-bind:style="{ width: missionProgress.finishedPercentage }"
                 ></div>
@@ -402,10 +402,7 @@
           </div>
         </div>
 
-        <div
-          v-show="activeTab === UITab.Donate"
-          class="flex-1 w-full mx-auto px-4 overflow-y-auto text-center items-center"
-        >
+        <div v-show="activeTab === UITab.Donate" class="flex-1 w-full mx-auto px-4 overflow-y-auto text-center items-center">
           <div
             class="border border-gray-300 rounded-md p-0.5"
           >
@@ -430,9 +427,8 @@
           </div>
         </div>
 
-        <div class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker" 
-          v-show="activeTab === UITab.ViewData">
-
+        <div v-show="activeTab === UITab.ViewData" class="flex-1 flex flex-col w-full mx-auto px-4 overflow-hidden bg-darker" >
+          <!-- Statically located divs-->
           <div id="dropSelectDiv" ref="dropSelectDiv" class="popup-selector-main overlay-drop">
             <div id="innerDropSelectDiv"  class="popup-selector-inner">
               <button class="close-button" v-on:click="closeDropFilterMenu()">
@@ -466,7 +462,6 @@
               </div>
             </div>
           </div>
-
           <div id="targetSelectDiv" ref="targetSelectDiv" class="popup-selector-main overlay-target">
             <div id="innerTargetSelectDiv" class="popup-selector-inner">
               <button class="close-button" v-on:click="closeTargetFilterMenu()">
@@ -498,16 +493,15 @@
               </div>
             </div>
           </div>
-
           <div id="missionViewDiv" ref="missionViewDiv" class="w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
-            <div id="innerMissionViewDiv" style="max-height: 80vw;"  class="bg-dark rounded-lg relative p-1rem">
+            <div id="innerMissionViewDiv"  class="max-h-80vw bg-dark rounded-lg relative p-1rem">
               <button class="close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
               <div id="missionViewContentDiv" v-if="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)" 
-                style="max-height: 70vh; max-width: 35vw; min-width: 30vw;" class="text-gray-300 text-center overflow-auto">
+                class="min-w-30vw max-w-35vw max-h-70vh text-gray-300 text-center overflow-auto">
                 <!-- Header information about the mission -->
                 <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ shipToName(viewMissionData.shipInfo.ship) }}</span><br />
                 <span class="text-star text-goldenstar" v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0">{{ "★".repeat(viewMissionData.shipInfo.level) }}</span>
@@ -641,7 +635,7 @@
                   </div>
                   <div class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(sf, sfindex) in viewMissionData.stoneFragments">
-                      <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
+                      <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
                         <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
                         <div v-if="sf.count > 1" :class="'ledger-af-count ' + numToDigClass(sf.count)">
@@ -668,62 +662,57 @@
               </div>
             </div>
           </div>
-          <div class="mt-0i" ref="selectViewMissionsAccountForm" v-if="doesDataExist">
-            <form 
-              id="viewAccountForm" name="viewAccountForm" class="select-form"
-              v-on:submit="event => {
-                event.preventDefault();
-                for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
-                viewMissionsOfEid();
-              }">
-              <div ref="viewMissionAccountSelectRef" class="relative flex-grow focus-within:z-10">
-                <!-- Overlay to tag inmput with number of missions -->
-                <div v-if="selectedMissionAccount != null && objectedExistingData.find(acc => acc.id == selectedMissionAccount) != null" class="ledger-input-overlay">
-                  <span class="invisible whitespace-pre">
-                    {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.id }}
-                  </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.accountColor" >
-                      {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.ebString }}
-                    </span> - {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount }} missions)
-                </div>
 
-                <input
-                  ref="viewMissionAccountInputRef"
-                  type="text"
-                  class="drop-select border-gray-300"
-                  placeholder="Select an account"
-                  v-bind:value="selectedMissionAccount"
-                  v-on:focus="openMissionsViewAccountDropdown"
-                  v-on:input="selectedMissionAccount = $event.target.value"
-                >
-                <ul
-                  v-if="viewMissionAccountDropdownOpen && objectedExistingData.length > 0"
-                  class="ledger-list focus:outline-none sm:text-sm"
-                  tabindex="-1"
-                >
-                  <li
-                    v-for="account in objectedExistingData"
-                    v-bind:key="account.id" class="drop-opt"
-                    v-on:click="selectViewAccount(account)"
-                  >
-                    {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
-                  </li>
-                </ul>
+          <!-- All the shit that resizes -->
+          <form
+            id="viewAccountForm" name="viewAccountForm" class="select-form"
+            v-on:submit="event => {
+              event.preventDefault();
+              for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
+              viewMissionsOfEid();
+            }">
+            <div ref="viewMissionAccountSelectRef" class="relative flex-grow focus-within:z-10">
+              <!-- Overlay to tag inmput with number of missions -->
+              <div v-if="selectedMissionAccount != null && objectedExistingData.find(acc => acc.id == selectedMissionAccount) != null" class="ledger-input-overlay">
+                <span class="invisible whitespace-pre">
+                  {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.id }}
+                </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.accountColor" >
+                    {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.ebString }}
+                  </span> - {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount }} missions)
               </div>
-              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-              v-if="idle" ref="viewMissionAccountSubmitRef" type="submit" v-bind:disabled="(selectedMissionAccount === null || selectedMissionAccount == '' || objectedExistingData.find(a => a.id == selectedMissionAccount) == null || eidMissionsBeingLoaded)">
-                View
-              </button>
-            </form>
-          </div>
-          <div class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView" v-else>
-            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
-          </div>
-          <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-            <div class="mt-1rem mb-1rem" v-if="selectedMissionAccount != null && selectedMissionAccount == loadedEid && loadedAccountMissionsCount != (objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount ?? 0)">
-              <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4"> You are viewing outdated data - click <span class="text-gray-500">View</span> again to fix this.</span>
+
+              <input
+                ref="viewMissionAccountInputRef"
+                type="text"
+                class="drop-select border-gray-300"
+                placeholder="Select an account"
+                v-bind:value="selectedMissionAccount"
+                v-on:focus="openMissionsViewAccountDropdown"
+                v-on:input="selectedMissionAccount = $event.target.value"
+              >
+              <ul
+                v-if="viewMissionAccountDropdownOpen && objectedExistingData.length > 0"
+                class="ledger-list focus:outline-none sm:text-sm"
+                tabindex="-1"
+              >
+                <li
+                  v-for="account in objectedExistingData"
+                  v-bind:key="account.id" class="drop-opt"
+                  v-on:click="selectViewAccount(account)"
+                >
+                  {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
+                </li>
+              </ul>
             </div>
-            <div ref="filterRef">
-              <span class="ml-05rem font-bold text-gray-400">Filter: </span>
+            <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
+            v-if="idle" ref="viewMissionAccountSubmitRef" type="submit" v-bind:disabled="!idle || (selectedMissionAccount === null || selectedMissionAccount == '' || objectedExistingData.find(a => a.id == selectedMissionAccount) == null || eidMissionsBeingLoaded)">
+              View
+            </button>
+          </form>
+
+          <div class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
+            <div ref="filterRef" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+              <span class="h-20 font-bold text-gray-400">Filter: </span>
               <button 
                 id="toggleFilterButton"
                 class="text-base toggle-link" 
@@ -757,7 +746,7 @@
                   <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
                     <!-- Separator -->
                     <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
-
+  
                     <div class="filter-container focus-within:z-10">
                       <!-- Top level filter options -->
                       <select class="filter-select border-gray-300 text-gray-400"
@@ -766,7 +755,7 @@
                         <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                           {{ validOption.text }}
                       </select>
-
+  
                       <!-- Operator options -->
                       <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
@@ -774,7 +763,7 @@
                         <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                           {{ validOperator.text }}
                       </select>
-
+  
                       <!-- Value options (Base) -->
                       <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
@@ -783,7 +772,7 @@
                         <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
                       </select>
-
+  
                       <!-- Drop Selectors
                         opens a custom modal -->
                       <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
@@ -791,7 +780,7 @@
                         class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
                         v-model="dFilterValues[index]" :id="'filter-value-' + index"
                       >
-
+  
                       <!-- Target Selectors
                         opens a custom modal -->
                       <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
@@ -799,7 +788,7 @@
                         class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
                         v-model="dFilterValues[index]" :id="'filter-value-' + index"
                       >
-
+  
                       <!-- Value options - Launch/Return Date Selectors
                         Min: 20 January 2021  
                         Max: Today-->
@@ -808,7 +797,7 @@
                         v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
                         v-on:change="handleFilterChange" required="required"
                         v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
-
+  
                       <!-- OR controls -->
                       <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
                         title="Add alternate filter condition"
@@ -817,7 +806,7 @@
                         v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
                         OR
                       </button>
-
+  
                       <!-- Clear button-->
                       <button 
                         v-if="topLevelFilterOptions[index] != null"
@@ -826,7 +815,7 @@
                         v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
                         ×
                       </button>
-
+  
                       <!-- Show a warning div if the filter is incomplete -->
                       <span
                         v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null || ((topLevelFilterOptions[index] == 'returnDT' || topLevelFilterOptions[index] == 'launchDT') && filterValues[index] == ''))"
@@ -840,7 +829,7 @@
                       v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
                         <!-- Separator -->
                         <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
-
+  
                         <!-- Top level filter options -->
                         <select v-model="orFilterTopLevelOptions[index][orIndex]"
                           class="filter-select border-gray-300 text-gray-400"
@@ -848,7 +837,7 @@
                           <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                             {{ validOption.text }}
                         </select>
-
+  
                         <!-- Operator options -->
                         <select
                           v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
@@ -857,7 +846,7 @@
                           <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                             {{ validOperator.text }}
                         </select>
-
+  
                         <!-- Value options -->
                         <select v-model="orFilterValues[index][orIndex]"
                           v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && isBaseFilter(orFilterTopLevelOptions[index][orIndex])"
@@ -866,7 +855,7 @@
                           <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                             {{ validValue.text }}
                         </select>
-
+  
                         <!-- Drop Selectors
                           opens a custom modal -->
                         <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, orIndex);}"
@@ -875,7 +864,7 @@
                           v-bind:value="dOrFilterValues[index][orIndex]" readonly
                           :id="'filter-value-' + index + '-' + orIndex"
                         >
-
+  
                         <!-- Target Selectors
                           opens a custom modal -->
                         <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
@@ -884,7 +873,7 @@
                           v-bind:value="dOrFilterValues[index][orIndex]" readonly
                           :id="'filter-value-' + index + '-' + orIndex"
                         >
-
+  
                         <!-- Launch/Return Date Selectors
                           Min: 20 January 2021  
                           Max: Today + 5 days -->
@@ -910,10 +899,10 @@
                     </div>
                   </div>
                 </div>
-
+  
                 <!-- Create a 2 px visible gray line that goes across the entire div-->
                 <hr class="mt-1rem w-full">
-
+  
                 <button
                   v-if="idle"
                   ref="applyFilterToData"
@@ -924,7 +913,7 @@
                 >
                   Apply Filter
                 </button>
-
+  
                 <!-- Show loading gif while filter is being applied -->
                 <span v-if="dataBeingFiltered" class="text-green-700 mt-05rem">
                   <i>
@@ -944,10 +933,11 @@
                 </span>
               </form>
             </div>
-            <hr class="mt-1rem invisible">
-            <div class="ml-05rem">
-              <span class="font-bold text-gray-400">Missions: </span>
-              <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base toggle-link" type="button" v-on:click="toggleElements($event)">{{(allVisible ? 'Collapse All' : 'Expand All')}}</button>
+          </div>
+
+          <div class="min-h-7 max-h-20 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
+            <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+              <span class="font-bold text-base text-gray-400">Options</span><br />
               <span class="mr-5">
                 <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
                 <input id="viewByDateCB" type="checkbox" v-model="viewByDate" class="ext-opt-check"/>
@@ -965,39 +955,47 @@
                 <input id="useGifsForRarity" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
               </span>
             </div>
-            <div ref="resultsDiv" class="relative h-screen">
+          </div>
+
+          <div class="flex-1 px-2 overflow-auto shadow-sm bg-darkest rounded-md mt-075rem">
+            <div ref="resultsDiv" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div class="filter-form text-lg" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
               </div>
-              <div v-else id="missionListDiv" :style="'max-height: ' + calculateMaxMissionDivHeight() + '%;'" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
-                <template v-for="(value, yI) in groupedMissions" :key="yI">
-                  <span :class="'text-lg font-bold mr-05rem ledger-underline'">{{ gYA[yI].year }}</span>
-                  <button class="tb-c text-lg toggle-link" type="button" v-on:click="toggleElements($event, gYA[yI])">
-                    {{(gYA[yI].enabled ? 'Collapse' : 'Expand')}}
+              <div v-else id="missionListDiv" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+                <span class="text-xl">
+                  Missions
+                  <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-xl toggle-link" type="button" v-on:click="toggleElements($event)">{{(allVisible ? 'Collapse All' : 'Expand All')}}</button>
+                </span>
+                <hr class="mt-05rem mb-05rem w-full">
+                <template v-for="(yearVF, yearIndex) in groupedMissions" :key="yearIndex">
+                  <span :class="'text-lg font-bold mr-05rem ledger-underline'">{{ groupedYearArray[yearIndex].year }}</span>
+                  <button class="tb-c text-lg toggle-link" type="button" v-on:click="toggleElements($event, groupedYearArray[yearIndex])">
+                    {{(groupedYearArray[yearIndex].enabled ? 'Collapse' : 'Expand')}}
                   </button>
-                  <div v-if="gYA[yI].enabled" v-for="(subValue, mI) in value" :key="mI">
+                  <div v-if="groupedYearArray[yearIndex].enabled" v-for="(monthVF, monthIndex) in yearVF" :key="monthIndex">
                     <div class="mt-1rem ml-2rem">
-                      <span class="text-base font-bold mr-05rem ledger-underline">{{ gYA[yI].year }}-{{ gMA[yI][mI].month }}</span>
-                      <button class="tb-c text-base toggle-link" type="button" v-on:click="toggleElements($event, gYA[yI], gMA[yI][mI])">
-                       {{(gMA[yI][mI].enabled ? 'Collapse' : 'Expand')}}
+                      <span class="text-base font-bold mr-05rem ledger-underline">{{ groupedYearArray[yearIndex].year }}-{{ groupedMonthArray[yearIndex][monthIndex].month }}</span>
+                      <button class="tb-c text-base toggle-link" type="button" v-on:click="toggleElements($event, groupedYearArray[yearIndex], groupedMonthArray[yearIndex][monthIndex])">
+                       {{(groupedMonthArray[yearIndex][monthIndex].enabled ? 'Collapse' : 'Expand')}}
                       </button>
-                      <div v-if="gMA[yI][mI].enabled" v-for="(subSubValue, dIndex) in subValue" :key="dIndex">
+                      <div v-if="groupedMonthArray[yearIndex][monthIndex].enabled" v-for="(dayVF, dayIndex) in monthVF" :key="dayIndex">
                         <div class="mt-1rem ml-2rem">
                           <span v-if="viewByDate" class="text-sm font-bold ledger-underline">
-                            {{ gYA[yI].year }}-{{ gMA[yI][mI].month }}-{{ gDA[yI][mI][dIndex].day }}
-                          </span> <button v-if="viewByDate" class="tb-c text-sm mr-05rem toggle-link" type="button" v-on:click="toggleElements($event, gYA[yI], gMA[yI][mI], gDA[yI][mI][dIndex])">
-                            {{(gDA[yI][mI][dIndex].enabled ? 'Collapse' : 'Expand')}}
+                            {{ groupedYearArray[yearIndex].year }}-{{ groupedMonthArray[yearIndex][monthIndex].month }}-{{ groupedDayArray[yearIndex][monthIndex][dayIndex].day }}
+                          </span> <button v-if="viewByDate" class="tb-c text-sm mr-05rem toggle-link" type="button" v-on:click="toggleElements($event, groupedYearArray[yearIndex], groupedMonthArray[yearIndex][monthIndex], groupedDayArray[yearIndex][monthIndex][dayIndex])">
+                            {{(groupedDayArray[yearIndex][monthIndex][dayIndex].enabled ? 'Collapse' : 'Expand')}}
                           </button>
                           <div class="mt-1rem mission-grid">
-                            <div v-if="(viewByDate && gDA[yI][mI][dIndex].enabled) || (!viewByDate && gMA[yI][mI].enabled)"
+                            <div v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled)"
                               class="text-sm mission-item"
-                              v-for="(mission, missionIndex) in subSubValue" :key="missionIndex">
+                              v-for="(mission, missionIndex) in dayVF" :key="missionIndex">
                               <button 
                                 class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                 type="button" v-on:click="viewSpecificMission(mission.missionId)"
                               >
                                 <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
-                                  {{padDateOut(gYA[yI].year, gMA[yI][mI].month, gDA[yI][mI][dIndex].day)}}
+                                  {{padDateOut(groupedYearArray[yearIndex].year, groupedMonthArray[yearIndex][monthIndex].month, groupedDayArray[yearIndex][monthIndex][dayIndex].day)}}
                                 </span>
                                 <span v-if="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
                                   {{' ' + mission.launchTime}}
@@ -1015,10 +1013,208 @@
                     </div>
                   </div>
                   <br/>
-                  <hr v-if="gYA[yI].enabled" class="pt-3rem pb-3rem invisible mt-1">
+                  <hr v-if="groupedYearArray[yearIndex].enabled && yearIndex != groupedYearArray.length - 1" class="pt-3rem pb-3rem invisible mt-1">
                 </template>
               </div>
             </div>
+          </div>
+
+          <!-- Data does not exist -->
+          <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
+            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
+          </div>
+        </div>
+
+        <div v-show="activeTab === UITab.LifetimeDrops" class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
+          <form
+            v-if="doesDataExist"
+            id="lifetimeAccountForm" name="lifetimeAccountForm" class="select-form"
+            v-on:submit="event => {
+              event.preventDefault();
+              viewLifetimeDropsOfEid();
+          }">
+          <!-- lifetimeAccountSelectRef, lifetimeAccountInputRef, openLifetimeAccountDropdown, lifetimeAccountDropdownOpen, selectLifetimeAccount, viewLifetimeAccountSubmitRef -->
+            <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
+              <!-- Overlay to tag inmput with number of missions -->
+              <div v-if="selectedLifetimeAccount != null && objectedExistingData.find(acc => acc.id == selectedLifetimeAccount) != null" class="ledger-input-overlay">
+                <span class="invisible whitespace-pre">
+                  {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.id }}
+                </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.accountColor" >
+                    {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.ebString }}
+                  </span> - {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.missionCount }} missions)
+              </div>
+
+              <input
+                ref="lifetimeAccountInputRef"
+                type="text"
+                class="drop-select border-gray-300"
+                placeholder="Select an account"
+                v-bind:value="selectedLifetimeAccount"
+                v-on:focus="openLifetimeAccountDropdown"
+                v-on:input="selectedLifetimeAccount = $event.target.value"
+              >
+              <ul
+                v-if="lifetimeAccountDropdownOpen && objectedExistingData.length > 0"
+                class="ledger-list focus:outline-none sm:text-sm"
+                tabindex="-1"
+              >
+                <li
+                  v-for="account in objectedExistingData"
+                  v-bind:key="account.id" class="drop-opt"
+                  v-on:click="selectLifetimeAccount(account)"
+                >
+                  {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
+                </li>
+              </ul>
+            </div>
+            <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
+            v-if="idle" ref="viewLifetimeAccountSubmitRef" type="submit" v-bind:disabled="!idle || (selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || lifetimeDropsBeingLoaded)">
+              View
+            </button>
+          </form>
+
+          <div class="h-14 px-2 py-1 text-sm text-gray-400 bg-darkest rounded-md tabular-nums">
+            <div v-if="doesDataExist && lifetimeState !== LifetimeLoadState.Idle">
+              <div>
+                Status: <span :class="getLifetimeStatusColor()">{{ getLifetimeStatusText() }}</span>
+              </div>
+              <div class="h-3 relative rounded-full overflow-hidden mt-1">
+                <div class="w-full h-full bg-dark absolute"></div>
+                <div class="h-full absolute rounded-full bg-green-500"
+                  v-bind:style="{ width: lifetimeDropsLoadedProgress.percentageDone }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
+            <div class="mt-4" v-if="doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded">
+              <span class="ledger-underline text-base text-gray-400">Data Coalesced from {{ lifetimeDrops.missionCount }} Missions</span>
+              <div>
+                <span>Sort method:</span>
+                <br/>
+                <span class="mr-5">
+                  <label for="lifetimeSortDefault" class="ext-opt-label">Default</label>
+                  <input id="lifetimeSortDefault" type="radio" v-model="lifetimeSortMethod" value="default" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="lifetimeSortIV" class="ext-opt-label">Inventory Visualizer</label>
+                  <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="lifetimeSortRarity" class="ext-opt-label">Random</label>
+                  <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
+                </span>
+              </div>
+              <!-- Artifacts -->
+              <div v-if="lifetimeDrops.artifactCount > 0">
+                <div class="mission-view-div bg-blue-900 text-gray-300">
+                  Artifacts ({{ lifetimeDrops.artifactCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(af, afindex) in lifetimeDrops.artifacts">
+                    <a v-external-link :class="'ledger-af-link tooltip-custom ' + afBackgroundClass(af)" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(af, 1) + '/'">
+                      <img class="h-full w-full" :alt="af.gameName" :src="specPath(af, 1)"/>
+                      <div v-if="af.count > 1" :class="'ledger-af-count ' + numToDigClass(af.count)">
+                        {{ af.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ af.gameName }} (T{{parseInt(af.level) + 1}})
+                        <span :class="afRarityClass(af)">
+                          {{ afRarityText(af) }}
+                        </span>
+                        × {{ af.count }} <br />
+                        {{ boundEffectString(af.effectString)[0] }}
+                        <span class="text-sm text-green-500">
+                          {{ boundEffectString(af.effectString)[1] }}
+                        </span>
+                        {{ boundEffectString(af.effectString)[2] }}
+                      </span>
+                    </a>
+                  </div>
+                </div>
+                <br />
+              </div>
+
+              <!-- Stones -->
+              <div v-if="lifetimeDrops.stoneCount > 0">
+                <div class="mission-view-div bg-fuchsia-900 text-gray-300">
+                  Eggfinity Stones ({{ lifetimeDrops.stoneCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(st, stindex) in lifetimeDrops.stones">
+                    <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(st, 2) + '/'">
+                      <img class="h-full w-full" :alt="st.gameName" :src="specPath(st, 2)"/>
+                      <div v-if="st.count > 1" :class="'ledger-af-count ' + numToDigClass(st.count)">
+                        {{ st.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ st.gameName }} (T{{parseInt(st.level) + 2}})
+                        × {{ st.count }} <br />
+                        {{ boundEffectString(st.effectString)[0] }}
+                        <span class="text-sm text-green-500">
+                          {{ boundEffectString(st.effectString)[1] }}
+                        </span>
+                        {{ boundEffectString(st.effectString)[2] }}
+                      </span>
+                    </a>
+                  </div>
+                </div>
+                <br />
+              </div>
+
+              <!-- Ingredients -->
+              <div v-if="lifetimeDrops.ingredientCount > 0">
+                <div class="mission-view-div text-gray-400 bg-darkerer">
+                  Ingredients ({{ lifetimeDrops.ingredientCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(ing, ingindex) in lifetimeDrops.ingredients">
+                    <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(ing, 1) + '/'">
+                      <img class="h-full w-full" :alt="ing.gameName" :src="specPath(ing, 1)"/>
+                      <div v-if="ing.count > 1" :class="'ledger-af-count ' + numToDigClass(ing.count)">
+                        {{ ing.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ ing.gameName }} (T{{parseInt(ing.level) + 1}})
+                        × {{ ing.count }}
+                      </span>
+                    </a>
+                  </div>
+                </div>
+                <br />
+              </div>
+
+              <!-- Stone Fragments -->
+              <div v-if="lifetimeDrops.stoneFragmentCount > 0">
+                <div class="mission-view-div text-gray-400 bg-darkerer">
+                  Stone Fragments ({{ lifetimeDrops.stoneFragmentCount }})
+                </div>
+                <div class="ledger-af-repeat-lifetime">
+                  <div class="af-view-rep-lifetime" v-for="(sf, sfindex) in lifetimeDrops.stoneFragments">
+                    <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
+                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
+                      <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
+                      <div v-if="sf.count > 1" :class="'ledger-af-count ' + numToDigClass(sf.count)">
+                        {{ sf.count }}
+                      </div>
+                      <span class="text-sm tooltiptext-custom speech-bubble">
+                        {{ sf.gameName }} (T{{parseInt(sf.level) + 1}})
+                        × {{ sf.count }} <br />
+                    </a>
+                  </div>
+                  <br />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data does not exist -->
+          <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
+            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
         </div>
 
@@ -1090,6 +1286,7 @@
         const UITab = {
           Ledger: 'Ledger',
           ViewData: 'View Mission Data',
+          LifetimeDrops: 'Lifetime Drops',
           About: 'About',
           Donate: 'Donate',
         };
@@ -1103,6 +1300,15 @@
           Failed: 'Failed',
           Interrupted: 'Interrupted',
         };
+
+        const LifetimeLoadState = {
+          Idle: 'Idle',
+          FetchingIds: 'FetchingIds',
+          LoadingMissionData: 'LoadingMissionData',
+          CoalescingMissionData: 'CoalescingMission',
+          Success: 'Success',
+          Failed: 'Failed',
+        }
 
         function normalizePlayerId(id) {
           id = id.trim();
@@ -1194,6 +1400,8 @@
             const selectedMissionAccount = Vue.ref(null);
             Vue.watch(selectedMissionAccount, async () => { if(!/^EI[0-9]{16}$/.test(selectedMissionAccount?.value ?? "")) selectedMissionAccount.value = ""; });
 
+            const selectedLifetimeAccount = Vue.ref(null);
+            Vue.watch(selectedLifetimeAccount, async () => { if(!/^EI[0-9]{16}$/.test(selectedLifetimeAccount?.value ?? "")) selectedLifetimeAccount.value = ""; });
 
             // I spent three fucking hours trying to figure out why I couldn't type into a fucking input. 
             // It was this. Fucking. Kill. Me.
@@ -1202,12 +1410,14 @@
               const active = document.activeElement;
               if (!playerIdSelectRef?.value?.contains(active)) closePlayerIdDropdown();
               if (!viewMissionAccountSelectRef?.value?.contains(active)) closeMissionsViewAccountDropdown();
+              if (!lifetimeAccountSelectRef?.value.contains(active)) closeLifetimeAccountDropdown();
             };
 
             const handleMousedown = event => {
               const target = event.target;
               if (!playerIdSelectRef.value?.contains(target)) closePlayerIdDropdown();
               if (!viewMissionAccountSelectRef?.value?.contains(target)) closeMissionsViewAccountDropdown();
+              if(!lifetimeAccountSelectRef?.value?.contains(target)) closeLifetimeAccountDropdown();
             };
 
             Vue.onMounted(() => {
@@ -1316,6 +1526,152 @@
               }
               closeDropFilterMenu();
             };
+
+            const lifetimeAccountSelectRef = Vue.ref(null);
+            const lifetimeAccountInputRef = Vue.ref(null);
+            const lifetimeAccountSubmitRef = Vue.ref(null);
+            const lifetimeAccountDropdownOpen = Vue.ref(false);
+            const openLifetimeAccountDropdown = () => { lifetimeAccountDropdownOpen.value = true; };
+            const closeLifetimeAccountDropdown = () => {
+              lifetimeAccountDropdownOpen.value = false;
+              if (selectedLifetimeAccount.value != null && selectedLifetimeAccount.value.trim() !== '' && lifetimeAccountSubmitRef.value !== null) lifetimeAccountSubmitRef.value.focus();
+              else lifetimeAccountInputRef.value?.blur();
+            };
+            const selectLifetimeAccount = account => {
+              closeLifetimeAccountDropdown();
+              selectedLifetimeAccount.value = account.id;
+            };
+            const lifetimeDrops = Vue.ref(null);
+            const lifetimeSortMethod = Vue.ref("default");
+            Vue.watch(lifetimeSortMethod, () => reSortLifetime());
+            const reSortLifetime = () => {
+              if(lifetimeDrops.value != null && lifetimeDrops.value.artifacts != null && lifetimeDrops.value.stones != null && lifetimeDrops.value.stoneFragments != null && lifetimeDrops.value.ingredients != null){
+                var useThisFunc;
+                switch(lifetimeSortMethod.value){
+                  case 'default':
+                    useThisFunc = sortGroupAlreadyCombed;
+                    break;
+                  case 'iv':
+                    useThisFunc = inventoryVisualizerSort;
+                    break;
+                  case 'random':
+                    useThisFunc = shuffle;
+                    break;
+                }
+                lifetimeDrops.value.artifacts = useThisFunc(lifetimeDrops.value.artifacts);
+                lifetimeDrops.value.stones = useThisFunc(lifetimeDrops.value.stones);
+                lifetimeDrops.value.stoneFragments = useThisFunc(lifetimeDrops.value.stoneFragments);
+                lifetimeDrops.value.ingredients = useThisFunc(lifetimeDrops.value.ingredients);
+              }
+            };
+            const getLifetimeStatusColor = () => {
+              switch(lifetimeState.value){
+                case LifetimeLoadState.Success:
+                  return "text-green-500";
+                case LifetimeLoadState.Failed:
+                  return "text-red-700";
+                default:
+                  return "text-gray-300";
+              }
+            };
+            const getLifetimeStatusText = () => {
+              switch(lifetimeState.value){
+                case LifetimeLoadState.FetchingIds:
+                  return "Fetching mission IDs...";
+                case LifetimeLoadState.LoadingMissionData:
+                  return "Loading missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
+                case LifetimeLoadState.CoalescingMissionData:
+                  return "Coalescing missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
+                case LifetimeLoadState.Success:
+                  return "Success";
+                case LifetimeLoadState.Failed:
+                  return "Failed";
+                default:
+                  return "Idle";
+              }
+            };
+            const lifetimeState = Vue.ref(LifetimeLoadState.Idle);
+            const lifetimeDropsBeingLoaded = Vue.ref(false);
+            const lifetimeDropsLoadedProgress = Vue.ref({
+              percentageDone: '0%',
+              loadedCount: 0,
+              totalCount: 0,
+            });
+            const viewLifetimeDropsOfEid = async () => {
+              //Reset allLoadedMissions - potential insane lag spikes for some reason
+              allLoadedMissions.value = null;
+              filteredMissions.value = null;
+              loadedEid.value = null;
+
+              lifetimeDrops.value = null;
+              lifetimeDropsLoadedProgress.value = {
+                percentageDone: '0%',
+                loadedCount: 0,
+                totalCount: 0,
+              };
+              lifetimeDropsBeingLoaded.value = true;
+              lifetimeState.value = LifetimeLoadState.FetchingIds;
+              const idsJson = await window.getMissionIds(selectedLifetimeAccount.value);
+              if(idsJson == null || idsJson == ''){
+                lifetimeState.value = LifetimeLoadState.Failed;
+                lifetimeDropsBeingLoaded.value = false;
+                return;
+              }
+              const ids = JSON.parse(idsJson);
+              lifetimeState.value = LifetimeLoadState.LoadingMissionData;
+              const missions = [];
+              lifetimeDropsLoadedProgress.value.totalCount = ids.length;
+              for (const id of ids) {
+                const mission = await getSpecificMissionData(selectedLifetimeAccount.value, id, false);
+                if (mission != null) {
+                  missions.push(mission);
+                }
+                lifetimeDropsLoadedProgress.value.percentageDone = `${(missions.length / ids.length) * 100}%`;
+                lifetimeDropsLoadedProgress.value.loadedCount++;
+              }
+              lifetimeDrops.value = {
+                artifacts: [],
+                stones: [],
+                stoneFragments: [],
+                ingredients: [],
+                missionCount: missions.length,
+              };
+              lifetimeState.value = LifetimeLoadState.CoalescingMissionData;
+              lifetimeDrops.value.percentageDone = '0%';
+              lifetimeDrops.value.loadedCount = 0;
+              // Coalesce the artifacts, stones, stone fragments, and ingredients from each mission in missions
+              // To match a coalesce for [x] - level, id, and rarity
+              // If two [x] have the same level, id, and rarity, they are the same, add their .count together
+              for(const cMission of missions){
+                cMission.artifacts.forEach(artifact => mergeItems(lifetimeDrops.value.artifacts, artifact));
+                cMission.stones.forEach(stone => mergeItems(lifetimeDrops.value.stones, stone));
+                cMission.stoneFragments.forEach(stoneFragment => mergeItems(lifetimeDrops.value.stoneFragments, stoneFragment));
+                cMission.ingredients.forEach(ingredient => mergeItems(lifetimeDrops.value.ingredients, ingredient));
+                lifetimeDropsLoadedProgress.value.loadedCount++;
+                lifetimeDropsLoadedProgress.value.percentageDone = `${(lifetimeDropsLoadedProgress.value.loadedCount / ids.length) * 100}%`;
+              }
+              //Re-run group sorting
+              reSortLifetime();
+              //Sum all counts to detemrine aritfactCount, stoneCount, stoneFragmentCount, and ingredientCount
+              lifetimeDrops.value.artifactCount = lifetimeDrops.value.artifacts.map(artifact => artifact.count).reduce((acc, cur) => acc + cur, 0);
+              lifetimeDrops.value.stoneCount = lifetimeDrops.value.stones.map(stone => stone.count).reduce((acc, cur) => acc + cur, 0);
+              lifetimeDrops.value.stoneFragmentCount = lifetimeDrops.value.stoneFragments.map(fragment => fragment.count).reduce((acc, cur) => acc + cur, 0);
+              lifetimeDrops.value.ingredientCount = lifetimeDrops.value.ingredients.map(ingredient => ingredient.count).reduce((acc, cur) => acc + cur, 0);
+
+              lifetimeState.value = LifetimeLoadState.Success;
+
+              lifetimeDropsBeingLoaded.value = false;
+            };
+
+            const mergeItems = (targetArray, item) => {
+              const existingItem = targetArray.find(existingItem =>
+                existingItem.id === item.id &&
+                existingItem.level === item.level &&
+                existingItem.rarity === item.rarity
+              );
+              if (existingItem) existingItem.count += item.count;
+              else targetArray.push(item);
+            }
 
             const viewMissionAccountSelectRef = Vue.ref(null);
             const viewMissionAccountInputRef = Vue.ref(null);
@@ -1509,23 +1865,42 @@
                 return acc;
               }, {});
             };
-            const sortedGroupedSpecType = (collection) => {
-              return Object.values(groupedSpecType(collection)).sort((a, b) => {
+            const sortedGroupedSpecType = (collection) => {return sortGroupAlreadyCombed(Object.values(groupedSpecType(collection)));};
+            const sortGroupAlreadyCombed = (collection) => {
+              return collection.sort((a, b) => {
                 if(a.level > b.level) return -1;
                 if(a.level < b.level) return 1;
                 if(a.rarity > b.rarity) return -1;
                 if(a.rarity < b.rarity) return 1;
+                if(a.id > b.id) return -1;
+                if(a.id < b.id) return 1;
                 if(a.quality < b.quality) return -1;
                 if(a.quality > b.quality) return 1;
                 return 0;
               }).reverse();
             };
+            const inventoryVisualizerSort = (collection) => {
+              return collection.sort((a, b) => {
+                if(a.rarity > b.rarity) return -1;
+                if(a.rarity < b.rarity) return 1;
+                if(a.ivOrder > b.ivOrder) return -1;
+                if(a.ivOrder < b.ivOrder) return 1;
+                if(a.level > b.level) return -1;
+                if(a.level < b.level) return 1;
+                return 0;
+              });
+            };
+            const shuffle = (collection) => {
+              return collection.sort(() => Math.random() - 0.5);
+            };
             const numToDigClass = (num) => {
               const parsedNum = parseInt(num.toString());
               switch (true) {
-                case parsedNum <= 9: return "w-onedig";
-                case parsedNum > 9 && parsedNum <= 99: return "w-twodig";
+                case parsedNum > 99999: return "w-sixdig";
+                case parsedNum > 9999: return "w-fivedig";
+                case parsedNum > 999: return "w-fourdig";
                 case parsedNum > 99: return "w-threedig";
+                case parsedNum > 9: return "w-twodig";
                 default: return "w-onedig";
               }
             };
@@ -1626,30 +2001,29 @@
 
             const eidMissionsBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
-            const loadedAccountMissionsCount = Vue.ref(0);
             const allLoadedMissions = Vue.ref(null);
             const filteredMissions = Vue.ref(null);
-            const gYA = Vue.ref(null);
-            const gMA = Vue.ref(null);
-            const gDA = Vue.ref(null);
+            const groupedYearArray = Vue.ref(null);
+            const groupedMonthArray = Vue.ref(null);
+            const groupedDayArray = Vue.ref(null);
             const groupedMissions = Vue.computed(() => {
               if (filteredMissions.value == null || filteredMissions.value.length === 0) return {};
 
               // Generate a list of all the years that have missions
               const uniqueYears = [...new Set(filteredMissions.value.map(mission => mission.launchYear))].reverse();
               //Make a copy of the uniqueYears array, and add an enabled property to each year
-              gYA.value = uniqueYears.map(year => { return { year: year, enabled: true}; });
+              groupedYearArray.value = uniqueYears.map(year => { return { year: year, enabled: true}; });
 
               // Create a 2D array storing months used in each year
               const uniqueMonthsArr = uniqueYears.map(year =>
                 [...new Set(filteredMissions.value.filter(mission => mission.launchYear === year).map(mission => mission.launchMonth))].reverse()
               );
               //Make a copy of the uniqueMonthsArr array, and add an enabled property to each month
-              gMA.value = uniqueMonthsArr.map(year => year.map(month => { return { month: month, enabled: true}; }));
+              groupedMonthArray.value = uniqueMonthsArr.map(year => year.map(month => { return { month: month, enabled: true}; }));
 
               // Create a 3D array storing days used in each month
-              const uniqueDaysArr = uniqueYears.map((year, yI) =>
-                uniqueMonthsArr[yI].map(month =>
+              const uniqueDaysArr = uniqueYears.map((year, yearIndex) =>
+                uniqueMonthsArr[yearIndex].map(month =>
                   [...new Set(
                     filteredMissions.value
                       .filter(mission => mission.launchYear === year && mission.launchMonth === month)
@@ -1658,12 +2032,12 @@
                 )
               );
               //Make a copy of the uniqueDaysArr array, and add an enabled property to each day
-              gDA.value = uniqueDaysArr.map((year, yI) => year.map((month, mI) => month.map(day => { return { day: day, enabled: true}; })));
+              groupedDayArray.value = uniqueDaysArr.map((year, yearIndex) => year.map((month, monthIndex) => month.map(day => { return { day: day, enabled: true}; })));
 
               // Create a 4D array storing all missions in each day
-              return uniqueYears.map((year, yI) =>
-                uniqueMonthsArr[yI].map((month, mI) =>
-                  uniqueDaysArr[yI][mI].map(day =>
+              return uniqueYears.map((year, yearIndex) =>
+                uniqueMonthsArr[yearIndex].map((month, monthIndex) =>
+                  uniqueDaysArr[yearIndex][monthIndex].map(day =>
                     filteredMissions.value
                       .filter(mission => mission.launchYear === year && mission.launchMonth === month && mission.launchDay === day)
                       .reverse()
@@ -1675,21 +2049,21 @@
             const allVisible = Vue.ref(true);
             function toggleElements(event, passedYear, passedMonth, passedDay) {
               if(passedYear){
-                const year = gYA.value[gYA.value.indexOf(passedYear)];
+                const year = groupedYearArray.value[groupedYearArray.value.indexOf(passedYear)];
                 if(passedMonth){
-                  const month = gMA.value[gYA.value.indexOf(passedYear)][gMA.value[gYA.value.indexOf(passedYear)].indexOf(passedMonth)];
+                  const month = groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)][groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)].indexOf(passedMonth)];
                   if(passedDay){
-                    const day = gDA.value[gYA.value.indexOf(passedYear)][gMA.value[gYA.value.indexOf(passedYear)].indexOf(passedMonth)][gDA.value[gYA.value.indexOf(passedYear)][gMA.value[gYA.value.indexOf(passedYear)].indexOf(passedMonth)].indexOf(passedDay)];
+                    const day = groupedDayArray.value[groupedYearArray.value.indexOf(passedYear)][groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)].indexOf(passedMonth)][groupedDayArray.value[groupedYearArray.value.indexOf(passedYear)][groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)].indexOf(passedMonth)].indexOf(passedDay)];
                     day.enabled = !day.enabled;
                   } else month.enabled = !month.enabled;
                 } else year.enabled = !year.enabled;
               } else { //Toggle all
                 allVisible.value = !allVisible.value;
-                for (const year of gYA.value) {
+                for (const year of groupedYearArray.value) {
                   year.enabled = allVisible.value;
-                  for (const month of gMA.value[gYA.value.indexOf(year)]) {
+                  for (const month of groupedMonthArray.value[groupedYearArray.value.indexOf(year)]) {
                     month.enabled = allVisible.value;
-                    for (const day of gDA.value[gYA.value.indexOf(year)][gMA.value[gYA.value.indexOf(year)].indexOf(month)]) {
+                    for (const day of groupedDayArray.value[groupedYearArray.value.indexOf(year)][groupedMonthArray.value[groupedYearArray.value.indexOf(year)].indexOf(month)]) {
                       day.enabled = allVisible.value;
                     }
                   }
@@ -1697,21 +2071,8 @@
               }
             }
 
-            const calculateMaxMissionDivHeight = () => {
-              if(hideFilter.value) return '80';
-              else{
-                //Sum all values in orFilterConditionsCount, ignoring null
-                const orsSum = orFilterConditionsCount.value.reduce((a, b) => a + (b || 0), 0);
-                const count = (parseInt(filterConditionsCount?.value ?? 1) ?? 1) + orsSum;
-                const calc = 80 - ((count == 1 ? 0 : count * 7.0) + 7);
-                if(calc < 60) return '60';
-                else return calc.toString();
-              }
-            };
-
             const viewMissionsOfEid = async () => {
               filterApplyTime.value = ""; //Reset the filter apply time
-              loadedAccountMissionsCount.value = objectedExistingData.value.find(acc => acc.id == selectedMissionAccount.value.toString())?.missionCount ?? 0;
               eidMissionsBeingLoaded.value = true;
               const missionsLoadValue = await window.viewMissionsEID(selectedMissionAccount.value.toString());
               if (missionsLoadValue !== "") {
@@ -2300,51 +2661,21 @@
               return (num < 10 ? '0' : '') + num;
             }
 
-            const missionBeingViewed = Vue.ref(null);
-            const viewSpecificMission = async (missionId) => {
-              //Do not allow viewing a mission while data is being fetched - prevent collisions
-              if(isFetching.value) return false; 
-
-              const shipInfoStr = await window.getShipInfo(loadedEid.value, missionId);
-              if(shipInfoStr == "") return;
+            const getSpecificMissionData = async (eid, missionId, extendedInfo) => {
+              const shipInfoStr = await window.getShipInfo(eid, missionId);
+              if(shipInfoStr == "") return null;
               const shipInfo = JSON.parse(shipInfoStr);
 
-              const loadValue = await window.getShipDrops(loadedEid.value, missionId);
-              if(loadValue == "") return;
+              const loadValue = await window.getShipDrops(eid, missionId);
+              if(loadValue == "") return null;
               const allDrops = JSON.parse(loadValue);
-
-              missionBeingViewed.value = missionId;
 
               const artifacts = allDrops.filter(drop => drop.specType == "Artifact");
               const stones = allDrops.filter(drop => drop.specType == "Stone");
               const stoneFragments = allDrops.filter(drop => drop.specType == "StoneFragment");
               const ingredients = allDrops.filter(drop => drop.specType == "Ingredient");
               //Compute the duration in days, hours, minutes
-
-              const launchDateTime = new Date(
-                shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay, 
-                shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]
-              );
-              const returnDateTime = new Date(
-                shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay, 
-                shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]
-              );
-              const duration = returnDateTime - launchDateTime;
-              const days = Math.floor(duration / (1000 * 60 * 60 * 24));
-              const hours = Math.floor((duration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-              const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-              const durationString = (days > 0 ? days + "d" : "") + (hours > 0 ? hours + "h": "") + minutes + "m";
-              const launchStr = shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime;
-              const returnStr = shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime;
-
-              //Find the loaded ships index in the filteredMissions array, to get the missions directly before and after it
-              const shipIndex = filteredMissions.value.findIndex(mission => mission.missionId == missionId);
-              const prevMission = shipIndex > 0 ? filteredMissions.value[shipIndex - 1].missionId : null;
-              const nextMission = shipIndex < filteredMissions.value.length - 1 ? filteredMissions.value[shipIndex + 1].missionId : null;
-
-              //Max of 2
-              const capModifier = Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity);
-              const newMissionViewData = {
+              const commonProperties = {
                 shipInfo: shipInfo,
                 artifacts: sortedGroupedSpecType(artifacts),
                 stones: sortedGroupedSpecType(stones),
@@ -2353,14 +2684,52 @@
                 artifactCount: artifacts.length,
                 stoneCount: stones.length,
                 stoneFragmentCount: stoneFragments.length,
-                ingredientCount: ingredients.length,
-                capacityModifier: capModifier,
-                launchStr: launchStr,
-                returnStr: returnStr,
-                durationStr: durationString,
-                prevMission: prevMission,
-                nextMission: nextMission
+                ingredientCount: ingredients.length
               };
+
+              if (extendedInfo) {
+                const launchDateTime = new Date(
+                  shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay,
+                  shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]
+                );
+                const returnDateTime = new Date(
+                  shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay,
+                  shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]
+                );
+                const duration = returnDateTime - launchDateTime;
+                const days = Math.floor(duration / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((duration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+                const durationString = (days > 0 ? days + "d" : "") + (hours > 0 ? hours + "h": "") + minutes + "m";
+                const launchStr = shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime;
+                const returnStr = shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime;
+
+                // Find the loaded ship's index in the filteredMissions array, to get the missions directly before and after it
+                const shipIndex = filteredMissions.value.findIndex(mission => mission.missionId == missionId);
+                const prevMission = shipIndex > 0 ? filteredMissions.value[shipIndex - 1].missionId : null;
+                const nextMission = shipIndex < filteredMissions.value.length - 1 ? filteredMissions.value[shipIndex + 1].missionId : null;
+
+                const capModifier = Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity);
+
+                return {
+                  ...commonProperties,
+                  launchStr: launchStr,
+                  returnStr: returnStr,
+                  durationStr: durationString,
+                  prevMission: prevMission,
+                  nextMission: nextMission,
+                  capacityModifier: capModifier,
+                };
+              } else return commonProperties;
+            };
+
+            const missionBeingViewed = Vue.ref(null);
+            const viewSpecificMission = async (missionId) => {
+              //Do not allow viewing a mission while data is being fetched - prevent collisions
+              if(isFetching.value) return false; 
+              const newMissionViewData = await getSpecificMissionData(loadedEid.value, missionId, true);
+              if(newMissionViewData == null) return false;
+              missionBeingViewed.value = missionId;
               viewMissionData.value = newMissionViewData;
               openMissionOverlay();
             };
@@ -2403,6 +2772,25 @@
 
               appHasUpdate,
 
+              //Lifetime data
+              LifetimeLoadState,
+              selectedLifetimeAccount,
+              lifetimeAccountSelectRef,
+              lifetimeAccountInputRef,
+              openLifetimeAccountDropdown,
+              closeLifetimeAccountDropdown,
+              lifetimeAccountDropdownOpen,
+              selectLifetimeAccount,
+              lifetimeAccountSubmitRef,
+              lifetimeDrops,
+              lifetimeDropsBeingLoaded,
+              lifetimeDropsLoadedProgress,
+              viewLifetimeDropsOfEid,
+              lifetimeState,
+              lifetimeSortMethod,
+              getLifetimeStatusColor,
+              getLifetimeStatusText,
+
               //View all missions
               doesDataExist,
               existingData,
@@ -2431,7 +2819,6 @@
               viewMissionTimes,
               recolorDC,
               useGifsForRarity,
-              loadedAccountMissionsCount,
               loadedEid,
               allLoadedMissions,
               filteredMissions,
@@ -2453,9 +2840,9 @@
               properCase,
               durToTextClass,
               viewMissionData,
-              gYA,
-              gMA,
-              gDA,
+              groupedYearArray,
+              groupedMonthArray,
+              groupedDayArray,
               allVisible,
 
               //Filter
@@ -2486,7 +2873,6 @@
               removeOrAndShift,
               generateFilterConditionsArr,
               generateOrFiltersConditionsArr,
-              calculateMaxMissionDivHeight,
               filterWarningRead,
               hideFilterWarning,
               dismissFilterWarning,

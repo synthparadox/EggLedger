@@ -141,6 +141,7 @@ type MissionDrop struct {
 	Level        int32   `json:"level"`
 	Rarity       int32   `json:"rarity"`
 	Quality      float64 `json:"quality"`
+	IVOrder      int32   `json:"ivOrder"`
 }
 
 type ExportAccount struct {
@@ -1028,6 +1029,20 @@ func main() {
 		return knownAccounts
 	})
 
+	ui.MustBind("getMissionIds", func(playerId string) string {
+		ids, err := db.RetrievePlayerCompleteMissionIds(playerId)
+		if err != nil {
+			log.Error(err)
+		}
+		//Return a JSON string of the mission IDs
+		jsonData, err := json.Marshal(ids)
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+		return string(jsonData)
+	})
+
 	ui.MustBind("viewMissionsEID", func(eid string) string {
 		if LoadedMissionYears, err := viewMissionsOfId(eid); err != nil {
 			log.Error(err)
@@ -1230,6 +1245,7 @@ func main() {
 				Level:    int32(*drop.Spec.Level),
 				Rarity:   int32(*drop.Spec.Rarity),
 				Quality:  foundQuality,
+				IVOrder:  int32(spec.Name.InventoryVisualizerOrder()),
 			}
 			switch {
 			case strings.Contains(missionDrop.Name, "_FRAGMENT"):

@@ -1175,6 +1175,101 @@ func (a *ArtifactSpec) Type() ArtifactSpec_Type {
 	return a.Name.ArtifactType()
 }
 
+func (a ArtifactSpec_Name) InventoryVisualizerOrder() int {
+	switch a {
+	case ArtifactSpec_LUNAR_TOTEM:
+		return 15
+	case ArtifactSpec_NEODYMIUM_MEDALLION:
+		return 21
+	case ArtifactSpec_BEAK_OF_MIDAS:
+		return 23
+	case ArtifactSpec_LIGHT_OF_EGGENDIL:
+		return 34
+	case ArtifactSpec_DEMETERS_NECKLACE:
+		return 16
+	case ArtifactSpec_VIAL_MARTIAN_DUST:
+		return 17
+	case ArtifactSpec_ORNATE_GUSSET:
+		return 20
+	case ArtifactSpec_THE_CHALICE:
+		return 26
+	case ArtifactSpec_BOOK_OF_BASAN:
+		return 33
+	case ArtifactSpec_PHOENIX_FEATHER:
+		return 27
+	case ArtifactSpec_TUNGSTEN_ANKH:
+		return 19
+	case ArtifactSpec_AURELIAN_BROOCH:
+		return 18
+	case ArtifactSpec_CARVED_RAINSTICK:
+		return 24
+	case ArtifactSpec_PUZZLE_CUBE:
+		return 14
+	case ArtifactSpec_QUANTUM_METRONOME:
+		return 28
+	case ArtifactSpec_SHIP_IN_A_BOTTLE:
+		return 31
+	case ArtifactSpec_TACHYON_DEFLECTOR:
+		return 32
+	case ArtifactSpec_INTERSTELLAR_COMPASS:
+		return 25
+	case ArtifactSpec_DILITHIUM_MONOCLE:
+		return 29
+	case ArtifactSpec_TITANIUM_ACTUATOR:
+		return 30
+	case ArtifactSpec_MERCURYS_LENS:
+		return 22
+	case ArtifactSpec_TACHYON_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_TACHYON_STONE:
+		return 6
+	case ArtifactSpec_DILITHIUM_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_DILITHIUM_STONE:
+		return 11
+	case ArtifactSpec_SHELL_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_SHELL_STONE:
+		return 4
+	case ArtifactSpec_LUNAR_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_LUNAR_STONE:
+		return 5
+	case ArtifactSpec_SOUL_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_SOUL_STONE:
+		return 8
+	case ArtifactSpec_PROPHECY_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_PROPHECY_STONE:
+		return 13
+	case ArtifactSpec_QUANTUM_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_QUANTUM_STONE:
+		return 9
+	case ArtifactSpec_TERRA_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_TERRA_STONE:
+		return 7
+	case ArtifactSpec_LIFE_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_LIFE_STONE:
+		return 10
+	case ArtifactSpec_CLARITY_STONE_FRAGMENT:
+		fallthrough
+	case ArtifactSpec_CLARITY_STONE:
+		return 12
+	case ArtifactSpec_GOLD_METEORITE:
+		return 1
+	case ArtifactSpec_TAU_CETI_GEODE:
+		return 2
+	case ArtifactSpec_SOLAR_TITANIUM:
+		return 3
+	default:
+		return 0
+	}
+}
+
 func (a ArtifactSpec_Name) ArtifactType() ArtifactSpec_Type {
 	switch a {
 	// Artifacts
