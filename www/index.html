@@ -1102,6 +1102,10 @@
                   <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
                 </span>
                 <span class="mr-5">
+                  <label for="lifetimeSortRarity" class="ext-opt-label">Total Count</label>
+                  <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="count" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
                   <label for="lifetimeSortRarity" class="ext-opt-label">Random</label>
                   <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
                 </span>
@@ -1557,6 +1561,9 @@
                   case 'random':
                     useThisFunc = shuffle;
                     break;
+                  case 'count':
+                    useThisFunc = sortGroupByCount;
+                    break;
                 }
                 lifetimeDrops.value.artifacts = useThisFunc(lifetimeDrops.value.artifacts);
                 lifetimeDrops.value.stones = useThisFunc(lifetimeDrops.value.stones);
@@ -1890,6 +1897,20 @@
                 return 0;
               });
             };
+            const sortGroupByCount = (collection) => {
+              return collection.sort((a, b) => {
+                if(a.count > b.count) return -1;
+                if(a.count < b.count) return 1;
+                if(a.level > b.level) return -1;
+                if(a.level < b.level) return 1;
+                if(a.rarity > b.rarity) return -1;
+                if(a.rarity < b.rarity) return 1;
+                if(a.id > b.id) return -1;
+                if(a.id < b.id) return 1;
+                if(a.quality < b.quality) return -1;
+                if(a.quality > b.quality) return 1;
+              });
+            };
             const shuffle = (collection) => {
               return collection.sort(() => Math.random() - 0.5);
             };
@@ -1918,6 +1939,10 @@
             };
             //Return three strings in an array, the first is the string before the effect, the second is the effect, and the third is the string after the effect
             const boundEffectString = (str) => {
+              if(str.startsWith('!!')){
+                const match = /<([^>]+)>/g.exec(str);
+                return (!match ? ["?", "?", "?"] : [str.substring(2, match.index), match[1], ""]);
+              }
               const match = /\[(.*?)\]/g.exec(str);
               return (!match ? ["?", "?", "?"] : [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)]);
             };

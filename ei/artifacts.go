@@ -177,7 +177,7 @@ func (a *ArtifactSpec) DropEffectString() string {
 			case ArtifactSpec_RARE:
 				replString = "1000%"
 			case ArtifactSpec_LEGENDARY:
-				return "Gold gifts and drone rewards guaranteed"
+				return "!!Gold gifts and drone rewards <guaranteed>"
 			}
 		}
 	case ArtifactSpec_LIGHT_OF_EGGENDIL:
@@ -444,7 +444,7 @@ func (a *ArtifactSpec) DropEffectString() string {
 			case ArtifactSpec_EPIC:
 				replString = "900%"
 			case ArtifactSpec_LEGENDARY:
-				return "Cash drone rewards and gifts guaranteed"
+				return "!!Cash drone rewards and gifts <guaranteed>"
 			}
 		}
 	case ArtifactSpec_PUZZLE_CUBE:
