@@ -105,7 +105,7 @@
               </div>
               <button
                 v-if="idle" ref="playerIdSubmitRef" type="submit" class="fetch-button disabled:hover:darker_tab_hover"
-                v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid"
+                v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid || lifetimeDropsBeingLoaded || eidMissionsBeingLoaded"
               >
                 Fetch
               </button>
@@ -427,7 +427,8 @@
           </div>
         </div>
 
-        <div v-show="activeTab === UITab.ViewData" class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker" >
+        <div v-show="activeTab === UITab.ViewData" class="flex-1 flex flex-col w-full mx-auto px-4 overflow-hidden bg-darker" >
+          <!-- Statically located divs-->
           <div id="dropSelectDiv" ref="dropSelectDiv" class="popup-selector-main overlay-drop">
             <div id="innerDropSelectDiv"  class="popup-selector-inner">
               <button class="close-button" v-on:click="closeDropFilterMenu()">
@@ -461,7 +462,6 @@
               </div>
             </div>
           </div>
-
           <div id="targetSelectDiv" ref="targetSelectDiv" class="popup-selector-main overlay-target">
             <div id="innerTargetSelectDiv" class="popup-selector-inner">
               <button class="close-button" v-on:click="closeTargetFilterMenu()">
@@ -493,16 +493,15 @@
               </div>
             </div>
           </div>
-
           <div id="missionViewDiv" ref="missionViewDiv" class="w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
-            <div id="innerMissionViewDiv" style="max-height: 80vw;"  class="bg-dark rounded-lg relative p-1rem">
+            <div id="innerMissionViewDiv"  class="max-h-80vw bg-dark rounded-lg relative p-1rem">
               <button class="close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
               <div id="missionViewContentDiv" v-if="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)" 
-                style="max-height: 70vh; max-width: 35vw; min-width: 30vw;" class="text-gray-300 text-center overflow-auto">
+                class="min-w-30vw max-w-35vw max-h-70vh text-gray-300 text-center overflow-auto">
                 <!-- Header information about the mission -->
                 <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ shipToName(viewMissionData.shipInfo.ship) }}</span><br />
                 <span class="text-star text-goldenstar" v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0">{{ "★".repeat(viewMissionData.shipInfo.level) }}</span>
@@ -636,7 +635,7 @@
                   </div>
                   <div class="ledger-af-repeat">
                     <div class="mission-view-rep" v-for="(sf, sfindex) in viewMissionData.stoneFragments">
-                      <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
+                      <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
                         target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
                         <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
                         <div v-if="sf.count > 1" :class="'ledger-af-count ' + numToDigClass(sf.count)">
@@ -663,62 +662,57 @@
               </div>
             </div>
           </div>
-          <div class="mt-0i" ref="selectViewMissionsAccountForm" v-if="doesDataExist">
-            <form 
-              id="viewAccountForm" name="viewAccountForm" class="select-form"
-              v-on:submit="event => {
-                event.preventDefault();
-                for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
-                viewMissionsOfEid();
-              }">
-              <div ref="viewMissionAccountSelectRef" class="relative flex-grow focus-within:z-10">
-                <!-- Overlay to tag inmput with number of missions -->
-                <div v-if="selectedMissionAccount != null && objectedExistingData.find(acc => acc.id == selectedMissionAccount) != null" class="ledger-input-overlay">
-                  <span class="invisible whitespace-pre">
-                    {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.id }}
-                  </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.accountColor" >
-                      {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.ebString }}
-                    </span> - {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount }} missions)
-                </div>
 
-                <input
-                  ref="viewMissionAccountInputRef"
-                  type="text"
-                  class="drop-select border-gray-300"
-                  placeholder="Select an account"
-                  v-bind:value="selectedMissionAccount"
-                  v-on:focus="openMissionsViewAccountDropdown"
-                  v-on:input="selectedMissionAccount = $event.target.value"
-                >
-                <ul
-                  v-if="viewMissionAccountDropdownOpen && objectedExistingData.length > 0"
-                  class="ledger-list focus:outline-none sm:text-sm"
-                  tabindex="-1"
-                >
-                  <li
-                    v-for="account in objectedExistingData"
-                    v-bind:key="account.id" class="drop-opt"
-                    v-on:click="selectViewAccount(account)"
-                  >
-                    {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
-                  </li>
-                </ul>
+          <!-- All the shit that resizes -->
+          <form
+            id="viewAccountForm" name="viewAccountForm" class="select-form"
+            v-on:submit="event => {
+              event.preventDefault();
+              for(let i = 0; i < topLevelFilterOptions.length; i++) removeAndShift(i);
+              viewMissionsOfEid();
+            }">
+            <div ref="viewMissionAccountSelectRef" class="relative flex-grow focus-within:z-10">
+              <!-- Overlay to tag inmput with number of missions -->
+              <div v-if="selectedMissionAccount != null && objectedExistingData.find(acc => acc.id == selectedMissionAccount) != null" class="ledger-input-overlay">
+                <span class="invisible whitespace-pre">
+                  {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.id }}
+                </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.accountColor" >
+                    {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.ebString }}
+                  </span> - {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount }} missions)
               </div>
-              <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-              v-if="idle" ref="viewMissionAccountSubmitRef" type="submit" v-bind:disabled="(selectedMissionAccount === null || selectedMissionAccount == '' || objectedExistingData.find(a => a.id == selectedMissionAccount) == null || eidMissionsBeingLoaded)">
-                View
-              </button>
-            </form>
-          </div>
-          <div class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView" v-else>
-            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
-          </div>
-          <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-            <div class="mt-1rem mb-1rem" v-if="selectedMissionAccount != null && selectedMissionAccount == loadedEid && loadedAccountMissionsCount != (objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.missionCount ?? 0)">
-              <span class="text-red-700 border border-red-700 rounded-md mb-1 py-2 px-4"> You are viewing outdated data - click <span class="text-gray-500">View</span> again to fix this.</span>
+
+              <input
+                ref="viewMissionAccountInputRef"
+                type="text"
+                class="drop-select border-gray-300"
+                placeholder="Select an account"
+                v-bind:value="selectedMissionAccount"
+                v-on:focus="openMissionsViewAccountDropdown"
+                v-on:input="selectedMissionAccount = $event.target.value"
+              >
+              <ul
+                v-if="viewMissionAccountDropdownOpen && objectedExistingData.length > 0"
+                class="ledger-list focus:outline-none sm:text-sm"
+                tabindex="-1"
+              >
+                <li
+                  v-for="account in objectedExistingData"
+                  v-bind:key="account.id" class="drop-opt"
+                  v-on:click="selectViewAccount(account)"
+                >
+                  {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
+                </li>
+              </ul>
             </div>
-            <div ref="filterRef">
-              <span class="ml-05rem font-bold text-gray-400">Filter: </span>
+            <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
+            v-if="idle" ref="viewMissionAccountSubmitRef" type="submit" v-bind:disabled="!idle || (selectedMissionAccount === null || selectedMissionAccount == '' || objectedExistingData.find(a => a.id == selectedMissionAccount) == null || eidMissionsBeingLoaded)">
+              View
+            </button>
+          </form>
+
+          <div class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
+            <div ref="filterRef" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+              <span class="h-20 font-bold text-gray-400">Filter: </span>
               <button 
                 id="toggleFilterButton"
                 class="text-base toggle-link" 
@@ -752,7 +746,7 @@
                   <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
                     <!-- Separator -->
                     <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
-
+  
                     <div class="filter-container focus-within:z-10">
                       <!-- Top level filter options -->
                       <select class="filter-select border-gray-300 text-gray-400"
@@ -761,7 +755,7 @@
                         <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                           {{ validOption.text }}
                       </select>
-
+  
                       <!-- Operator options -->
                       <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
@@ -769,7 +763,7 @@
                         <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                           {{ validOperator.text }}
                       </select>
-
+  
                       <!-- Value options (Base) -->
                       <select class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleFilterChange"
@@ -778,7 +772,7 @@
                         <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
                       </select>
-
+  
                       <!-- Drop Selectors
                         opens a custom modal -->
                       <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
@@ -786,7 +780,7 @@
                         class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
                         v-model="dFilterValues[index]" :id="'filter-value-' + index"
                       >
-
+  
                       <!-- Target Selectors
                         opens a custom modal -->
                       <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
@@ -794,7 +788,7 @@
                         class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
                         v-model="dFilterValues[index]" :id="'filter-value-' + index"
                       >
-
+  
                       <!-- Value options - Launch/Return Date Selectors
                         Min: 20 January 2021  
                         Max: Today-->
@@ -803,7 +797,7 @@
                         v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
                         v-on:change="handleFilterChange" required="required"
                         v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
-
+  
                       <!-- OR controls -->
                       <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
                         title="Add alternate filter condition"
@@ -812,7 +806,7 @@
                         v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
                         OR
                       </button>
-
+  
                       <!-- Clear button-->
                       <button 
                         v-if="topLevelFilterOptions[index] != null"
@@ -821,7 +815,7 @@
                         v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
                         ×
                       </button>
-
+  
                       <!-- Show a warning div if the filter is incomplete -->
                       <span
                         v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null || ((topLevelFilterOptions[index] == 'returnDT' || topLevelFilterOptions[index] == 'launchDT') && filterValues[index] == ''))"
@@ -835,7 +829,7 @@
                       v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
                         <!-- Separator -->
                         <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
-
+  
                         <!-- Top level filter options -->
                         <select v-model="orFilterTopLevelOptions[index][orIndex]"
                           class="filter-select border-gray-300 text-gray-400"
@@ -843,7 +837,7 @@
                           <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                             {{ validOption.text }}
                         </select>
-
+  
                         <!-- Operator options -->
                         <select
                           v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
@@ -852,7 +846,7 @@
                           <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                             {{ validOperator.text }}
                         </select>
-
+  
                         <!-- Value options -->
                         <select v-model="orFilterValues[index][orIndex]"
                           v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && isBaseFilter(orFilterTopLevelOptions[index][orIndex])"
@@ -861,7 +855,7 @@
                           <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                             {{ validValue.text }}
                         </select>
-
+  
                         <!-- Drop Selectors
                           opens a custom modal -->
                         <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, orIndex);}"
@@ -870,7 +864,7 @@
                           v-bind:value="dOrFilterValues[index][orIndex]" readonly
                           :id="'filter-value-' + index + '-' + orIndex"
                         >
-
+  
                         <!-- Target Selectors
                           opens a custom modal -->
                         <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
@@ -879,7 +873,7 @@
                           v-bind:value="dOrFilterValues[index][orIndex]" readonly
                           :id="'filter-value-' + index + '-' + orIndex"
                         >
-
+  
                         <!-- Launch/Return Date Selectors
                           Min: 20 January 2021  
                           Max: Today + 5 days -->
@@ -905,10 +899,10 @@
                     </div>
                   </div>
                 </div>
-
+  
                 <!-- Create a 2 px visible gray line that goes across the entire div-->
                 <hr class="mt-1rem w-full">
-
+  
                 <button
                   v-if="idle"
                   ref="applyFilterToData"
@@ -919,7 +913,7 @@
                 >
                   Apply Filter
                 </button>
-
+  
                 <!-- Show loading gif while filter is being applied -->
                 <span v-if="dataBeingFiltered" class="text-green-700 mt-05rem">
                   <i>
@@ -939,10 +933,11 @@
                 </span>
               </form>
             </div>
-            <hr class="mt-1rem invisible">
-            <div class="ml-05rem">
-              <span class="font-bold text-gray-400">Missions: </span>
-              <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-base toggle-link" type="button" v-on:click="toggleElements($event)">{{(allVisible ? 'Collapse All' : 'Expand All')}}</button>
+          </div>
+
+          <div class="min-h-7 max-h-20 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
+            <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+              <span class="font-bold text-base text-gray-400">Options</span><br />
               <span class="mr-5">
                 <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
                 <input id="viewByDateCB" type="checkbox" v-model="viewByDate" class="ext-opt-check"/>
@@ -960,11 +955,19 @@
                 <input id="useGifsForRarity" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
               </span>
             </div>
-            <div ref="resultsDiv" class="relative h-screen">
+          </div>
+
+          <div class="flex-1 px-2 overflow-auto shadow-sm bg-darkest rounded-md mt-075rem">
+            <div ref="resultsDiv" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div class="filter-form text-lg" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
               </div>
-              <div v-else id="missionListDiv" :style="'max-height: ' + calculateMaxMissionDivHeight() + '%;'" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+              <div v-else id="missionListDiv" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+                <span class="text-xl">
+                  Missions
+                  <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-xl toggle-link" type="button" v-on:click="toggleElements($event)">{{(allVisible ? 'Collapse All' : 'Expand All')}}</button>
+                </span>
+                <hr class="mt-05rem mb-05rem w-full">
                 <template v-for="(yearVF, yearIndex) in groupedMissions" :key="yearIndex">
                   <span :class="'text-lg font-bold mr-05rem ledger-underline'">{{ groupedYearArray[yearIndex].year }}</span>
                   <button class="tb-c text-lg toggle-link" type="button" v-on:click="toggleElements($event, groupedYearArray[yearIndex])">
@@ -1010,10 +1013,15 @@
                     </div>
                   </div>
                   <br/>
-                  <hr v-if="groupedYearArray[yearIndex].enabled" class="pt-3rem pb-3rem invisible mt-1">
+                  <hr v-if="groupedYearArray[yearIndex].enabled && yearIndex != groupedYearArray.length - 1" class="pt-3rem pb-3rem invisible mt-1">
                 </template>
               </div>
             </div>
+          </div>
+
+          <!-- Data does not exist -->
+          <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
+            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
         </div>
 
@@ -1060,10 +1068,11 @@
               </ul>
             </div>
             <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-            v-if="idle" ref="viewLifetimeAccountSubmitRef" type="submit" v-bind:disabled="(selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || eidMissionsBeingLoaded)">
+            v-if="idle" ref="viewLifetimeAccountSubmitRef" type="submit" v-bind:disabled="!idle || (selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || lifetimeDropsBeingLoaded)">
               View
             </button>
           </form>
+
           <div class="h-14 px-2 py-1 text-sm text-gray-400 bg-darkest rounded-md tabular-nums">
             <div v-if="doesDataExist && lifetimeState !== LifetimeLoadState.Idle">
               <div>
@@ -1077,9 +1086,10 @@
               </div>
             </div>
           </div>
+
           <div class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
             <div class="mt-4" v-if="doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded">
-              <span class="ledger-underline text-base text-gray-500">Data Coalesced from {{ lifetimeDrops.missionCount }} Missions</span>
+              <span class="ledger-underline text-base text-gray-400">Data Coalesced from {{ lifetimeDrops.missionCount }} Missions</span>
               <div>
                 <span>Sort method:</span>
                 <br/>
@@ -1201,6 +1211,8 @@
               </div>
             </div>
           </div>
+
+          <!-- Data does not exist -->
           <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
             <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
@@ -1586,6 +1598,11 @@
               totalCount: 0,
             });
             const viewLifetimeDropsOfEid = async () => {
+              //Reset allLoadedMissions - potential insane lag spikes for some reason
+              allLoadedMissions.value = null;
+              filteredMissions.value = null;
+              loadedEid.value = null;
+
               lifetimeDrops.value = null;
               lifetimeDropsLoadedProgress.value = {
                 percentageDone: '0%',
@@ -1984,7 +2001,6 @@
 
             const eidMissionsBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
-            const loadedAccountMissionsCount = Vue.ref(0);
             const allLoadedMissions = Vue.ref(null);
             const filteredMissions = Vue.ref(null);
             const groupedYearArray = Vue.ref(null);
@@ -2055,21 +2071,8 @@
               }
             }
 
-            const calculateMaxMissionDivHeight = () => {
-              if(hideFilter.value) return '80';
-              else{
-                //Sum all values in orFilterConditionsCount, ignoring null
-                const orsSum = orFilterConditionsCount.value.reduce((a, b) => a + (b || 0), 0);
-                const count = (parseInt(filterConditionsCount?.value ?? 1) ?? 1) + orsSum;
-                const calc = 80 - ((count == 1 ? 0 : count * 7.0) + 7);
-                if(calc < 60) return '60';
-                else return calc.toString();
-              }
-            };
-
             const viewMissionsOfEid = async () => {
               filterApplyTime.value = ""; //Reset the filter apply time
-              loadedAccountMissionsCount.value = objectedExistingData.value.find(acc => acc.id == selectedMissionAccount.value.toString())?.missionCount ?? 0;
               eidMissionsBeingLoaded.value = true;
               const missionsLoadValue = await window.viewMissionsEID(selectedMissionAccount.value.toString());
               if (missionsLoadValue !== "") {
@@ -2816,7 +2819,6 @@
               viewMissionTimes,
               recolorDC,
               useGifsForRarity,
-              loadedAccountMissionsCount,
               loadedEid,
               allLoadedMissions,
               filteredMissions,
@@ -2871,7 +2873,6 @@
               removeOrAndShift,
               generateFilterConditionsArr,
               generateOrFiltersConditionsArr,
-              calculateMaxMissionDivHeight,
               filterWarningRead,
               hideFilterWarning,
               dismissFilterWarning,
