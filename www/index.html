@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="custom.css" />
     <script src="vue.global.prod.js"></script>
     <script src="shortcuts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
   </head>
   <body>
     <div id="app" class="h-stretch">
@@ -429,23 +430,20 @@
 
         <div v-show="activeTab === UITab.ViewData" class="flex-1 flex flex-col w-full mx-auto px-4 overflow-hidden bg-darker" >
           <!-- Statically located divs-->
-          <div id="dropSelectDiv" ref="dropSelectDiv" class="popup-selector-main overlay-drop">
-            <div id="innerDropSelectDiv"  class="popup-selector-inner">
-              <button class="close-button" v-on:click="closeDropFilterMenu()">
+          <div class="top-click-detect popup-selector-main overlay-drop">
+            <div class="inner-click-detect popup-selector-inner">
+              <button class="detect-trigger close-button" v-on:click="closeDropFilterMenu()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
               <input
-                id="drop-search"
-                type="text"
-                class="input-search"
-                placeholder="Search..."
+                id="drop-search" class="input-search" type="text" placeholder="Search..."
                 v-bind:value="dropSearchTerm"
                 v-on:focus="e => {e.preventDefault(); e.stopPropagation(); }"
                 v-on:input="dropSearchTerm = $event.target.value"
               />
-              <div id="dropSelectContentDiv" class="popup-opt-container">
+              <div class="popup-opt-container">
                 <div v-for="drop in dropSelectList" v-bind:key="drop" class="popup-opt" v-on:click="e => {e.preventDefault(); selectDropFilter(drop); }">
                   <img class="mr-1rem max-w-7" v-if="drop.imagePath != null && drop.imagePath != ''" :alt="drop.text" :src="`images/${drop.imagePath}`" 
                     :style="(drop.rarityGif ? 'background: url(' + drop.rarityGif + ') center center no-repeat; background-size: cover;' : '')"
@@ -462,23 +460,20 @@
               </div>
             </div>
           </div>
-          <div id="targetSelectDiv" ref="targetSelectDiv" class="popup-selector-main overlay-target">
-            <div id="innerTargetSelectDiv" class="popup-selector-inner">
-              <button class="close-button" v-on:click="closeTargetFilterMenu()">
+          <div class="top-click-detect popup-selector-main overlay-target">
+            <div class="inner-click-detect popup-selector-inner">
+              <button class="detect-trigger close-button" v-on:click="closeTargetFilterMenu()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
               <input
-                id="target-search"
-                type="text"
-                class="input-search" 
-                placeholder="Search..."
+                id="target-search" class="input-search" type="text" placeholder="Search..."
                 v-bind:value="targetSearchTerm"
                 v-on:focus="e => {e.preventDefault(); e.stopPropagation(); }"
                 v-on:input="targetSearchTerm = $event.target.value"
               />
-              <div id="targetSelectContentDiv" class="popup-opt-container">
+              <div class="popup-opt-container">
                 <div v-for="target in targetSelectList" v-bind:key="target" class="popup-opt" v-on:click="e => {e.preventDefault(); selectTargetFilter(target); }">
                   <img class="mr-1rem max-w-7" v-if="target.imagePath != null && target.imagePath != ''" :alt="target.text" :src="`images/targets/${target.imagePath}`"/>
                   <span class="text-gray-400">
@@ -493,14 +488,14 @@
               </div>
             </div>
           </div>
-          <div id="missionViewDiv" ref="missionViewDiv" class="w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
-            <div id="innerMissionViewDiv"  class="max-h-80vw bg-dark rounded-lg relative p-1rem">
-              <button class="close-button" v-on:click="closeMissionOverlay()">
+          <div class="top-click-detect w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
+            <div class="inner-click-detect max-h-80vw bg-dark rounded-lg relative p-1rem">
+              <button class="detect-trigger close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
-              <div id="missionViewContentDiv" v-if="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)" 
+              <div v-if="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)" 
                 class="min-w-30vw max-w-35vw max-h-70vh text-gray-300 text-center overflow-auto">
                 <!-- Header information about the mission -->
                 <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ shipToName(viewMissionData.shipInfo.ship) }}</span><br />
@@ -711,228 +706,225 @@
           </form>
 
           <div class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
-            <div ref="filterRef" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-              <span class="h-20 font-bold text-gray-400">Filter: </span>
-              <button 
-                id="toggleFilterButton"
-                class="text-base toggle-link" 
-                type="button" 
-                v-on:click="e => {
-                  e.preventDefault();
-                  hideFilter = !hideFilter;
-                  e.target.innerHTML = hideFilter ? 'Show' : 'Hide';
-                }"
-              >
-                Hide
-              </button>
-              <form 
-                id="filterForm"
-                name="filterForm"
-                v-if="!hideFilter"
-                class="filter-form text-xs"
-                v-on:submit="event => {
-                  event.preventDefault();
-                  applyFilter();
-                }"
-              >
-                <!-- Warning (if not already seen) -->
-                <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4 max-w-500p">
-                  <span class="font-bold ledger-underline mb-025rem">Warning:</span><br />
-                  The filter feature is experimental, and may not work as expected (especially with complicated combinations). You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion. Please use it carefully, and report any issues you encounter.
-                  <br /><br />
-                  <button type="button" class="p-075rem btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
-                </div>
-                <div class="max-h-60 overflow-y-auto">
-                  <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
-                    <!-- Separator -->
-                    <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
-  
-                    <div class="filter-container focus-within:z-10">
+            <span class="h-20 font-bold text-gray-400" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">Filter: </span>
+            <button
+              v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)"
+              id="toggleFilterButton"
+              class="text-base toggle-link" 
+              type="button" 
+              v-on:click="e => {
+                e.preventDefault();
+                hideFilter = !hideFilter;
+                e.target.innerHTML = hideFilter ? 'Show' : 'Hide';
+              }"
+            >
+              Hide
+            </button>
+            <form 
+              id="filterForm"
+              name="filterForm"
+              v-if="!hideFilter && groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)"
+              class="filter-form text-xs"
+              v-on:submit="event => {
+                event.preventDefault();
+                applyFilter();
+              }"
+            >
+              <!-- Warning (if not already seen) -->
+              <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4 max-w-500p">
+                <span class="font-bold ledger-underline mb-025rem">Warning:</span><br />
+                The filter feature is experimental, and may not work as expected (especially with complicated combinations). You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion. Please use it carefully, and report any issues you encounter.
+                <br /><br />
+                <button type="button" class="p-075rem btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
+              </div>
+              <div class="max-h-60 overflow-y-auto">
+                <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
+                  <!-- Separator -->
+                  <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
+
+                  <div class="filter-container focus-within:z-10">
+                    <!-- Top level filter options -->
+                    <select class="filter-select border-gray-300 text-gray-400"
+                      v-on:change="handleFilterChange"
+                      v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
+                      <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
+                        {{ validOption.text }}
+                    </select>
+
+                    <!-- Operator options -->
+                    <select class="filter-select border-gray-300 text-gray-400"
+                      v-on:change="handleFilterChange"
+                      v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
+                      <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                        {{ validOperator.text }}
+                    </select>
+
+                    <!-- Value options (Base) -->
+                    <select class="filter-select border-gray-300 text-gray-400"
+                      v-on:change="handleFilterChange"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && isBaseFilter(topLevelFilterOptions[index])"
+                      v-model="filterValues[index]" :id="'filter-value-' + index">
+                      <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                        {{ validValue.text }}
+                    </select>
+
+                    <!-- Drop Selectors
+                      opens a custom modal -->
+                    <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'drops'"
+                      class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
+                      v-model="dFilterValues[index]" :id="'filter-value-' + index"
+                    >
+
+                    <!-- Target Selectors
+                      opens a custom modal -->
+                    <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'target'"
+                      class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
+                      v-model="dFilterValues[index]" :id="'filter-value-' + index"
+                    >
+
+                    <!-- Value options - Launch/Return Date Selectors
+                      Min: 20 January 2021  
+                      Max: Today-->
+                    <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
+                      class="filter-select border-gray-300 text-gray-400"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
+                      v-on:change="handleFilterChange" required="required"
+                      v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
+
+                    <!-- OR controls -->
+                    <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
+                      title="Add alternate filter condition"
+                      class="mr-1rem flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
+                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && filterValues[index] != null && ((topLevelFilterOptions[index] != 'returnDT' && topLevelFilterOptions[index] != 'launchDT') || filterValues[index] != '')"
+                      v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
+                      OR
+                    </button>
+
+                    <!-- Clear button-->
+                    <button 
+                      v-if="topLevelFilterOptions[index] != null"
+                      class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
+                      title="Remove filter condition"
+                      v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
+                      ×
+                    </button>
+
+                    <!-- Show a warning div if the filter is incomplete -->
+                    <span
+                      v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null || ((topLevelFilterOptions[index] == 'returnDT' || topLevelFilterOptions[index] == 'launchDT') && filterValues[index] == ''))"
+                      class="whitespace-pre max-h-9 items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
+                      (!) Incomplete, will not apply
+                    </span>
+                  </div>
+                  <div class="ml-2rem filter-container focus-within:z-10" 
+                    v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
+                    v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
+                      <!-- Separator -->
+                      <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
+
                       <!-- Top level filter options -->
-                      <select class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleFilterChange"
-                        v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
+                      <select v-model="orFilterTopLevelOptions[index][orIndex]"
+                        class="filter-select border-gray-300 text-gray-400"
+                        v-on:change="handleOrFilterChange" :id="'filter-top-' + index + '-' + orIndex">
                         <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                           {{ validOption.text }}
                       </select>
-  
+
                       <!-- Operator options -->
-                      <select class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleFilterChange"
-                        v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
-                        <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                      <select
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
+                        class="filter-select border-gray-300 text-gray-400"
+                        v-on:change="handleOrFilterChange" :id="'filter-op-' + index + '-' + orIndex">
+                        <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                           {{ validOperator.text }}
                       </select>
-  
-                      <!-- Value options (Base) -->
-                      <select class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleFilterChange"
-                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && isBaseFilter(topLevelFilterOptions[index])"
-                        v-model="filterValues[index]" :id="'filter-value-' + index">
-                        <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+
+                      <!-- Value options -->
+                      <select v-model="orFilterValues[index][orIndex]"
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && isBaseFilter(orFilterTopLevelOptions[index][orIndex])"
+                        class="filter-select border-gray-300 text-gray-400"
+                        v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
+                        <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
                       </select>
-  
+
                       <!-- Drop Selectors
                         opens a custom modal -->
-                      <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
-                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'drops'"
-                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
-                        v-model="dFilterValues[index]" :id="'filter-value-' + index"
+                      <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, orIndex);}"
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'drops'"
+                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
+                        v-bind:value="dOrFilterValues[index][orIndex]" readonly
+                        :id="'filter-value-' + index + '-' + orIndex"
                       >
-  
+
                       <!-- Target Selectors
                         opens a custom modal -->
-                      <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
-                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'target'"
-                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
-                        v-model="dFilterValues[index]" :id="'filter-value-' + index"
+                      <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'target'"
+                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
+                        v-bind:value="dOrFilterValues[index][orIndex]" readonly
+                        :id="'filter-value-' + index + '-' + orIndex"
                       >
-  
-                      <!-- Value options - Launch/Return Date Selectors
+
+                      <!-- Launch/Return Date Selectors
                         Min: 20 January 2021  
-                        Max: Today-->
-                      <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
+                        Max: Today + 5 days -->
+                      <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
                         class="filter-select border-gray-300 text-gray-400"
-                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
-                        v-on:change="handleFilterChange" required="required"
-                        v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
-  
-                      <!-- OR controls -->
-                      <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
-                        title="Add alternate filter condition"
-                        class="mr-1rem flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
-                        v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && filterValues[index] != null && ((topLevelFilterOptions[index] != 'returnDT' && topLevelFilterOptions[index] != 'launchDT') || filterValues[index] != '')"
-                        v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators [index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
-                        OR
-                      </button>
-  
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
+                        v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex" required
+                      >
                       <!-- Clear button-->
                       <button 
-                        v-if="topLevelFilterOptions[index] != null"
-                        class="mr-1rem flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
+                        class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
                         title="Remove filter condition"
-                        v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
+                        v-on:click="e => {e.preventDefault(); removeOrAndShift(index, orIndex); }">
                         ×
                       </button>
-  
                       <!-- Show a warning div if the filter is incomplete -->
                       <span
-                        v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null || ((topLevelFilterOptions[index] == 'returnDT' || topLevelFilterOptions[index] == 'launchDT') && filterValues[index] == ''))"
-                        class="tooltip-custom items-center justify-center text-red-700 text-sml border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
-                        (!)
-                        <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
+                        v-if="orFilterTopLevelOptions[index][orIndex] != null && (orFilterOperators[index][orIndex] == null || orFilterValues[index][orIndex] == null)"
+                        class="whitespace-pre max-h-9 tooltip-custom items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
+                        (!) Incomplete, will not apply
                       </span>
-                    </div>
-                    <div class="ml-2rem filter-container focus-within:z-10" 
-                      v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
-                      v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
-                        <!-- Separator -->
-                        <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
-  
-                        <!-- Top level filter options -->
-                        <select v-model="orFilterTopLevelOptions[index][orIndex]"
-                          class="filter-select border-gray-300 text-gray-400"
-                          v-on:change="handleOrFilterChange" :id="'filter-top-' + index + '-' + orIndex">
-                          <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
-                            {{ validOption.text }}
-                        </select>
-  
-                        <!-- Operator options -->
-                        <select
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
-                          class="filter-select border-gray-300 text-gray-400"
-                          v-on:change="handleOrFilterChange" :id="'filter-op-' + index + '-' + orIndex">
-                          <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
-                            {{ validOperator.text }}
-                        </select>
-  
-                        <!-- Value options -->
-                        <select v-model="orFilterValues[index][orIndex]"
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && isBaseFilter(orFilterTopLevelOptions[index][orIndex])"
-                          class="filter-select border-gray-300 text-gray-400"
-                          v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
-                          <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
-                            {{ validValue.text }}
-                        </select>
-  
-                        <!-- Drop Selectors
-                          opens a custom modal -->
-                        <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, orIndex);}"
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'drops'"
-                          class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
-                          v-bind:value="dOrFilterValues[index][orIndex]" readonly
-                          :id="'filter-value-' + index + '-' + orIndex"
-                        >
-  
-                        <!-- Target Selectors
-                          opens a custom modal -->
-                        <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'target'"
-                          class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
-                          v-bind:value="dOrFilterValues[index][orIndex]" readonly
-                          :id="'filter-value-' + index + '-' + orIndex"
-                        >
-  
-                        <!-- Launch/Return Date Selectors
-                          Min: 20 January 2021  
-                          Max: Today + 5 days -->
-                        <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
-                          class="filter-select border-gray-300 text-gray-400"
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
-                          v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex" required
-                        >
-                        <!-- Clear button-->
-                        <button 
-                          class="mr-1rem flex items-center justify-center text-red-700 text-lg w-6 h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
-                          title="Remove filter condition"
-                          v-on:click="e => {e.preventDefault(); removeOrAndShift(index, orIndex); }">
-                          ×
-                        </button>
-                        <!-- Show a warning div if the filter is incomplete -->
-                        <span
-                          v-if="orFilterTopLevelOptions[index][orIndex] != null && (orFilterOperators[index][orIndex] == null || orFilterValues[index][orIndex] == null)"
-                          class="tooltip-custom items-center justify-center text-red-700 text-sml border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
-                          (!)
-                          <span class="tooltiptext-custom speech-bubble text-sml text-gray-500">This filter condition is incomplete,<br/>and will not be applied.</span>
-                        </span>
-                    </div>
                   </div>
                 </div>
-  
-                <!-- Create a 2 px visible gray line that goes across the entire div-->
-                <hr class="mt-1rem w-full">
-  
-                <button
-                  v-if="idle"
-                  ref="applyFilterToData"
-                  id="filter-apply-button"
-                  type="submit"
-                  class="mt-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  v-bind:disabled="(dataFilter === [] || dataBeingFiltered || !filterHasChanged)"
-                >
-                  Apply Filter
-                </button>
-  
-                <!-- Show loading gif while filter is being applied -->
-                <span v-if="dataBeingFiltered" class="text-green-700 mt-05rem">
-                  <i>
-                    <img src="images/loading.gif" alt="Loading..." class="target-ico" />
-                    Applying filter, please wait...
-                  </i>
-                </span>
-                <!-- Show the time that it took to apply the filter -->
-                <span v-if="!dataBeingFiltered && filterApplyTime != ''" class="text-green-700 mt-05rem">
-                  <i>
-                    Filtered in {{ filterApplyTime }} <span class="text-gray-500">
-                      ( <span class="text-green-700">
-                        {{ filteredMissions.length }} shown<span class="text-gray-500">,</span> {{ allLoadedMissions.length - filteredMissions.length }} filtered out 
-                      </span>)
-                    </span>
-                  </i>
-                </span>
-              </form>
-            </div>
+              </div>
+
+              <!-- Create a 2 px visible gray line that goes across the entire div-->
+              <hr class="mt-1rem w-full">
+
+              <button
+                v-if="idle"
+                ref="applyFilterToData"
+                id="filter-apply-button"
+                type="submit"
+                class="mt-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                v-bind:disabled="(dataFilter === [] || dataBeingFiltered || !filterHasChanged)"
+              >
+                Apply Filter
+              </button>
+
+              <!-- Show loading gif while filter is being applied -->
+              <span v-if="dataBeingFiltered" class="text-green-700 mt-05rem">
+                <i>
+                  <img src="images/loading.gif" alt="Loading..." class="target-ico" />
+                  Applying filter, please wait...
+                </i>
+              </span>
+              <!-- Show the time that it took to apply the filter -->
+              <span v-if="!dataBeingFiltered && filterApplyTime != ''" class="text-green-700 mt-05rem">
+                <i>
+                  Filtered in {{ filterApplyTime }} <span class="text-gray-500">
+                    ( <span class="text-green-700">
+                      {{ filteredMissions.length }} shown<span class="text-gray-500">,</span> {{ allLoadedMissions.length - filteredMissions.length }} filtered out 
+                    </span>)
+                  </span>
+                </i>
+              </span>
+            </form>
           </div>
 
           <div class="min-h-7 max-h-20 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
@@ -1244,15 +1236,32 @@
             >DavidArthurCole</a
           >
           <span v-if="appHasUpdate != ''" class="text-red-700">
-            (<a
-              v-external-link
-              href="https://github.com/DavidArthurCole/EggLedger/releases/latest"
-              target="_blank"
+            (<button
+              v-on:click="openUpdateModal()"
               class="text-red-700 hover:text-red-800 ledger-underline"
-              >New version [{{appHasUpdate}}] available!</a
+              >New version available!</button
             >)</span
           >
         </footer>
+      </div>
+      <div class="top-click-detect popup-selector-main overlay-update w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
+        <div class="inner-click-detect max-w-half bg-dark rounded-lg relative p-1rem">
+          <button class="detect-trigger close-button" v-on:click="closeUpdateModal()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+          <div class="text-gray-300 space-y-2 flex-auto flex-col text-center">
+            <span class="text-lg text-gray-400">New Version of EggLedger Available: <span class="text-green-500">{{ appHasUpdate }}</span></span><br/>
+            <span>Update information:</span>
+            <div v-if="appReleaseNotes !== ''" class="text-left flex-1 bg-darkerer overflow-auto gh-markdown-content max-h-60vh p-1rem rounded-md" v-html="markedParser(appReleaseNotes)"></div>
+            <div class="mt-1rem space-x-3 flex-auto">
+              <button class="min-w-30vw btn btn-outline-dark p-05rem pr-2rem pl-2rem rounded-md bg-blue-500 border-blue-600 hover:bg-blue-600 hover:border-blue-700">
+                <a v-external-link class="text-gray-200 hover:text-gray-300" href="https://github.com/DavidArthurCole/EggLedger/releases/latest">Download</a>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1309,7 +1318,6 @@
           Idle: 'Idle',
           FetchingIds: 'FetchingIds',
           LoadingMissionData: 'LoadingMissionData',
-          CoalescingMissionData: 'CoalescingMission',
           Success: 'Success',
           Failed: 'Failed',
         }
@@ -1414,7 +1422,7 @@
               const active = document.activeElement;
               if (!playerIdSelectRef?.value?.contains(active)) closePlayerIdDropdown();
               if (!viewMissionAccountSelectRef?.value?.contains(active)) closeMissionsViewAccountDropdown();
-              if (!lifetimeAccountSelectRef?.value.contains(active)) closeLifetimeAccountDropdown();
+              if (!lifetimeAccountSelectRef?.value?.contains(active)) closeLifetimeAccountDropdown();
             };
 
             const handleMousedown = event => {
@@ -1587,87 +1595,65 @@
                   return "Fetching mission IDs...";
                 case LifetimeLoadState.LoadingMissionData:
                   return "Loading missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
-                case LifetimeLoadState.CoalescingMissionData:
-                  return "Coalescing missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
                 case LifetimeLoadState.Success:
-                  return "Success";
+                  return "Succeeded" + (lifetimeSuccessTime.value != null ? ` in ${lifetimeSuccessTime.value} (${lifetimeDropsLoadedProgress.value.totalCount} missions)` : "");
                 case LifetimeLoadState.Failed:
                   return "Failed";
-                default:
-                  return "Idle";
               }
             };
             const lifetimeState = Vue.ref(LifetimeLoadState.Idle);
-            const lifetimeDropsBeingLoaded = Vue.ref(false);
-            const lifetimeDropsLoadedProgress = Vue.ref({
-              percentageDone: '0%',
-              loadedCount: 0,
-              totalCount: 0,
-            });
+            const lifetimeSuccessTime = Vue.ref(null);
+            const lifetimeDropsBeingLoaded = Vue.computed(() => lifetimeState.value == LifetimeLoadState.FetchingIds || lifetimeState.value == LifetimeLoadState.LoadingMissionData);
+            const lifetimeDropsLoadedProgress = Vue.ref({});
             const viewLifetimeDropsOfEid = async () => {
               //Reset allLoadedMissions - potential insane lag spikes for some reason
               allLoadedMissions.value = null;
               filteredMissions.value = null;
               loadedEid.value = null;
 
+              const start = performance.now();
+              lifetimeState.value = LifetimeLoadState.FetchingIds;
+              const idsJson = await window.getMissionIds(selectedLifetimeAccount.value);
+              if(idsJson == null || idsJson == ''){
+                lifetimeState.value = LifetimeLoadState.Failed;
+                return;
+              }
+              const ids = JSON.parse(idsJson);
               lifetimeDrops.value = null;
               lifetimeDropsLoadedProgress.value = {
                 percentageDone: '0%',
                 loadedCount: 0,
                 totalCount: 0,
               };
-              lifetimeDropsBeingLoaded.value = true;
-              lifetimeState.value = LifetimeLoadState.FetchingIds;
-              const idsJson = await window.getMissionIds(selectedLifetimeAccount.value);
-              if(idsJson == null || idsJson == ''){
-                lifetimeState.value = LifetimeLoadState.Failed;
-                lifetimeDropsBeingLoaded.value = false;
-                return;
-              }
-              const ids = JSON.parse(idsJson);
               lifetimeState.value = LifetimeLoadState.LoadingMissionData;
-              const missions = [];
               lifetimeDropsLoadedProgress.value.totalCount = ids.length;
-              for (const id of ids) {
-                const mission = await getSpecificMissionData(selectedLifetimeAccount.value, id, false);
-                if (mission != null) {
-                  missions.push(mission);
-                }
-                lifetimeDropsLoadedProgress.value.percentageDone = `${(missions.length / ids.length) * 100}%`;
-                lifetimeDropsLoadedProgress.value.loadedCount++;
-              }
               lifetimeDrops.value = {
                 artifacts: [],
                 stones: [],
                 stoneFragments: [],
                 ingredients: [],
-                missionCount: missions.length,
+                missionCount: ids.length,
               };
-              lifetimeState.value = LifetimeLoadState.CoalescingMissionData;
-              lifetimeDrops.value.percentageDone = '0%';
-              lifetimeDrops.value.loadedCount = 0;
-              // Coalesce the artifacts, stones, stone fragments, and ingredients from each mission in missions
-              // To match a coalesce for [x] - level, id, and rarity
-              // If two [x] have the same level, id, and rarity, they are the same, add their .count together
-              for(const cMission of missions){
-                cMission.artifacts.forEach(artifact => mergeItems(lifetimeDrops.value.artifacts, artifact));
-                cMission.stones.forEach(stone => mergeItems(lifetimeDrops.value.stones, stone));
-                cMission.stoneFragments.forEach(stoneFragment => mergeItems(lifetimeDrops.value.stoneFragments, stoneFragment));
-                cMission.ingredients.forEach(ingredient => mergeItems(lifetimeDrops.value.ingredients, ingredient));
+              for (const id of ids) {
+                const mission = await getSpecificMissionData(selectedLifetimeAccount.value, id, false);
+                if (mission != null) {
+                  mission.artifacts.forEach(artifact => mergeItems(lifetimeDrops.value.artifacts, artifact));
+                  mission.stones.forEach(stone => mergeItems(lifetimeDrops.value.stones, stone));
+                  mission.stoneFragments.forEach(stoneFragment => mergeItems(lifetimeDrops.value.stoneFragments, stoneFragment));
+                  mission.ingredients.forEach(ingredient => mergeItems(lifetimeDrops.value.ingredients, ingredient));
+                }
+                lifetimeDropsLoadedProgress.value.percentageDone = `${((ids.indexOf(id) + 1) / ids.length) * 100}%`;
                 lifetimeDropsLoadedProgress.value.loadedCount++;
-                lifetimeDropsLoadedProgress.value.percentageDone = `${(lifetimeDropsLoadedProgress.value.loadedCount / ids.length) * 100}%`;
               }
-              //Re-run group sorting
               reSortLifetime();
-              //Sum all counts to detemrine aritfactCount, stoneCount, stoneFragmentCount, and ingredientCount
               lifetimeDrops.value.artifactCount = lifetimeDrops.value.artifacts.map(artifact => artifact.count).reduce((acc, cur) => acc + cur, 0);
               lifetimeDrops.value.stoneCount = lifetimeDrops.value.stones.map(stone => stone.count).reduce((acc, cur) => acc + cur, 0);
               lifetimeDrops.value.stoneFragmentCount = lifetimeDrops.value.stoneFragments.map(fragment => fragment.count).reduce((acc, cur) => acc + cur, 0);
               lifetimeDrops.value.ingredientCount = lifetimeDrops.value.ingredients.map(ingredient => ingredient.count).reduce((acc, cur) => acc + cur, 0);
 
+              const end = performance.now();
+              lifetimeSuccessTime.value = Math.floor((end - start) / 1000) + "." + Math.floor((end - start) % 1000) + "s";
               lifetimeState.value = LifetimeLoadState.Success;
-
-              lifetimeDropsBeingLoaded.value = false;
             };
 
             const mergeItems = (targetArray, item) => {
@@ -1805,9 +1791,30 @@
 
             // ===== Check for updates =====
             const appHasUpdate = Vue.ref("");
+            const appReleaseNotes = Vue.ref("");
             Vue.onMounted(async () => {
-              appHasUpdate.value = await window.checkForUpdates();
+              const arrResponse = await window.checkForUpdates();
+              console.log(arrResponse);
+              appHasUpdate.value = arrResponse[0];
+              appReleaseNotes.value = arrResponse[1];
             });
+            const markedParser = Vue.ref(window.marked.parse);
+            const openUpdateModal = () => {
+              document.querySelectorAll('.gh-markdown-content a').forEach(link => {
+                link.addEventListener('click', e => {
+                  e.preventDefault();
+                  window.openURL(link.href);
+                });
+              });
+              const el = document.querySelector('.overlay-update');
+              el.style.display = 'flex';
+              el.classList.remove('hidden');
+            };
+            const closeUpdateModal = () => {
+              const el = document.querySelector('.overlay-update');
+              el.style.display = 'none';
+              el.classList.add('hidden');
+            };
 
             // ===== Global bindings =====
             // Bind a bunch of state updater functions to the global scope so that the go side can
@@ -2449,9 +2456,7 @@
               filterHasChanged.value = true;
 
               //Look for all `filter-top` elements and update their stylings
-              document.querySelectorAll('.filter-top').forEach(el => {
-                updateValueStyling(el, false);
-              });
+              document.querySelectorAll('.filter-top').forEach(el => updateValueStyling(el, false));
             }
 
             const removeOrAndShift = (index, orIndex) => {
@@ -2602,9 +2607,7 @@
             }
 
             const applyFilter = async () => {
-              //Start a timer to see how long it takes to apply the filter
               const startTime = performance.now();
-
               dataBeingFiltered.value = true;
               filterHasChanged.value = false;
               const newFilteredMissions = [];
@@ -2613,16 +2616,8 @@
                   newFilteredMissions.push(loadedMission);
                 }
               }
-
-              //Stop the timer and calculate the time it took to apply the filter
               const endTime = performance.now();
-              const applyTime = endTime - startTime;
-
-              //Display the time it took to apply the filter in seconds and ms
-              const seconds = Math.floor(applyTime / 1000);
-              const ms = Math.floor(applyTime % 1000);
-              filterApplyTime.value = seconds + "." + ms + "s";
-
+              filterApplyTime.value = Math.floor(endTime - startTime / 1000) + "." + Math.floor(endTime - startTime % 1000) + "s";
               filteredMissions.value = newFilteredMissions;
               dataBeingFiltered.value = false;
             };
@@ -2641,45 +2636,6 @@
                 return [path, target];
               }
             };
-
-            //Set it up so that if a click is performed outside of the 'viewMissionDiv', closeMissionOverlay() is called
-            Vue.onMounted(() => {
-              const largerDiv = document.getElementById('missionViewDiv');
-              largerDiv.addEventListener('click', function(event) {
-                if(this.classList.contains('hidden')) return;
-                const innerDiv = document.getElementById('innerMissionViewDiv');
-                const divRect = innerDiv.getBoundingClientRect();
-                const clickX = event.clientX;
-                const clickY = event.clientY;
-                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeMissionOverlay();
-              });
-            });
-
-            //Set it up so that if a click is performed outside of the 'dropSelectDiv', closeDropFilterMenu() is called
-            Vue.onMounted(() => {
-              const largerDiv = document.getElementById('dropSelectDiv');
-              largerDiv.addEventListener('click', function(event) {
-                if(this.classList.contains('hidden')) return;
-                const innerDiv = document.getElementById('innerDropSelectDiv');
-                const divRect = innerDiv.getBoundingClientRect();
-                const clickX = event.clientX;
-                const clickY = event.clientY;
-                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeDropFilterMenu();
-              });
-            });
-
-            //Set it up so that if a click is performed outside of the 'targetSelectDiv, closeTargetFilterMenu() is called
-            Vue.onMounted(() => {
-              const largerDiv = document.getElementById('targetSelectDiv');
-              largerDiv.addEventListener('click', function(event) {
-                if(this.classList.contains('hidden')) return;
-                const innerDiv = document.getElementById('innerTargetSelectDiv');
-                const divRect = innerDiv.getBoundingClientRect();
-                const clickX = event.clientX;
-                const clickY = event.clientY;
-                if(clickX < divRect.left || clickX > divRect.right || clickY < divRect.top || clickY > divRect.bottom) closeTargetFilterMenu();
-              });
-            });
 
             const padNumber = (num) => {
               num = parseInt(num.toString()); //Make sure it's a number
@@ -2759,6 +2715,18 @@
               openMissionOverlay();
             };
 
+            Vue.onMounted(() => {
+              document.querySelectorAll('.top-click-detect').forEach((topElement) => {
+                const innerEl = topElement.querySelector('.inner-click-detect');
+                topElement.addEventListener('click', function(event){
+                  if(innerEl.classList.contains('hidden')) return;
+                  const divRect = innerEl.getBoundingClientRect();
+                  if(event.clientX < divRect.left || event.clientX > divRect.right || event.clientY < divRect.top || event.clientY > divRect.bottom)
+                    innerEl.querySelector('.detect-trigger').click();
+                });
+              });
+            });
+
             return {
               appVersion,
               appDirectory,
@@ -2799,20 +2767,21 @@
 
               //Lifetime data
               LifetimeLoadState,
-              selectedLifetimeAccount,
-              lifetimeAccountSelectRef,
-              lifetimeAccountInputRef,
-              openLifetimeAccountDropdown,
-              closeLifetimeAccountDropdown,
-              lifetimeAccountDropdownOpen,
-              selectLifetimeAccount,
-              lifetimeAccountSubmitRef,
               lifetimeDrops,
               lifetimeDropsBeingLoaded,
               lifetimeDropsLoadedProgress,
-              viewLifetimeDropsOfEid,
               lifetimeState,
               lifetimeSortMethod,
+              lifetimeSuccessTime,
+              selectedLifetimeAccount,
+              lifetimeAccountSelectRef,
+              lifetimeAccountInputRef,
+              lifetimeAccountSubmitRef,
+              lifetimeAccountDropdownOpen,
+              openLifetimeAccountDropdown,
+              closeLifetimeAccountDropdown,
+              selectLifetimeAccount,
+              viewLifetimeDropsOfEid,
               getLifetimeStatusColor,
               getLifetimeStatusText,
 
@@ -2852,6 +2821,11 @@
               maxQuality,
               durationConfigs,
               artifactConfigs,
+              viewMissionData,
+              groupedYearArray,
+              groupedMonthArray,
+              groupedDayArray,
+              allVisible,
               boundEffectString,
               afRarityClass,
               afRarityText,
@@ -2864,11 +2838,6 @@
               numToDigClass,
               properCase,
               durToTextClass,
-              viewMissionData,
-              groupedYearArray,
-              groupedMonthArray,
-              groupedDayArray,
-              allVisible,
 
               //Filter
               dataFilter,
@@ -2883,6 +2852,28 @@
               orFilterTopLevelOptions,
               orFilterOperators,
               orFilterValues,
+              filterWarningRead,
+              hideFilterWarning,
+              dropFilterSelectedIndex,
+              dropFilterMenuOpen,
+              dropSelectList,
+              dropFilterSelectedOrIndex,
+              dropSearchTerm,
+              dFilterValues,
+              dOrFilterValues,
+              targetSelectList,
+              targetFilterSelectedIndex,
+              targetFilterSelectedOrIndex,
+              targetFilterMenuOpen,
+              targetSearchTerm,
+              openTargetFilterMenu,
+              closeTargetFilterMenu,
+              selectTargetFilter,
+              openDropFilterMenu,
+              closeDropFilterMenu,
+              selectDropFilter,
+              isBaseFilter,
+              dismissFilterWarning,
               addOr,
               applyFilter,
               handleFilterChange,
@@ -2898,28 +2889,12 @@
               removeOrAndShift,
               generateFilterConditionsArr,
               generateOrFiltersConditionsArr,
-              filterWarningRead,
-              hideFilterWarning,
-              dismissFilterWarning,
-              dropFilterSelectedIndex,
-              dropFilterMenuOpen,
-              dropSelectList,
-              dropFilterSelectedOrIndex,
-              dropSearchTerm,
-              dFilterValues,
-              dOrFilterValues,
-              openDropFilterMenu,
-              closeDropFilterMenu,
-              selectDropFilter,
-              isBaseFilter,
-              targetSelectList,
-              targetFilterSelectedIndex,
-              targetFilterSelectedOrIndex,
-              targetFilterMenuOpen,
-              openTargetFilterMenu,
-              closeTargetFilterMenu,
-              selectTargetFilter,
-              targetSearchTerm,
+
+              //Self-update
+              appReleaseNotes,
+              openUpdateModal,
+              closeUpdateModal,
+              markedParser,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,

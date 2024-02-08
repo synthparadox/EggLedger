@@ -26,7 +26,10 @@ module.exports = {
         eidoverlay: '-20',
       },
       padding: {
+        '0': '0rem',
+        '05rem': '0.5rem',
         '1rem:' : '1rem',
+        '2rem': '2rem',
       },
       height: {
         stretch: 'stretch',
@@ -36,11 +39,15 @@ module.exports = {
         '9/10': '90%',
       },
       minHeight: {
+        '6': '1.5rem',
         '7': '1.75rem',
       },
       maxHeight: {
+        '6': '1.5rem',
+        '9': '2.25rem',
         '6/10': '60%',
         '80vw': '80vw',
+        '60vh': '60vh',
         '70vh': '70vh',
       },
       width: {
@@ -53,10 +60,12 @@ module.exports = {
         '9/10': '90%',
       },
       minWidth: {
+        '6': '1.5rem',
         'selectpop': '15vw',
         '30vw': '30vw',
       },
       maxWidth: {
+        '6': '1.5rem',
         '8xl': '88rem',
         '9xl': '96rem',
         '10xl': '104rem',
@@ -66,6 +75,7 @@ module.exports = {
         '70vw': '70vw',
         '500p': '500px',
         '35vw': '35vw',
+        'half': '50%',
       },
       lineHeight: {
         '1rem': '1rem'
@@ -101,7 +111,10 @@ module.exports = {
         'dark_tab_hover': "#3a3d3a",
         'darker_tab_hover': "#2e312e",
         'privacy_blue': "#276ec8",
-        'data_loss_red': "#820808"
+        'data_loss_red': "#820808",
+
+        'upgrade_green': '#1c802e',
+        'upgrade_green_hover': '#155e22',
       },
       backgroundImage: {
         'rare': 'radial-gradient(#a8dfff,#8dd5ff,#3a9dfc)',
@@ -120,6 +133,8 @@ module.exports = {
         'short': "rgb(69, 159, 246)",
         'standard': "rgb(139, 93, 246)",
         'extended': "rgb(246, 168, 35)",
+        'upgrade_green': "#155e22",
+        'upgrade_green_hover': "#114f1c",
       },
     },
   },

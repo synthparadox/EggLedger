@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-//go:embed eiafx-config.json
+//go:embed eiafx-config-min.json
 var _eiafxConfigJSON []byte
 
 var Config *ei.ArtifactsConfigurationResponse

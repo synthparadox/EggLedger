@@ -11,9 +11,23 @@
 
 [**Download now**](https://github.com/DavidArthurCole/EggLedger/releases).
 
-<p align="center">
-  <img width="712" src="assets/screenshot.png" alt="screenshot">
-</p>
+## FAQ
+
+**Windows Defender is blocking the download. What do I do?**
+
+Windows has declared war on EggLedger, and more generally [GO-based executables](https://www.reddit.com/r/golang/comments/s1bh01/goexecutables_and_windows_defender/).
+I cannot fix Microsoft false-flagging my app as malware, or solve this issue at all without paying thousands of dollars a year. I do my best to use non-obfuscated code, however heuristic detection will hate GO until Microsoft does something about it.
+If your Microsoft Defender is hating the file on, mark your `Ledger` folder as excluded from scans in `Virus & threat protection settings` -> `Manage settings` -> `Exclusions` -> `Add or remove exclusions`. You can then specify your browser to download to that location, and you should be all set.
+
+**Why is EggLedger asking me to install Chrome?**
+
+EggLedger was originally built by MK2 on top of a `lorca`, an open-source solution to building Go apps with a web UI. `lorca` uses Chrome as its browser engine, and the app is built to use Chrome.
+I have since forked the project, and have added support for the following browsers on Windows:
+  - Brave
+  - Opera
+  - Vivaldi
+  - Edge
+For other operating systems, or in the lack of any of the above browsers, the app will rely on a Chrome or Chromium installation.
 
 ## Security and privacy
 
@@ -33,13 +47,11 @@ The MIT License. See COPYING.
 
 ## Contributing
 
-This repository is open to contribution. If you have something you want to add, feel free to fork the repository and submit a pull request.
+Unlike the original repository from mk2, this repository is open to contribution. 
+If you have something you want to add, feel free to fork the repository and submit a pull request.
 
 ## Development notes
 
 If you are using the provided MAKEFILE, you will need to either build the project on linux, or use a WSL environment to build it on Windows.
 Due to optimizing the MAKEFILE for GitHub Actions, the build process is linux-focused to ensure the actions do not fail.
 Beyond that, `make dist` will generate zips and an exe for you to test with.
-
-Q: Why is the entire fucking `lorca` library forked and stored locally?
-A: [This is why](https://github.com/zserge/lorca/issues/167) - I may develop an alternative to keeping this locally, eventually.

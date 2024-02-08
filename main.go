@@ -186,6 +186,10 @@ type PossibleArtifact struct {
 	BaseQuality float64              `json:"baseQuality"`
 }
 
+type ReleaseInfo struct {
+	Body string `json:"body"`
+}
+
 func init() {
 	log.SetLevel(log.InfoLevel)
 	// Send a copy of logs to $TMPDIR/EggLedger.log in case the app crashes
@@ -1343,19 +1347,19 @@ func main() {
 		}
 	})
 
-	ui.MustBind("checkForUpdates", func() string {
+	ui.MustBind("checkForUpdates", func() []string {
 		log.Info("checking for updates...")
-		newVersion, err := checkForUpdates()
+		newVersion, newReleaseNotes, err := checkForUpdates()
 		if err != nil {
 			log.Error(err)
-			return ""
+			return []string{"", ""}
 		}
 		if newVersion == "" {
 			log.Infof("no new version found")
-			return ""
+			return []string{"", ""}
 		} else {
 			log.Infof("new version found: %s", newVersion)
-			return newVersion
+			return []string{newVersion, newReleaseNotes}
 		}
 	})
 

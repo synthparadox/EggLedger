@@ -15,9 +15,10 @@ type AppStorage struct {
 
 	KnownAccounts []Account `json:"known_accounts"`
 
-	LastUpdateCheckAt  time.Time `json:"last_update_check_at"`
-	KnownLatestVersion string    `json:"known_latest_version"`
-	FilterWarningRead  bool      `json:"filter_warning_read"`
+	LastUpdateCheckAt       time.Time `json:"last_update_check_at"`
+	KnownLatestReleaseNotes string    `json:"known_latest_release_notes"`
+	KnownLatestVersion      string    `json:"known_latest_version"`
+	FilterWarningRead       bool      `json:"filter_warning_read"`
 }
 
 type Account struct {
@@ -80,10 +81,11 @@ func (s *AppStorage) AddKnownAccount(account Account) {
 	go s.Persist()
 }
 
-func (s *AppStorage) SetUpdateCheck(latestVersion string) {
+func (s *AppStorage) SetUpdateCheck(latestVersion string, latestReleaseNotes string) {
 	s.Lock()
 	s.LastUpdateCheckAt = time.Now()
 	s.KnownLatestVersion = latestVersion
+	s.KnownLatestReleaseNotes = latestReleaseNotes
 	s.Unlock()
 	go s.Persist()
 }
