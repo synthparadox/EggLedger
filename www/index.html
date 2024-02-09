@@ -1020,7 +1020,7 @@
         <div v-show="activeTab === UITab.LifetimeDrops" class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
           <div class="top-click-detect popup-selector-main overlay-target-lifetime">
             <div class="inner-click-detect popup-selector-inner">
-              <button class="detect-trigger close-button" v-on:click="closeTargetFilterMenu(true)">
+              <button class="detect-trigger close-button" v-on:click="closeTargetFilterMenu()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -1032,7 +1032,7 @@
                 v-on:input="lifetimeTargetSearchTerm = $event.target.value"
               />
               <div class="popup-opt-container">
-                <div v-for="target in lifetimeTargetSelectList" v-bind:key="target" class="popup-opt" v-on:click="e => {e.preventDefault(); selectTargetFilter(target, true); }">
+                <div v-for="target in lifetimeTargetSelectList" v-bind:key="target" class="popup-opt" v-on:click="e => {e.preventDefault(); selectTargetFilter(target); }">
                   <img class="mr-1rem max-w-7" v-if="target.imagePath != null && target.imagePath != ''" :alt="target.text" :src="`images/targets/${target.imagePath}`"/>
                   <span class="text-gray-400">
                     {{ target.text }}
@@ -1134,7 +1134,7 @@
               }"
             >
               <div class="max-h-60 overflow-y-auto">
-                <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr(true)" :key="index">
+                <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
                   <!-- Separator -->
                   <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
 
@@ -1174,7 +1174,7 @@
 
                     <!-- Target Selectors
                       opens a custom modal -->
-                    <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null, true);}"
+                    <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
                       v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && lifetimeTopLevelFilterOptions[index] == 'target'"
                       class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
                       v-model="dLifetimeFilterValues[index]" :id="'lifetime-filter-value-' + index"
@@ -1190,7 +1190,7 @@
                       v-bind:disabled="lifetimeTopLevelFilterOptions[index + 1] != null" :id="'lifetime-filter-value-' + index">
 
                     <!-- OR controls -->
-                    <button type="button" v-on:click="e => {e.preventDefault(); addOr(index, true);}"
+                    <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
                       title="Add alternate filter condition"
                       class="mr-1rem flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
                       v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && lifetimeFilterValues[index] != null && ((lifetimeTopLevelFilterOptions[index] != 'returnDT' && lifetimeTopLevelFilterOptions[index] != 'launchDT') || lifetimeFilterValues[index] != '')"
@@ -1204,7 +1204,7 @@
                       v-if="lifetimeTopLevelFilterOptions[index] != null"
                       class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
                       title="Remove filter condition"
-                      v-on:click="e => { e.preventDefault(); removeAndShift(index, true); }">
+                      v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
                       ×
                     </button>
 
@@ -1217,7 +1217,7 @@
                   </div>
                   <div class="ml-2rem filter-container focus-within:z-10" 
                     v-if="lifetimeOrFilterConditionsCount[index] != null && lifetimeOrFilterConditionsCount[index] > 0"
-                    v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index, true)">
+                    v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
                       <!-- Separator -->
                       <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
 
@@ -1258,7 +1258,7 @@
 
                       <!-- Target Selectors
                         opens a custom modal -->
-                      <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex, true);}"
+                      <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
                         v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null && lifetimeOrFilterOperators[index][orIndex] != null && lifetimeOrFilterTopLevelOptions[index][orIndex] == 'target'"
                         class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
                         v-bind:value="dLifetimeOrFilterValues[index][orIndex]" readonly
@@ -1277,7 +1277,7 @@
                       <button 
                         class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
                         title="Remove filter condition"
-                        v-on:click="e => {e.preventDefault(); removeOrAndShift(index, orIndex, true); }">
+                        v-on:click="e => {e.preventDefault(); removeOrAndShift(index, orIndex); }">
                         ×
                       </button>
                       <!-- Show a warning div if the filter is incomplete -->
@@ -1680,37 +1680,24 @@
             const targetFilterSelectedIndex = Vue.ref(null);
             const targetFilterSelectedOrIndex = Vue.ref(null);
             const targetFilterMenuOpen = Vue.ref(false);
-            const openTargetFilterMenu = (index, orIndex, lifetime) => {
-              const tSelectListRef = lifetime ? lifetimeTargetSelectList : targetSelectList;
-              const tSelectedIndexRef = lifetime ? lifetimeTargetFilterSelectedIndex : targetFilterSelectedIndex;
-              const tSelectedOrIndexRef = lifetime ? lifetimeTargetFilterSelectedOrIndex : targetFilterSelectedOrIndex;
-              const tFilterMenuOpenRef = lifetime ? lifetimeTargetFilterMenuOpen : targetFilterMenuOpen;
-              const targetSelector = lifetime ? '.overlay-target-lifetime' : '.overlay-target';
-              const tSearchBarSelector = lifetime ? 'target-search-lifetime' : 'target-search';
-
+            const openTargetFilterMenu = (index, orIndex) => {
               window.removeEventListener('focus', handleFocus, true);
-              tSelectListRef.value = getFilterValueOptions('target');
-              tSelectedIndexRef.value = index;
-              tSelectedOrIndexRef.value = orIndex ?? null;
-              tFilterMenuOpenRef.value = true;
-              const el = document.querySelector(targetSelector);
+              tSelectListRef().value = getFilterValueOptions('target');
+              tSelectedIndexRef().value = index;
+              tSelectedOrIndexRef().value = orIndex ?? null;
+              tFilterMenuOpenRef().value = true;
+              const el = document.querySelector(targetQuerySelector.value);
               el.style.display = 'flex';
               el.classList.remove('hidden');
-              document.getElementById(tSearchBarSelector).focus();
+              document.getElementById(tSearchBarSelector.value).focus();
             };
-            const closeTargetFilterMenu = (lifetime) => {
-              const tSearchTermRef = lifetime ? lifetimeTargetSearchTerm : targetSearchTerm;
-              const tSelectedIndexRef = lifetime ? lifetimeTargetFilterSelectedIndex : targetFilterSelectedIndex;
-              const tSelectedOrIndexRef = lifetime ? lifetimeTargetFilterSelectedOrIndex : targetFilterSelectedOrIndex;
-              const tFilterMenuOpenRef = lifetime ? lifetimeTargetFilterMenuOpen : targetFilterMenuOpen;
-              const targetSelector = lifetime ? '.overlay-target-lifetime' : '.overlay-target';
-
+            const closeTargetFilterMenu = () => {
               window.addEventListener('focus', handleFocus, true);
-              tSearchTermRef.value = "";
-              tSelectedIndexRef.value = null;
-              tSelectedOrIndexRef.value = null;
-              tFilterMenuOpenRef.value = false;
-              const el = document.querySelector(targetSelector);
+              tSearchTermRef().value = "";
+              tSelectedIndexRef().value = null;
+              tSelectedOrIndexRef().value = null;
+              tFilterMenuOpenRef().value = false;
+              const el = document.querySelector(targetQuerySelector.value);
               el.style.display = 'none';
               el.classList.add('hidden');
             };
@@ -1718,30 +1705,22 @@
             Vue.watch(targetSearchTerm, () => {
               targetSelectList.value = getFilterValueOptions('target').filter(target => target.text.toLowerCase().includes(targetSearchTerm.value.toLowerCase()));
             });
-            const selectTargetFilter = (target, lifetime) => {
-              const tSelectedIndexRef = lifetime ? lifetimeTargetFilterSelectedIndex : targetFilterSelectedIndex;
-              const tSelectedOrIndexRef = lifetime ? lifetimeTargetFilterSelectedOrIndex : targetFilterSelectedOrIndex;
-              const valRef = lifetime ? lifetimeFilterValues : filterValues;
-              const dValRef = lifetime ? dLifetimeFilterValues : dFilterValues;
-              const ofValRef = lifetime ? lifetimeOrFilterValues : orFilterValues;
-              const ofDValRef = lifetime ? dLifetimeOrFilterValues : dOrFilterValues;
-              const tFilterSelector = lifetime ? 'lifetime-filter-value-' : 'filter-value-';
-
+            const selectTargetFilter = (target) => {
               const newValue = target.value.toString().split('.')[0];
-              if(tSelectedIndexRef.value != null){
-                if(tSelectedOrIndexRef.value == null){
-                  valRef.value[tSelectedIndexRef.value] = newValue;
-                  dValRef.value[tSelectedIndexRef.value] = target.text;
-                  handleFilterChange(`${tFilterSelector}${tSelectedIndexRef.value}`);
-                  document.getElementById(`${tFilterSelector}${tSelectedIndexRef.value}`).size = target.text.length;
+              if(tSelectedIndexRef().value != null){
+                if(tSelectedOrIndexRef().value == null){
+                  valRef().value[tSelectedIndexRef().value] = newValue;
+                  dValRef().value[tSelectedIndexRef().value] = target.text;
+                  handleFilterChange(`${filterValSelector.value}${tSelectedIndexRef().value}`);
+                  document.getElementById(`${filterValSelector.value}${tSelectedIndexRef().value}`).size = target.text.length;
                 }else{
-                  ofValRef.value[tSelectedIndexRef.value][tSelectedOrIndexRef.value] = newValue;
-                  ofDValRef.value[tSelectedIndexRef.value][tSelectedOrIndexRef.value] = target.text;
-                  handleOrFilterChange(`${tFilterSelector}${tSelectedIndexRef.value}-${tSelectedOrIndexRef.value}`);
-                  document.getElementById(`${tFilterSelector}${tSelectedIndexRef.value}-${tSelectedOrIndexRef.value}`).size = target.text.length;
+                  ofValRef().value[tSelectedIndexRef().value][tSelectedOrIndexRef().value] = newValue;
+                  ofDValRef().value[tSelectedIndexRef().value][tSelectedOrIndexRef().value] = target.text;
+                  handleOrFilterChange(`${filterValSelector.value}${tSelectedIndexRef().value}-${tSelectedOrIndexRef().value}`);
+                  document.getElementById(`${filterValSelector.value}${tSelectedIndexRef().value}-${tSelectedOrIndexRef().value}`).size = target.text.length;
                 }
               }
-              closeTargetFilterMenu(lifetime);
+              closeTargetFilterMenu();
             };
 
             const dropSelectList = Vue.ref([]);
@@ -2489,7 +2468,7 @@
               possibleTargets.value = JSON.parse(await window.getPossibleTargets());
             });
 
-            const getTopLevelFilterOptions = (lifeTime) => {
+            const getTopLevelFilterOptions = () => {
               const commonOptions = [
                 { text: 'Ship', value: 'ship' },
                 { text: 'Duration', value: 'duration' },
@@ -2497,7 +2476,7 @@
                 { text: 'Target', value: 'target' },
                 { text: 'Double Cap', value: 'dubcap'}
               ];
-              if(lifeTime) return commonOptions;
+              if(isLifetime.value) return commonOptions;
               return commonOptions.concat({ text: 'Drops/Loot', value: 'drops' }, { text: 'Launch Date', value: 'launchDT' }, { text: 'Return Date', value: 'returnDT' });
             }
 
@@ -2572,34 +2551,28 @@
             //==============================================
             // Filter window functions
             //==============================================
-            function generateFilterConditionsArr(lifetime){
-              return new Array(lifetime ? lifetimeFilterConditionsCount.value : filterConditionsCount.value);
+            function generateFilterConditionsArr(){
+              return new Array(condCountRef().value);
             };
 
-            function generateOrFiltersConditionsArr(index, lifetime){
-              return new Array(lifetime ? lifetimeOrFilterConditionsCount.value[index] : orFilterConditionsCount.value[index]);
+            function generateOrFiltersConditionsArr(index){
+              return new Array(ofCondCountRef().value[index]);
             };
 
-            const updateValueStyling = (passedEl, isOr, lifetime) => {
-
-              const filterSelector = lifetime ? 'lifetime-filter-value-' : 'filter-value-';
-              const ofTopLevRef = lifetime ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions;
-              const topLevRef = lifetime ? lifetimeTopLevelFilterOptions : topLevelFilterOptions;
-              const ofValRef = lifetime ? lifetimeOrFilterValues : orFilterValues;
-              const valRef = lifetime ? lifetimeFilterValues : filterValues;
-
+            const updateValueStyling = (passedEl, isOr) => {
               //Extract the index from the element's id (split on the last dash)
-              const index = parseInt(passedEl.id.split("-")[lifetime ? 3 : 2]);
+              const index = parseInt(passedEl.id.split("-")[isLifetime.value ? 3 : 2]);
               const orIndex = isOr ? parseInt(passedEl.id.split("-").pop()) : null;
               if(isOr && orIndex == null) return;
 
-              const el = document.getElementById(filterSelector + index + (isOr ? ('-' + orIndex) : ''));
+              const el = document.getElementById(filterValSelector.value + index + (isOr ? ('-' + orIndex) : ''));
+
               if(!el) return;
               const existingBorder = el ? 'border-' + el.classList.toString().match(/ border-(.*?)(\s|"|'|$)/)[1].trim() : '';
               const existingText =  el ? 'text-' + el.classList.toString().replace('text-sm', ' ').match(/ text-(.*?)(\s|"|'|$)/)[1].trim() : ''; 
-              const isDrops = isOr ? ofTopLevRef.value[index][orIndex] == 'drops' : topLevRef.value[index] == 'drops';
-              const dropsValue = isOr ? ofValRef.value[index][orIndex] : valRef.value[index];
-              const isDuration = isOr ? ofTopLevRef.value[index][orIndex] == 'duration' : topLevRef.value[index] == 'duration';
+              const isDrops = isOr ? ofTopLevRef().value[index][orIndex] == 'drops' : topLevRef().value[index] == 'drops';
+              const dropsValue = isOr ? ofValRef().value[index][orIndex] : valRef().value[index];
+              const isDuration = isOr ? ofTopLevRef().value[index][orIndex] == 'duration' : topLevRef().value[index] == 'duration';
               var newBorder = '', newText = '';
 
               if(isDrops && dropsValue != null && dropsValue != ''){
@@ -2628,25 +2601,14 @@
               el.classList.add(newText);
             };
 
-            const updateFilterNoReCount = (lifetime) => {
-              const hasChangedRef = lifetime ? lifetimeFilterHasChanged : filterHasChanged;
-              const topLevRef = lifetime ? lifetimeTopLevelFilterOptions : topLevelFilterOptions;
-              const opRef = lifetime ? lifetimeFilterOperators : filterOperators;
-              const valRef = lifetime ? lifetimeFilterValues : filterValues;
-              const dataFilterRef = lifetime ? lifetimeDataFilter : dataFilter;
-              const ofCondCountRef = lifetime ? lifetimeOrFilterConditionsCount : orFilterConditionsCount;
-              const ofTopLevRef = lifetime ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions;
-              const ofOpRef = lifetime ? lifetimeOrFilterOperators : orFilterOperators;
-              const ofValRef = lifetime ? lifetimeOrFilterValues : orFilterValues;
-              const orDataFilterRef = lifetime ? lifetimeOrDataFilter : orDataFilter;
-
-              hasChangedRef.value = true;
+            const updateFilterNoReCount = () => {
+              hasChangedRef().value = true;
               const newDataFilter = [];
-              if(topLevRef.value.length != 0 && topLevRef.value != null){
-                for(let i = 0; i < topLevRef.value.length; i++){
-                const topLevel = topLevRef.value[i];
-                const op = opRef.value[i];
-                const val = valRef.value[i];
+              if(topLevRef().value.length != 0 && topLevRef().value != null){
+                for(let i = 0; i < topLevRef().value.length; i++){
+                const topLevel = topLevRef().value[i];
+                const op = opRef().value[i];
+                const val = valRef().value[i];
                 if(topLevel == null || op == null || (val == null || (topLevel?.indexOf('DT') > -1 && val == ''))) break;
                 newDataFilter.push({
                   topLevel: topLevel,
@@ -2655,16 +2617,16 @@
                 });
               } 
               }
-              dataFilterRef.value = newDataFilter;
+              dataFilterRef().value = newDataFilter;
 
               const newOrDataFilter = [];
-              for(let i = 0; i < ofCondCountRef.value.length; i++){
+              for(let i = 0; i < ofCondCountRef().value.length; i++){
                 const orDataFilterArr = [];
-                if(ofTopLevRef.value[i] == null || ofOpRef.value[i] == null || ofValRef.value[i] == null) continue;
-                for(let j = 0; j < ofTopLevRef.value[i].length; j++){
-                  const topLevel = ofTopLevRef.value[i][j];
-                  const op = ofOpRef.value[i][j];
-                  const val = ofValRef.value[i][j];
+                if(ofTopLevRef().value[i] == null || ofOpRef().value[i] == null || ofValRef().value[i] == null) continue;
+                for(let j = 0; j < ofTopLevRef().value[i].length; j++){
+                  const topLevel = ofTopLevRef().value[i][j];
+                  const op = ofOpRef().value[i][j];
+                  const val = ofValRef().value[i][j];
                   if(topLevel == null || op == null || (val == null || (topLevel?.indexOf('DT') > -1 && val == ''))) break;
                   orDataFilterArr.push({
                     topLevel: topLevel,
@@ -2674,30 +2636,23 @@
                 }
                 newOrDataFilter.push(orDataFilterArr);
               }
-              orDataFilterRef.value = newOrDataFilter;
+              orDataFilterRef().value = newOrDataFilter;
             };
 
             const handleFilterChange = (event) => {
               const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
-              const lifetime = targetId.indexOf('lifetime') > -1;
-
-              const filterSelector = lifetime ? 'lifetime-filter-top' : 'filter-top';
-              const opRef = lifetime ? lifetimeFilterOperators : filterOperators;
-              const valRef = lifetime ? lifetimeFilterValues : filterValues;
-              const dValRef = lifetime ? dLifetimeFilterValues : dFilterValues;
-
               if(targetEl.oldValue == null || targetEl.type == 'date') { 
-                updateFilterConditionsCount(lifetime); 
+                updateFilterConditionsCount(); 
                 targetEl.oldValue = targetEl.value;
-              } else updateFilterNoReCount(lifetime); 
-              updateValueStyling(targetEl, false, lifetime);
-              if(targetId.indexOf(filterSelector) > -1) {
+              } else updateFilterNoReCount(); 
+              updateValueStyling(targetEl, false);
+              if(targetId.indexOf(filterTopSelector.value) > -1) {
                 const index = parseInt(targetId.split("-").pop());
-                if(getFilterValueOptions(targetEl.value).indexOf(opRef.value[index]) == -1) opRef.value[index] = null;
-                if(getFilterValueOptions(targetEl.value).indexOf(valRef.value[index]) == -1) {
-                  valRef.value[index] = null;
-                  dValRef.value[index] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(opRef().value[index]) == -1) opRef().value[index] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(valRef().value[index]) == -1) {
+                  valRef().value[index] = null;
+                  dValRef().value[index] = null;
                 }
               }
             };
@@ -2705,44 +2660,30 @@
             const handleOrFilterChange = (event) => {
               const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
-              const lifetime = targetId.indexOf('lifetime') > -1;
-
-              const filterSelector = lifetime ? 'lifetime-filter-top' : 'filter-top';
-              const ofOpRef = lifetime ? lifetimeOrFilterOperators : orFilterOperators;
-              const ofValRef = lifetime ? lifetimeOrFilterValues : orFilterValues;
-              const ofDValRef = lifetime ? dLifetimeOrFilterValues : dOrFilterValues;
-
-              const index = parseInt(targetId.split("-")[lifetime ? 3 : 2]);
+              const index = parseInt(targetId.split("-")[isLifetime.value ? 3 : 2]);
               const orIndex = parseInt(targetId.split("-").pop()); 
-              updateFilterNoReCount(lifetime);
-              updateValueStyling(targetEl, true, lifetime);
-              if(targetId.indexOf(filterSelector) > -1) {
-                if(getFilterValueOptions(targetEl.value).indexOf(ofOpRef.value[index][orIndex]) == -1) ofOpRef.value[index][orIndex] = null;
-                if(getFilterValueOptions(targetEl.value).indexOf(ofValRef.value[index][orIndex]) == -1) {
-                  ofValRef.value[index][orIndex] = null;
-                  ofDValRef.value[index][orIndex] = null;
+              updateFilterNoReCount();
+              updateValueStyling(targetEl, true);
+              if(targetId.indexOf(filterTopSelector.value) > -1) {
+                if(getFilterValueOptions(targetEl.value).indexOf(ofOpRef().value[index][orIndex]) == -1) ofOpRef().value[index][orIndex] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(ofValRef().value[index][orIndex]) == -1) {
+                  ofValRef().value[index][orIndex] = null;
+                  ofDValRef().value[index][orIndex] = null;
                 }
               }
             };
 
-            const updateFilterConditionsCount = (lifetime) => {
-              const hasChangedRef = lifetime ? lifetimeFilterHasChanged : filterHasChanged;
-              const topLevRef = lifetime ? lifetimeTopLevelFilterOptions : topLevelFilterOptions;
-              const opRef = lifetime ? lifetimeFilterOperators : filterOperators;
-              const valRef = lifetime ? lifetimeFilterValues : filterValues;
-              const condCountRef = lifetime ? lifetimeFilterConditionsCount : filterConditionsCount;
-              const dataFilterRef = lifetime ? lifetimeDataFilter : dataFilter;
-
-              hasChangedRef.value = true;
+            const updateFilterConditionsCount = () => {
+              hasChangedRef().value = true;
               const newDataFilter = [];
-              if(topLevRef.value.length == 0 || topLevRef.value == null) return;
+              if(topLevRef().value.length == 0 || topLevRef().value == null) return;
               var maxIndex = 0;
               var set = false;
 
-              for(let i = 0; i < topLevRef.value.length; i++){
-                const topLevel = topLevRef.value[i];
-                const op = opRef.value[i];
-                const val = valRef.value[i];
+              for(let i = 0; i < topLevRef().value.length; i++){
+                const topLevel = topLevRef().value[i];
+                const op = opRef().value[i];
+                const val = valRef().value[i];
 
                 if(topLevel == null || op == null || (val == null || (topLevel?.indexOf('DT') > -1 && val == ''))) {
                   maxIndex = i;
@@ -2755,90 +2696,67 @@
                   val: val
                 });
 
-                if(i + 1 == condCountRef.value) {
-                  condCountRef.value += 1;
+                if(i + 1 == condCountRef().value) {
+                  condCountRef().value += 1;
                   set = true;
                 }
               }
 
-              if(!set) condCountRef.value = maxIndex + 1;
-              dataFilterRef.value = newDataFilter;
+              if(!set) condCountRef().value = maxIndex + 1;
+              dataFilterRef().value = newDataFilter;
             };
 
             //==============================================
             // Filter Vue functions
             //==============================================
-            const addOr = (index, lifetime) => {
-              const ofCondCountRef = lifetime ? lifetimeOrFilterConditionsCount : orFilterConditionsCount;
-              const ofTopLevRef = lifetime ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions;
-              const ofOpRef = lifetime ? lifetimeOrFilterOperators : orFilterOperators;
-              const ofValRef = lifetime ? lifetimeOrFilterValues : orFilterValues;
+            const addOr = (index) => {
+              if(ofCondCountRef().value == null) ofCondCountRef().value = [];
+              if(ofCondCountRef().value[index] == null) ofCondCountRef().value[index] = 1;
+              else ofCondCountRef().value[index] += 1;
 
-              if(ofCondCountRef.value == null) ofCondCountRef.value = [];
-              if(ofCondCountRef.value[index] == null) ofCondCountRef.value[index] = 1;
-              else ofCondCountRef.value[index] += 1;
+              if(ofTopLevRef().value[index] == null) ofTopLevRef().value[index] = [];
+              if(ofOpRef().value[index] == null) ofOpRef().value[index] = [];
+              if(ofValRef().value[index] == null) ofValRef().value[index] = [];
 
-              if(ofTopLevRef.value[index] == null) ofTopLevRef.value[index] = [];
-              if(ofOpRef.value[index] == null) ofOpRef.value[index] = [];
-              if(ofValRef.value[index] == null) ofValRef.value[index] = [];
-
-              ofTopLevRef.value[index].push(null);
-              ofOpRef.value[index].push(null);
-              ofValRef.value[index].push(null);
+              ofTopLevRef().value[index].push(null);
+              ofOpRef().value[index].push(null);
+              ofValRef().value[index].push(null);
             };
 
-            const removeAndShift = (index, lifetime) => {
-              const topLevRef = lifetime ? lifetimeTopLevelFilterOptions : topLevelFilterOptions;
-              const opRef = lifetime ? lifetimeFilterOperators : filterOperators;
-              const valRef = lifetime ? lifetimeFilterValues : filterValues;
-              const dValRef = lifetime ? dLifetimeFilterValues : dFilterValues;
-              const ofTopLevRef = lifetime ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions;
-              const ofOpRef = lifetime ? lifetimeOrFilterOperators : orFilterOperators;
-              const ofValRef = lifetime ? lifetimeOrFilterValues : orFilterValues;
-              const ofDValRef = lifetime ? dLifetimeOrFilterValues : dOrFilterValues;
-              const filterSelector = lifetime ? '.lifetime-filter-top' : '.filter-top';
-              const hasChangedRef = lifetime ? lifetimeFilterHasChanged : filterHasChanged;
-
+            const removeAndShift = (index) => {
               //Shift all elements after the one being removed down one
-              for(let i = index; i < topLevRef.value.length; i++){
-                topLevRef.value[i] = topLevRef.value[i + 1];
-                opRef.value[i] = opRef.value[i + 1];
-                valRef.value[i] = valRef.value[i + 1];
-                dValRef.value[i] = dValRef.value[i + 1];
+              for(let i = index; i < topLevRef().value.length; i++){
+                topLevRef().value[i] = topLevRef().value[i + 1];
+                opRef().value[i] = opRef().value[i + 1];
+                valRef().value[i] = valRef().value[i + 1];
+                dValRef().value[i] = dValRef().value[i + 1];
               
                 orFilterConditionsCount.value[i] = orFilterConditionsCount.value[i + 1];
-                ofTopLevRef.value[i] = ofTopLevRef.value[i + 1];
-                ofOpRef.value[i] = ofOpRef.value[i + 1];
-                ofValRef.value[i] = ofValRef.value[i + 1];
-                ofDValRef.value[i] = ofDValRef.value[i + 1];
+                ofTopLevRef().value[i] = ofTopLevRef().value[i + 1];
+                ofOpRef().value[i] = ofOpRef().value[i + 1];
+                ofValRef().value[i] = ofValRef().value[i + 1];
+                ofDValRef().value[i] = ofDValRef().value[i + 1];
               }
-              updateFilterConditionsCount(lifetime);
-              updateFilterNoReCount(lifetime);
-              hasChangedRef.value = true;
+              updateFilterConditionsCount();
+              updateFilterNoReCount();
+              hasChangedRef().value = true;
 
               //Look for all `filter-top` elements and update their stylings
-              document.querySelectorAll(filterSelector).forEach(el => updateValueStyling(el, false, lifetime));
+              document.querySelectorAll(filterTopQuerySelector.value).forEach(el => updateValueStyling(el, false));
             }
 
-            const removeOrAndShift = (index, orIndex, lifetime) => {
-              const ofTopLevRef = lifetime ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions;
-              const ofOpRef = lifetime ? lifetimeOrFilterOperators : orFilterOperators;
-              const ofValRef = lifetime ? lifetimeOrFilterValues : orFilterValues;
-              const ofDValRef = lifetime ? dLifetimeOrFilterValues : dOrFilterValues;
-              const ofCondCountRef = lifetime ? lifetimeOrFilterConditionsCount : orFilterConditionsCount;
-              const hasChangedRef = lifetime ? lifetimeFilterHasChanged : filterHasChanged;
-
+            const removeOrAndShift = (index, orIndex) => {
               //Shift all elements after the one being removed down one
-              for(let i = orIndex; i < ofTopLevRef.value[index].length; i++){
-                ofTopLevRef.value[index][i] = ofTopLevRef.value[index][i + 1];
-                ofOpRef.value[index][i] = ofOpRef.value[index][i + 1];
-                ofValRef.value[index][i] = ofValRef.value[index][i + 1];
-                ofDValRef.value[index][i] = ofDValRef.value[index][i + 1];
+              for(let i = orIndex; i < ofTopLevRef().value[index].length; i++){
+                ofTopLevRef().value[index][i] = ofTopLevRef().value[index][i + 1];
+                ofOpRef().value[index][i] = ofOpRef().value[index][i + 1];
+                ofValRef().value[index][i] = ofValRef().value[index][i + 1];
+                ofDValRef().value[index][i] = ofDValRef().value[index][i + 1];
               }
-              ofCondCountRef.value[index] -= 1;
-              if(ofCondCountRef.value[index] == 0) ofCondCountRef.value[index] = null;
-              updateFilterNoReCount(lifetime);
-              hasChangedRef.value = true;
+              ofCondCountRef().value[index] -= 1;
+              if(ofCondCountRef().value[index] == 0) ofCondCountRef().value[index] = null;
+              updateFilterNoReCount();
+              hasChangedRef().value = true;
             }
 
             const testMissionAgainstFilter = async(mission, filter) => {
@@ -3095,6 +3013,31 @@
               });
             });
 
+            const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeDrops);
+            const filterTopSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-top' : 'filter-top');
+            const filterTopQuerySelector = Vue.computed(() => isLifetime.value ? '.lifetime-filter-top' : '.filter-top');
+            const filterValSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-value-' : 'filter-value-');
+            const tSearchBarSelector = Vue.computed(() => isLifetime.value ? 'target-search-lifetime' : 'target-search');
+            const targetQuerySelector = Vue.computed(() => isLifetime.value ? '.overlay-target-lifetime' : '.overlay-target');
+            const ofTopLevRef = () => {return(isLifetime.value ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions)};
+            const topLevRef = () => {return(isLifetime.value ? lifetimeTopLevelFilterOptions : topLevelFilterOptions)};
+            const ofValRef = () => {return(isLifetime.value ? lifetimeOrFilterValues : orFilterValues)};
+            const valRef = () => {return(isLifetime.value ? lifetimeFilterValues : filterValues)};
+            const hasChangedRef = () => {return(isLifetime.value ? lifetimeFilterHasChanged : filterHasChanged)};
+            const opRef = () => {return(isLifetime.value ? lifetimeFilterOperators : filterOperators)};
+            const dataFilterRef = () => {return(isLifetime.value ? lifetimeDataFilter : dataFilter)};
+            const ofCondCountRef = () => {return(isLifetime.value ? lifetimeOrFilterConditionsCount : orFilterConditionsCount)};
+            const ofOpRef = () => {return(isLifetime.value ? lifetimeOrFilterOperators : orFilterOperators)};
+            const orDataFilterRef = () => {return(isLifetime.value ? lifetimeOrDataFilter : orDataFilter)};
+            const ofDValRef = () => {return(isLifetime.value ? dLifetimeOrFilterValues : dOrFilterValues)};
+            const condCountRef = () => {return(isLifetime.value ? lifetimeFilterConditionsCount : filterConditionsCount)};
+            const dValRef = () => {return(isLifetime.value ? dLifetimeFilterValues : dFilterValues)};
+            const tSelectedIndexRef = () => {return(isLifetime.value ? lifetimeTargetFilterSelectedIndex : targetFilterSelectedIndex)};
+            const tSelectedOrIndexRef = () => {return(isLifetime.value ? lifetimeTargetFilterSelectedOrIndex : targetFilterSelectedOrIndex)};
+            const tSearchTermRef = () => {return(isLifetime.value ? lifetimeTargetSearchTerm : targetSearchTerm)};
+            const tFilterMenuOpenRef = () => {return(isLifetime.value ? lifetimeTargetFilterMenuOpen : targetFilterMenuOpen)};
+            const tSelectListRef = () => {return(isLifetime.value ? lifetimeTargetSelectList : targetSelectList)};
+            
             return {
               appVersion,
               appDirectory,
