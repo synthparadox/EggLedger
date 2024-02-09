@@ -9,7 +9,7 @@
   box-sizing: border-box;
 }
 
-.overlay-mission, .overlay-drop, .overlay-target, .overlay-update {
+.overlay-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update {
   background: rgba(0, 0, 0, 0.5);
 }
 

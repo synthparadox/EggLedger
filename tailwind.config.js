@@ -25,12 +25,6 @@ module.exports = {
       zIndex: {
         eidoverlay: '-20',
       },
-      padding: {
-        '0': '0rem',
-        '05rem': '0.5rem',
-        '1rem:' : '1rem',
-        '2rem': '2rem',
-      },
       height: {
         stretch: 'stretch',
         '1rem': '1rem',
@@ -90,8 +84,17 @@ module.exports = {
         '3rem': '3rem',
       },
       margin: {
+        '0': '0rem !important',
+        '025rem': '0.25rem !important',
         '075rem': '0.75rem',
         '05rem': '0.5rem',
+      },
+      padding: {
+        '0': '0rem',
+        '05rem': '0.5rem',
+        '1rem:' : '1rem',
+        '2rem': '2rem',
+        'select': '2.5rem',
       },
       fontSize: {
         'star': '1.4rem',

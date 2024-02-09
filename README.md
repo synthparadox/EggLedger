@@ -21,12 +21,13 @@ If your Microsoft Defender is hating the file on, mark your `Ledger` folder as e
 
 **Why is EggLedger asking me to install Chrome?**
 
-EggLedger was originally built by MK2 on top of a `lorca`, an open-source solution to building Go apps with a web UI. `lorca` uses Chrome as its browser engine, and the app is built to use Chrome.
-I have since forked the project, and have added support for the following browsers on Windows:
+EggLedger was originally built by MK2 on top of a `lorca`, an open-source solution to building Go apps with a web UI. `lorca` uses Chrome as its browser engine.
+I have since forked [my own version](https://github.com/DavidArthurCole/lorca) of `lorca`, and have added support for the following browsers on Windows:
   - Brave
   - Opera
   - Vivaldi
   - Edge
+
 For other operating systems, or in the lack of any of the above browsers, the app will rely on a Chrome or Chromium installation.
 
 ## Security and privacy
