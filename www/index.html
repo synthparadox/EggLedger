@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="index.css" />
     <link rel="stylesheet" href="custom.css" />
     <script src="vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
     <script src="shortcuts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
   </head>
@@ -75,7 +76,7 @@
                 </div>
                 <div v-if="!isPlayerIdValid" class="ledger-input-overlay">
                   <span class="invisible whitespace-pre">
-                    {{ playerId }}</span> ( <span class="text-red-700">Invalid EID: {{getEidProblem(playerId)}}</span> )
+                    {{ playerId }} ( <span class="text-red-700">Invalid EID: {{getEidProblem(playerId)}}</span> )
                   </span>
                 </div>
                 <input
@@ -97,7 +98,7 @@
                   <li
                     v-for="account in knownAccounts"
                     v-bind:key="account.id" class="drop-opt"
-                    v-on:click="selectPlayerId(account.id)"
+                    v-on:click="closePlayerIdDropdown(account.id)"
                   >
                     {{ account.id }} (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == account.id)?.accountColor">{{
                       objectedExistingData.find(acc => acc.id == account.id)?.nickname }} {{ objectedExistingData.find(acc => acc.id == account.id)?.ebString ?? "???" }}</span>) 
@@ -240,20 +241,18 @@
 
             <div class="space-y-1">
               <h2 class="font-bold">How do I use EggLedger?</h2>
-              <p>
-                <ul class="about-list-1">
-                  <li>Go to the Ledger tab</li>
-                  <li>Enter your Egg, Inc. account ID</li>
-                  <li>
-                    Press "Fetch"
-                    <ul class="about-list-2">
-                      <li>The first fetch session for an account could take a while, if you have lots of completed missions</li>
-                      <li>Subsequent sessions will only fetch unrecorded missions</li>
-                    </ul>
-                  </li>
-                </ul>
-                <span class="ledger-underline">Data for multiple accounts can coexist.</span>
-              </p>
+              <ul class="about-list-1">
+                <li>Go to the Ledger tab</li>
+                <li>Enter your Egg, Inc. account ID</li>
+                <li>
+                  Press "Fetch"
+                  <ul class="about-list-2">
+                    <li>The first fetch session for an account could take a while, if you have lots of completed missions</li>
+                    <li>Subsequent sessions will only fetch unrecorded missions</li>
+                  </ul>
+                </li>
+              </ul>
+              <span class="ledger-underline">Data for multiple accounts can coexist.</span>
             </div>
             <hr />
 
@@ -296,38 +295,36 @@
 
             <div class="space-y-1">
               <h2 class="font-bold">Where do I find my Egg, Inc. account ID?</h2>
-              <p>
-                <ul class="about-list-1">
-                  <li class="mt-1">
-                    Open the game menu <img src="images/icon_menu.webp" alt="Menu Icon" class="game-btn-ico"/>
-                  </li>
-                  <li class="mt-1">
-                    Choose Settings <img src="images/icon_settings.webp" alt="Settings Icon" class="game-btn-ico"/>
-                  </li>
-                  <li class="mt-1 mb-1">
-                    Choose &nbsp; <span class="p-0.5 text-xs rounded-md bg-privacy_blue w-4 pl-3 pr-3"> Privacy &amp; Data </span>
-                  </li>
-                  <li class="mt1">
-                    Your EID is at the bottom
-                    <ul class="about-list-2">
-                      <li class="mt-1">
-                        <span class="ledger-underline">It should look like EI1234567890123456</span>. That's the
-                        letters "EI" followed by 16 digits.
-                      </li>
-                      <li class="mt-1 mb-1">
-                        Alternatively, if you choose Help
-                        <img
-                          src="images/icon_help.webp"
-                          alt="Help Icon"
-                          class="game-btn-ico"
-                        />
-                        in the main menu and click on &nbsp; <span class="p-0.5 text-xs rounded-md bg-data_loss_red w-4 pl-3 pr-3"> Data Loss Issue </span> &nbsp; the game will auto-compose an email
-                        with your ID in the subject
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </p>
+              <ul class="about-list-1">
+                <li class="mt-1">
+                  Open the game menu <img src="images/icon_menu.webp" alt="Menu Icon" class="game-btn-ico"/>
+                </li>
+                <li class="mt-1">
+                  Choose Settings <img src="images/icon_settings.webp" alt="Settings Icon" class="game-btn-ico"/>
+                </li>
+                <li class="mt-1 mb-1">
+                  Choose &nbsp; <span class="p-0.5 text-xs rounded-md bg-privacy_blue w-4 pl-3 pr-3"> Privacy &amp; Data </span>
+                </li>
+                <li class="mt1">
+                  Your EID is at the bottom
+                  <ul class="about-list-2">
+                    <li class="mt-1">
+                      <span class="ledger-underline">It should look like EI1234567890123456</span>. That's the
+                      letters "EI" followed by 16 digits.
+                    </li>
+                    <li class="mt-1 mb-1">
+                      Alternatively, if you choose Help
+                      <img
+                        src="images/icon_help.webp"
+                        alt="Help Icon"
+                        class="game-btn-ico"
+                      />
+                      in the main menu and click on &nbsp; <span class="p-0.5 text-xs rounded-md bg-data_loss_red w-4 pl-3 pr-3"> Data Loss Issue </span> &nbsp; the game will auto-compose an email
+                      with your ID in the subject
+                    </li>
+                  </ul>
+                </li>
+              </ul>
             </div>
             <hr />
 
@@ -490,7 +487,7 @@
           </div>
           <div class="top-click-detect w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
             <div class="inner-click-detect max-h-80vw bg-dark rounded-lg relative p-1rem">
-              <button class="detect-trigger close-button" v-on:click="closeMissionOverlay()">
+              <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -542,108 +539,33 @@
                 </button>
 
                 <!-- Artifacts -->
-                <div v-if="viewMissionData.artifactCount > 0">
-                  <div class="mission-view-div bg-blue-900">
-                    Artifacts ({{ viewMissionData.artifactCount }})
-                  </div>
-                  <div class="ledger-af-repeat">
-                    <div class="mission-view-rep" v-for="(af, afindex) in viewMissionData.artifacts">
-                      <a v-external-link :class="'ledger-af-link tooltip-custom ' + afBackgroundClass(af)" 
-                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(af, 1) + '/'">
-                        <img class="h-full w-full" :alt="af.gameName" :src="specPath(af, 1)"/>
-                        <div v-if="af.count > 1" :class="'ledger-af-count ' + numToDigClass(af.count)">
-                          {{ af.count }}
-                        </div>
-                        <span class="text-sm tooltiptext-custom speech-bubble">
-                          {{ af.gameName }} (T{{parseInt(af.level) + 1}})
-                          <span :class="afRarityClass(af)">
-                            {{ afRarityText(af) }}
-                          </span>
-                          × {{ af.count }} <br />
-                          {{ boundEffectString(af.effectString)[0] }}
-                          <span class="text-sm text-green-500">
-                            {{ boundEffectString(af.effectString)[1] }}
-                          </span>
-                          {{ boundEffectString(af.effectString)[2] }}
-                        </span>
-                      </a>
-                    </div>
-                  </div>
-                  <br />
-                </div>
+                <drop-display
+                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-blue-900"
+                  label-display-value="Artifacts" :if-count="viewMissionData.artifactCount" :item-array="viewMissionData.artifacts"
+                  spec-path-offset="1" type="artifact" ledger-type="mission"
+                  :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
+                ></drop-display>
 
                 <!-- Stones -->
-                <div v-if="viewMissionData.stoneCount > 0">
-                  <div class="mission-view-div bg-fuchsia-900">
-                    Eggfinity Stones ({{ viewMissionData.stoneCount }})
-                  </div>
-                  <div class="ledger-af-repeat">
-                    <div class="mission-view-rep" v-for="(st, stindex) in viewMissionData.stones">
-                      <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
-                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(st, 2) + '/'">
-                        <img class="h-full w-full" :alt="st.gameName" :src="specPath(st, 2)"/>
-                        <div v-if="st.count > 1" :class="'ledger-af-count ' + numToDigClass(st.count)">
-                          {{ st.count }}
-                        </div>
-                        <span class="text-sm tooltiptext-custom speech-bubble">
-                          {{ st.gameName }} (T{{parseInt(st.level) + 2}})
-                          × {{ st.count }} <br />
-                          {{ boundEffectString(st.effectString)[0] }}
-                          <span class="text-sm text-green-500">
-                            {{ boundEffectString(st.effectString)[1] }}
-                          </span>
-                          {{ boundEffectString(st.effectString)[2] }}
-                        </span>
-                      </a>
-                    </div>
-                  </div>
-                  <br />
-                </div>
+                <drop-display
+                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-fuchsia-900"
+                  label-display-value="Eggfinity Stones" :if-count="viewMissionData.stoneCount" :item-array="viewMissionData.stones"
+                  spec-path-offset="2" type="stone" ledger-type="mission"
+                ></drop-display>
 
                 <!-- Ingredients -->
-                <div v-if="viewMissionData.ingredientCount > 0">
-                  <div class="mission-view-div text-gray-400 bg-darkerer">
-                    Ingredients ({{ viewMissionData.ingredientCount }})
-                  </div>
-                  <div class="ledger-af-repeat">
-                    <div class="mission-view-rep" v-for="(ing, ingindex) in viewMissionData.ingredients">
-                      <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
-                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(ing, 1) + '/'">
-                        <img class="h-full w-full" :alt="ing.gameName" :src="specPath(ing, 1)"/>
-                        <div v-if="ing.count > 1" :class="'ledger-af-count ' + numToDigClass(ing.count)">
-                          {{ ing.count }}
-                        </div>
-                        <span class="text-sm tooltiptext-custom speech-bubble">
-                          {{ ing.gameName }} (T{{parseInt(ing.level) + 1}})
-                          × {{ ing.count }}
-                        </span>
-                      </a>
-                    </div>
-                  </div>
-                  <br />
-                </div>
+                <drop-display
+                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
+                  label-display-value="Ingredients" :if-count="viewMissionData.ingredientCount" :item-array="viewMissionData.ingredients"
+                  spec-path-offset="1" type="ingredient" ledger-type="mission"
+                ></drop-display>
 
                 <!-- Stone Fragments -->
-                <div v-if="viewMissionData.stoneFragmentCount > 0">
-                  <div class="mission-view-div text-gray-400 bg-darkerer">
-                    Stone Fragments ({{ viewMissionData.stoneFragmentCount }})
-                  </div>
-                  <div class="ledger-af-repeat">
-                    <div class="mission-view-rep" v-for="(sf, sfindex) in viewMissionData.stoneFragments">
-                      <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
-                        target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
-                        <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
-                        <div v-if="sf.count > 1" :class="'ledger-af-count ' + numToDigClass(sf.count)">
-                          {{ sf.count }}
-                        </div>
-                        <span class="text-sm tooltiptext-custom speech-bubble">
-                          {{ sf.gameName }} (T{{parseInt(sf.level) + 1}})
-                          × {{ sf.count }} <br />
-                      </a>
-                    </div>
-                    <br />
-                  </div>
-                </div>
+                <drop-display
+                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
+                  label-display-value="Stone Fragments" :if-count="viewMissionData.stoneFragmentCount" :item-array="viewMissionData.stoneFragments"
+                  spec-path-offset="1" type="stone_frag" ledger-type="mission"
+                ></drop-display>
 
                 <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
                 <div class="mt-2 text-xs text-gray-300 text-center">
@@ -693,7 +615,7 @@
                 <li
                   v-for="account in objectedExistingData"
                   v-bind:key="account.id" class="drop-opt"
-                  v-on:click="selectViewAccount(account)"
+                  v-on:click="closeMissionsViewAccountDropdown(account)"
                 >
                   {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
                 </li>
@@ -747,7 +669,7 @@
                     <select class="filter-select border-gray-300 text-gray-400"
                       v-on:change="handleFilterChange"
                       v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
-                      <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
+                      <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                         {{ validOption.text }}
                     </select>
 
@@ -755,7 +677,7 @@
                     <select class="filter-select border-gray-300 text-gray-400"
                       v-on:change="handleFilterChange"
                       v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
-                      <option v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                      <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                         {{ validOperator.text }}
                     </select>
 
@@ -764,7 +686,7 @@
                       v-on:change="handleFilterChange"
                       v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && isBaseFilter(topLevelFilterOptions[index])"
                       v-model="filterValues[index]" :id="'filter-value-' + index">
-                      <option v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                      <option class="filter-select-option" v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                         {{ validValue.text }}
                     </select>
 
@@ -828,7 +750,7 @@
                       <select v-model="orFilterTopLevelOptions[index][orIndex]"
                         class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleOrFilterChange" :id="'filter-top-' + index + '-' + orIndex">
-                        <option v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
+                        <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
                           {{ validOption.text }}
                       </select>
 
@@ -837,7 +759,7 @@
                         v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
                         class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleOrFilterChange" :id="'filter-op-' + index + '-' + orIndex">
-                        <option v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                        <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                           {{ validOperator.text }}
                       </select>
 
@@ -846,7 +768,7 @@
                         v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && isBaseFilter(orFilterTopLevelOptions[index][orIndex])"
                         class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
-                        <option v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                        <option class="filter-select-option" v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
                       </select>
 
@@ -927,7 +849,7 @@
             </form>
           </div>
 
-          <div class="min-h-7 max-h-20 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
+          <div class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <span class="font-bold text-base text-gray-400">Options</span><br />
               <span class="mr-5">
@@ -945,6 +867,17 @@
               <span class="mr-5">
                 <label for="useGifsForRarity" class="ext-opt-label">Particle GIFs for rarity</label>
                 <input id="useGifsForRarity" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
+              </span>
+            </div>
+            <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+              <span class="font-bold text-base text-gray-400">Drops Sort Method</span><br />
+              <span class="mr-5">
+                <label for="viewMissionSortDefault" class="ext-opt-label">Default</label>
+                <input id="viewMissionSortDefault" type="radio" v-model="viewMissionSortMethod" value="default" class="ext-opt-check"/>
+              </span>
+              <span class="mr-5">
+                <label for="viewMissionSortIV" class="ext-opt-label">Inventory Visualizer</label>
+                <input id="viewMissionSortIV" type="radio" v-model="viewMissionSortMethod" value="iv" class="ext-opt-check"/>
               </span>
             </div>
           </div>
@@ -1143,7 +1076,7 @@
                     <select class="filter-select border-gray-300 text-gray-400"
                       v-on:change="handleFilterChange"
                       v-model="lifetimeTopLevelFilterOptions[index]" :id="'lifetime-filter-top-' + index">
-                      <option v-for="validOption in getTopLevelFilterOptions(true)" v-bind:key="validOption" v-bind:value="validOption.value">
+                      <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions(true)" v-bind:key="validOption" v-bind:value="validOption.value">
                         {{ validOption.text }}
                     </select>
 
@@ -1151,7 +1084,7 @@
                     <select class="filter-select border-gray-300 text-gray-400"
                       v-on:change="handleFilterChange"
                       v-if="lifetimeTopLevelFilterOptions[index] != null" v-model="lifetimeFilterOperators[index]" :id="'lifetime-filter-op-' + index">
-                      <option v-for="validOperator in getFilterOpOptions(lifetimeTopLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                      <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(lifetimeTopLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                         {{ validOperator.text }}
                     </select>
 
@@ -1160,17 +1093,9 @@
                       v-on:change="handleFilterChange"
                       v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && isBaseFilter(lifetimeTopLevelFilterOptions[index])"
                       v-model="lifetimeFilterValues[index]" :id="'lifetime-filter-value-' + index">
-                      <option v-for="validValue in getFilterValueOptions(lifetimeTopLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                      <option class="filter-select-option" v-for="validValue in getFilterValueOptions(lifetimeTopLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                         {{ validValue.text }}
                     </select>
-
-                    <!-- Drop Selectors
-                      opens a custom modal -->
-                    <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
-                      v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && lifetimeTopLevelFilterOptions[index] == 'drops'"
-                      class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
-                      v-model="dLifetimeFilterValues[index]" :id="'lifetime-filter-value-' + index"
-                    >
 
                     <!-- Target Selectors
                       opens a custom modal -->
@@ -1179,15 +1104,6 @@
                       class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
                       v-model="dLifetimeFilterValues[index]" :id="'lifetime-filter-value-' + index"
                     >
-
-                    <!-- Value options - Launch/Return Date Selectors
-                      Min: 20 January 2021  
-                      Max: Today-->
-                    <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="lifetimeFilterValues[index]"
-                      class="filter-select border-gray-300 text-gray-400"
-                      v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && (lifetimeTopLevelFilterOptions[index] == 'launchDT' || lifetimeTopLevelFilterOptions[index] == 'returnDT')"
-                      v-on:change="handleFilterChange" required="required"
-                      v-bind:disabled="lifetimeTopLevelFilterOptions[index + 1] != null" :id="'lifetime-filter-value-' + index">
 
                     <!-- OR controls -->
                     <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
@@ -1225,7 +1141,7 @@
                       <select v-model="lifetimeOrFilterTopLevelOptions[index][orIndex]"
                         class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleOrFilterChange" :id="'lifetime-filter-top-' + index + '-' + orIndex">
-                        <option v-for="validOption in getTopLevelFilterOptions(true)" v-bind:key="validOption" v-bind:value="validOption.value">
+                        <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions(true)" v-bind:key="validOption" v-bind:value="validOption.value">
                           {{ validOption.text }}
                       </select>
 
@@ -1234,7 +1150,7 @@
                         v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null" v-model="lifetimeOrFilterOperators[index][orIndex]"
                         class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleOrFilterChange" :id="'lifetime-filter-op-' + index + '-' + orIndex">
-                        <option v-for="validOperator in getFilterOpOptions(lifetimeOrFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
+                        <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(lifetimeOrFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
                           {{ validOperator.text }}
                       </select>
 
@@ -1243,18 +1159,9 @@
                         v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null && lifetimeOrFilterOperators[index][orIndex] != null && isBaseFilter(lifetimeOrFilterTopLevelOptions[index][orIndex])"
                         class="filter-select border-gray-300 text-gray-400"
                         v-on:change="handleOrFilterChange" :id="'lifetime-filter-value-' + index + '-' + orIndex">
-                        <option v-for="validValue in getFilterValueOptions(lifetimeOrFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
+                        <option class="filter-select-option" v-for="validValue in getFilterValueOptions(lifetimeOrFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
                           {{ validValue.text }}
                       </select>
-
-                      <!-- Drop Selectors
-                        opens a custom modal -->
-                      <input type="text" v-on:click="e => {e.preventDefault(); openDropLifetimeFilterMenu(index, orIndex);}"
-                        v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null && lifetimeOrFilterOperators[index][orIndex] != null && lifetimeOrFilterTopLevelOptions[index][orIndex] == 'drops'"
-                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
-                        v-bind:value="dLifetimeOrFilterValues[index][orIndex]" readonly
-                        :id="'lifetime-filter-value-' + index + '-' + orIndex"
-                      >
 
                       <!-- Target Selectors
                         opens a custom modal -->
@@ -1265,14 +1172,6 @@
                         :id="'lifetime-filter-value-' + index + '-' + orIndex"
                       >
 
-                      <!-- Launch/Return Date Selectors
-                        Min: 20 January 2021  
-                        Max: Today + 5 days -->
-                      <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="lifetimeOrFilterValues[index][orIndex]"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null && lifetimeOrFilterOperators[index][orIndex] != null && (lifetimeOrFilterTopLevelOptions[index][orIndex] == 'launchDT' || lifetimeOrFilterTopLevelOptions[index][orIndex] == 'returnDT')"
-                        v-on:change="handleOrFilterChange" :id="'lifetime-filter-value-' + index + '-' + orIndex" required
-                      >
                       <!-- Clear button-->
                       <button 
                         class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
@@ -1315,6 +1214,10 @@
                   <label for="useGifsForRarity" class="ext-opt-label">Particle GIFs for rarity</label>
                   <input id="useGifsForRarity" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
                 </span>
+                <span class="mr-5">
+                  <label for="lifetimeDropsPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
+                  <input id="lifetimeDropsPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
+                </span>
               </div>
               <div class="mb-05rem">
                 <span>Sort method</span>
@@ -1336,109 +1239,35 @@
                   <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
                 </span>
               </div>
+
               <!-- Artifacts -->
-              <div v-if="lifetimeDrops.artifactCount > 0">
-                <div class="mission-view-div bg-blue-900 text-gray-300">
-                  Artifacts ({{ lifetimeDrops.artifactCount }})
-                </div>
-                <div class="ledger-af-repeat-lifetime">
-                  <div class="af-view-rep-lifetime" v-for="(af, afindex) in lifetimeDrops.artifacts">
-                    <a v-external-link :class="'ledger-af-link tooltip-custom ' + afBackgroundClass(af)" 
-                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(af, 1) + '/'">
-                      <img class="h-full w-full" :alt="af.gameName" :src="specPath(af, 1)"/>
-                      <div v-if="af.count > 1" :class="'ledger-af-count ' + numToDigClass(af.count)">
-                        {{ af.count }}
-                      </div>
-                      <span class="text-sm tooltiptext-custom speech-bubble">
-                        {{ af.gameName }} (T{{parseInt(af.level) + 1}})
-                        <span :class="afRarityClass(af)">
-                          {{ afRarityText(af) }}
-                        </span>
-                        × {{ af.count }} <br />
-                        {{ boundEffectString(af.effectString)[0] }}
-                        <span class="text-sm text-green-500">
-                          {{ boundEffectString(af.effectString)[1] }}
-                        </span>
-                        {{ boundEffectString(af.effectString)[2] }}
-                      </span>
-                    </a>
-                  </div>
-                </div>
-                <br />
-              </div>
+              <drop-display
+                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-blue-900 text-gray-300"
+                label-display-value="Artifacts" :if-count="lifetimeDrops.artifactCount" :item-array="lifetimeDrops.artifacts"
+                spec-path-offset="1" type="artifact" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
+                :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
+              ></drop-display>
 
               <!-- Stones -->
-              <div v-if="lifetimeDrops.stoneCount > 0">
-                <div class="mission-view-div bg-fuchsia-900 text-gray-300">
-                  Eggfinity Stones ({{ lifetimeDrops.stoneCount }})
-                </div>
-                <div class="ledger-af-repeat-lifetime">
-                  <div class="af-view-rep-lifetime" v-for="(st, stindex) in lifetimeDrops.stones">
-                    <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
-                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(st, 2) + '/'">
-                      <img class="h-full w-full" :alt="st.gameName" :src="specPath(st, 2)"/>
-                      <div v-if="st.count > 1" :class="'ledger-af-count ' + numToDigClass(st.count)">
-                        {{ st.count }}
-                      </div>
-                      <span class="text-sm tooltiptext-custom speech-bubble">
-                        {{ st.gameName }} (T{{parseInt(st.level) + 2}})
-                        × {{ st.count }} <br />
-                        {{ boundEffectString(st.effectString)[0] }}
-                        <span class="text-sm text-green-500">
-                          {{ boundEffectString(st.effectString)[1] }}
-                        </span>
-                        {{ boundEffectString(st.effectString)[2] }}
-                      </span>
-                    </a>
-                  </div>
-                </div>
-                <br />
-              </div>
+              <drop-display
+                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-fuchsia-900 text-gray-300"
+                label-display-value="Eggfinity Stones" :if-count="lifetimeDrops.stoneCount" :item-array="lifetimeDrops.stones"
+                spec-path-offset="2" type="stone" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
+              ></drop-display>
 
               <!-- Ingredients -->
-              <div v-if="lifetimeDrops.ingredientCount > 0">
-                <div class="mission-view-div text-gray-400 bg-darkerer">
-                  Ingredients ({{ lifetimeDrops.ingredientCount }})
-                </div>
-                <div class="ledger-af-repeat-lifetime">
-                  <div class="af-view-rep-lifetime" v-for="(ing, ingindex) in lifetimeDrops.ingredients">
-                    <a v-external-link class="ledger-af-link tooltip-custom bg-common" 
-                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(ing, 1) + '/'">
-                      <img class="h-full w-full" :alt="ing.gameName" :src="specPath(ing, 1)"/>
-                      <div v-if="ing.count > 1" :class="'ledger-af-count ' + numToDigClass(ing.count)">
-                        {{ ing.count }}
-                      </div>
-                      <span class="text-sm tooltiptext-custom speech-bubble">
-                        {{ ing.gameName }} (T{{parseInt(ing.level) + 1}})
-                        × {{ ing.count }}
-                      </span>
-                    </a>
-                  </div>
-                </div>
-                <br />
-              </div>
+              <drop-display
+                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
+                label-display-value="Ingredients" :if-count="lifetimeDrops.ingredientCount" :item-array="lifetimeDrops.ingredients"
+                spec-path-offset="1" type="ingredient" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
+              ></drop-display>
 
               <!-- Stone Fragments -->
-              <div v-if="lifetimeDrops.stoneFragmentCount > 0">
-                <div class="mission-view-div text-gray-400 bg-darkerer">
-                  Stone Fragments ({{ lifetimeDrops.stoneFragmentCount }})
-                </div>
-                <div class="ledger-af-repeat-lifetime">
-                  <div class="af-view-rep-lifetime" v-for="(sf, sfindex) in lifetimeDrops.stoneFragments">
-                    <a v-external-link class="ledger-af-link tooltip-custom bg-darker" 
-                      target="_blank" :href="'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + afExplorerName(sf, 1) + '/'">
-                      <img class="h-full w-full" :alt="sf.gameName" :src="specPath(sf, 1)"/>
-                      <div v-if="sf.count > 1" :class="'ledger-af-count ' + numToDigClass(sf.count)">
-                        {{ sf.count }}
-                      </div>
-                      <span class="text-sm tooltiptext-custom speech-bubble">
-                        {{ sf.gameName }} (T{{parseInt(sf.level) + 1}})
-                        × {{ sf.count }} <br />
-                    </a>
-                  </div>
-                  <br />
-                </div>
-              </div>
+              <drop-display 
+                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
+                label-display-value="Stone Fragments" :if-count="lifetimeDrops.stoneFragmentCount" :item-array="lifetimeDrops.stoneFragments"
+                spec-path-offset="1" type="stone_frag" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
+              ></drop-display>
             </div>
           </div>
 
@@ -1489,10 +1318,12 @@
             <span class="text-lg text-gray-400">New Version of EggLedger Available: <span class="text-green-500">{{ appHasUpdate }}</span></span><br/>
             <span>Update information:</span>
             <div v-if="appReleaseNotes !== ''" class="text-left flex-1 bg-darkerer overflow-auto gh-markdown-content max-h-60vh p-1rem rounded-md" v-html="markedParser(appReleaseNotes)"></div>
-            <div class="mt-1rem space-x-3 flex-auto">
-              <button class="min-w-30vw btn btn-outline-dark p-05rem pr-2rem pl-2rem rounded-md bg-blue-500 border-blue-600 hover:bg-blue-600 hover:border-blue-700">
-                <a v-external-link class="text-gray-200 hover:text-gray-300" href="https://github.com/DavidArthurCole/EggLedger/releases/latest">Download</a>
-              </button>
+            <div class="mt-1rem flex-auto justify-center items-center">
+              <a v-external-link class="items-center justify-center text-gray-200 hover:text-gray-300" href="https://github.com/DavidArthurCole/EggLedger/releases/latest">
+                <button class="min-w-30vw btn btn-outline-dark p-05rem pr-2rem pl-2rem rounded-md bg-blue-500 border-blue-600 hover:bg-blue-600 hover:border-blue-700">
+                  Download
+                </button>
+              </a>
             </div>
           </div>
         </div>
@@ -1633,7 +1464,21 @@
           hideFilterWarning.value = true;
         }
 
+        const options = {
+          moduleCache: { vue: Vue},
+          async getFile(url) {
+            const res = await fetch(url);
+            if ( !res.ok ) throw Object.assign(new Error(res.statusText + ' ' + url), { res });
+            return { getContentData: asBinary => asBinary ? res.arrayBuffer() : res.text(),}
+          },
+          addStyle(textContent) { document.head.insertBefore(Object.assign(document.createElement('style'), { textContent }), document.head.getElementsByTagName('style')[0] || null);},
+        }
+        const { loadModule } = window['vue3-sfc-loader'];
         const app = Vue.createApp({
+          //Load in templates for repetitive components
+          components: {
+            'drop-display': Vue.defineAsyncComponent(() => loadModule('./templates/DropDisplay.vue', options)),
+          },
           setup() {
             // ===== Tab =====
             const activeTab = Vue.ref(UITab.Ledger);
@@ -1772,6 +1617,7 @@
               closeDropFilterMenu();
             };
 
+            const lifetimeShowDropsPerShip = Vue.ref(false);
             const lifetimeAccountSelectRef = Vue.ref(null);
             const lifetimeAccountInputRef = Vue.ref(null);
             const lifetimeAccountSubmitRef = Vue.ref(null);
@@ -1965,14 +1811,11 @@
             const viewMissionAccountSubmitRef = Vue.ref(null);
             const viewMissionAccountDropdownOpen = Vue.ref(false);
             const openMissionsViewAccountDropdown = () => { viewMissionAccountDropdownOpen.value = true; };
-            const closeMissionsViewAccountDropdown = () => {
+            const closeMissionsViewAccountDropdown = (account) => {
+              if(account != null && account != '') selectedMissionAccount.value = account.id;
               viewMissionAccountDropdownOpen.value = false;
               if (selectedMissionAccount.value != null && selectedMissionAccount.value.trim() !== '' && viewMissionAccountSubmitRef.value !== null) viewMissionAccountSubmitRef.value.focus();
               else viewMissionAccountInputRef.value?.blur();
-            };
-            const selectViewAccount = account => {
-              closeMissionsViewAccountDropdown();
-              selectedMissionAccount.value = account.id;
             };
 
             const playerIdSelectRef = Vue.ref(null);
@@ -1980,14 +1823,11 @@
             const playerIdSubmitRef = Vue.ref(null);
             const playerIdDropdownOpen = Vue.ref(false);
             const openPlayerIdDropdown = () => { playerIdDropdownOpen.value = true; };
-            const closePlayerIdDropdown = () => {
+            const closePlayerIdDropdown = (id) => {
+              if(id != null && id != '') playerId.value = id;
               playerIdDropdownOpen.value = false;
               if (playerId.value.trim() !== '' && playerIdSubmitRef.value !== null) playerIdSubmitRef.value.focus();
               else playerIdInputRef.value?.blur();
-            };
-            const selectPlayerId = id => {
-              playerId.value = id;
-              closePlayerIdDropdown();
             };
             const getEidProblem = id => {
               const normalizedId = normalizePlayerId(id).toUpperCase();
@@ -2006,7 +1846,6 @@
                 isFetching.value = false;
               }
             };
-
             const stopFetchingPlayerData = async () => {
               await window.stopFetchingPlayerData();
               isFetching.value = false;
@@ -2991,11 +2830,25 @@
             };
 
             const missionBeingViewed = Vue.ref(null);
+            const viewMissionSortMethod = Vue.ref('default');
             const viewSpecificMission = async (missionId) => {
               //Do not allow viewing a mission while data is being fetched - prevent collisions
               if(isFetching.value) return false; 
               const newMissionViewData = await getSpecificMissionData(loadedEid.value, missionId, true);
               if(newMissionViewData == null) return false;
+              var useThisFunc;
+              switch(viewMissionSortMethod.value){
+                case 'default':
+                  useThisFunc = sortGroupAlreadyCombed;
+                  break;
+                case 'iv':
+                  useThisFunc = inventoryVisualizerSort;
+                  break;
+              }
+              newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
+              newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
+              newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
+              newMissionViewData.ingredients = useThisFunc(newMissionViewData?.ingredients);
               missionBeingViewed.value = missionId;
               viewMissionData.value = newMissionViewData;
               openMissionOverlay();
@@ -3060,7 +2913,6 @@
               getEidProblem,
               openPlayerIdDropdown,
               closePlayerIdDropdown,
-              selectPlayerId,
               fetchPlayerData,
               stopFetchingPlayerData,
 
@@ -3117,6 +2969,7 @@
               lifetimeTargetFilterMenuOpen,
               lifetimeTargetSearchTerm,
               lifetimeDropsExcludedCount,
+              lifetimeShowDropsPerShip,
 
               //View all missions
               doesDataExist,
@@ -3138,7 +2991,6 @@
               closeMissionOverlay,
               refreshExistingData,
               openMissionsViewAccountDropdown,
-              selectViewAccount,
               closeMissionsViewAccountDropdown,
 
               //View specific mission
@@ -3159,6 +3011,7 @@
               groupedMonthArray,
               groupedDayArray,
               allVisible,
+              viewMissionSortMethod,
               boundEffectString,
               afRarityClass,
               afRarityText,

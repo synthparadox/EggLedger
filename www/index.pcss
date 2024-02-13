@@ -60,8 +60,12 @@ hr {
   @apply relative flex flex-row items-center flex-grow
 }
 
+.filter-select-option {
+  @apply bg-darkest text-gray-400 hover:bg-darkest
+}
+
 .filter-select {
-  @apply focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm bg-darkest tabular-nums appearance-none mr-1rem mt-05rem pl-05rem pt-05rem pb-05rem pr-select
+  @apply focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm bg-darkest hover:bg-darker tabular-nums appearance-none mr-1rem mt-05rem pl-05rem pt-05rem pb-05rem pr-select
 }
 
 .ext-opt-label {
@@ -133,7 +137,7 @@ hr {
 }
 
 .toggle-link {
-  @apply text-short mr-5 font-bold bg-transparent
+  @apply text-short hover:text-shortdarker mr-5 font-bold bg-transparent
 }
 
 .popup-selector-main {
@@ -145,7 +149,7 @@ hr {
 }
 
 .close-button {
-  @apply absolute top-2 right-2 text-gray-300 hover:text-gray-300
+  @apply absolute top-2 right-2 text-gray-300 hover:text-gray-500
 }
 
 .popup-opt-container {
