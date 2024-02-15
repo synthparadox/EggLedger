@@ -1,7 +1,12 @@
 const colors = require('tailwindcss/colors');
 
 module.exports = {
-  content: ['./www/*.html'],
+  content: [
+    './www/*.html',
+    './www/**/*.html',
+    './www/templates/*.vue',
+    './www/**/*.vue',
+  ],
   theme: {
     extend: {
       colors: {
@@ -27,7 +32,7 @@ module.exports = {
         eidoverlay: '-20',
       },
       height: {
-        stretch: 'stretch',
+        'stretch': 'stretch',
         '1rem': '1rem',
         'half': '50%',
         'half-vh': '50vh',

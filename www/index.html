@@ -538,34 +538,11 @@
                   <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
 
-                <!-- Artifacts -->
-                <drop-display
-                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-blue-900"
-                  label-display-value="Artifacts" :if-count="viewMissionData.artifactCount" :item-array="viewMissionData.artifacts"
-                  spec-path-offset="1" type="artifact" ledger-type="mission"
+                <drop-display-container
+                  :use-gifs-for-rarity="useGifsForRarity" ledger-type="mission"
                   :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
-                ></drop-display>
-
-                <!-- Stones -->
-                <drop-display
-                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-fuchsia-900"
-                  label-display-value="Eggfinity Stones" :if-count="viewMissionData.stoneCount" :item-array="viewMissionData.stones"
-                  spec-path-offset="2" type="stone" ledger-type="mission"
-                ></drop-display>
-
-                <!-- Ingredients -->
-                <drop-display
-                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
-                  label-display-value="Ingredients" :if-count="viewMissionData.ingredientCount" :item-array="viewMissionData.ingredients"
-                  spec-path-offset="1" type="ingredient" ledger-type="mission"
-                ></drop-display>
-
-                <!-- Stone Fragments -->
-                <drop-display
-                  :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
-                  label-display-value="Stone Fragments" :if-count="viewMissionData.stoneFragmentCount" :item-array="viewMissionData.stoneFragments"
-                  spec-path-offset="1" type="stone_frag" ledger-type="mission"
-                ></drop-display>
+                  :data="viewMissionData"
+                ></drop-display-container>
 
                 <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
                 <div class="mt-2 text-xs text-gray-300 text-center">
@@ -659,162 +636,16 @@
                 <br /><br />
                 <button type="button" class="p-075rem btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
               </div>
-              <div class="max-h-60 overflow-y-auto">
-                <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
-                  <!-- Separator -->
-                  <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
 
-                  <div class="filter-container focus-within:z-10">
-                    <!-- Top level filter options -->
-                    <select class="filter-select border-gray-300 text-gray-400"
-                      v-on:change="handleFilterChange"
-                      v-model="topLevelFilterOptions[index]" :id="'filter-top-' + index">
-                      <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
-                        {{ validOption.text }}
-                    </select>
-
-                    <!-- Operator options -->
-                    <select class="filter-select border-gray-300 text-gray-400"
-                      v-on:change="handleFilterChange"
-                      v-if="topLevelFilterOptions[index] != null" v-model="filterOperators[index]" :id="'filter-op-' + index">
-                      <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(topLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
-                        {{ validOperator.text }}
-                    </select>
-
-                    <!-- Value options (Base) -->
-                    <select class="filter-select border-gray-300 text-gray-400"
-                      v-on:change="handleFilterChange"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && isBaseFilter(topLevelFilterOptions[index])"
-                      v-model="filterValues[index]" :id="'filter-value-' + index">
-                      <option class="filter-select-option" v-for="validValue in getFilterValueOptions(topLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
-                        {{ validValue.text }}
-                    </select>
-
-                    <!-- Drop Selectors
-                      opens a custom modal -->
-                    <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, null);}"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'drops'"
-                      class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
-                      v-model="dFilterValues[index]" :id="'filter-value-' + index"
-                    >
-
-                    <!-- Target Selectors
-                      opens a custom modal -->
-                    <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && topLevelFilterOptions[index] == 'target'"
-                      class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
-                      v-model="dFilterValues[index]" :id="'filter-value-' + index"
-                    >
-
-                    <!-- Value options - Launch/Return Date Selectors
-                      Min: 20 January 2021  
-                      Max: Today-->
-                    <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="filterValues[index]"
-                      class="filter-select border-gray-300 text-gray-400"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && (topLevelFilterOptions[index] == 'launchDT' || topLevelFilterOptions[index] == 'returnDT')"
-                      v-on:change="handleFilterChange" required="required"
-                      v-bind:disabled="topLevelFilterOptions[index + 1] != null" :id="'filter-value-' + index">
-
-                    <!-- OR controls -->
-                    <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
-                      title="Add alternate filter condition"
-                      class="mr-1rem flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
-                      v-if="topLevelFilterOptions[index] != null && filterOperators[index] != null && filterValues[index] != null && ((topLevelFilterOptions[index] != 'returnDT' && topLevelFilterOptions[index] != 'launchDT') || filterValues[index] != '')"
-                      v-bind:disabled="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] != 0 && (orFilterTopLevelOptions[index][orFilterConditionsCount[index] - 1] == null || orFilterOperators[index][orFilterConditionsCount[index] - 1] == null || orFilterValues[index][orFilterConditionsCount[index] - 1] == null)">
-                      OR
-                    </button>
-
-                    <!-- Clear button-->
-                    <button 
-                      v-if="topLevelFilterOptions[index] != null"
-                      class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
-                      title="Remove filter condition"
-                      v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
-                      ×
-                    </button>
-
-                    <!-- Show a warning div if the filter is incomplete -->
-                    <span
-                      v-if="topLevelFilterOptions[index] != null && (filterOperators[index] == null || filterValues[index] == null || ((topLevelFilterOptions[index] == 'returnDT' || topLevelFilterOptions[index] == 'launchDT') && filterValues[index] == ''))"
-                      class="whitespace-pre max-h-9 items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
-                      (!) Incomplete, will not apply
-                    </span>
-                  </div>
-                  <div class="ml-2rem filter-container focus-within:z-10" 
-                    v-if="orFilterConditionsCount[index] != null && orFilterConditionsCount[index] > 0"
-                    v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
-                      <!-- Separator -->
-                      <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
-
-                      <!-- Top level filter options -->
-                      <select v-model="orFilterTopLevelOptions[index][orIndex]"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleOrFilterChange" :id="'filter-top-' + index + '-' + orIndex">
-                        <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions()" v-bind:key="validOption" v-bind:value="validOption.value">
-                          {{ validOption.text }}
-                      </select>
-
-                      <!-- Operator options -->
-                      <select
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null" v-model="orFilterOperators[index][orIndex]"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleOrFilterChange" :id="'filter-op-' + index + '-' + orIndex">
-                        <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(orFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
-                          {{ validOperator.text }}
-                      </select>
-
-                      <!-- Value options -->
-                      <select v-model="orFilterValues[index][orIndex]"
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && isBaseFilter(orFilterTopLevelOptions[index][orIndex])"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex">
-                        <option class="filter-select-option" v-for="validValue in getFilterValueOptions(orFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
-                          {{ validValue.text }}
-                      </select>
-
-                      <!-- Drop Selectors
-                        opens a custom modal -->
-                      <input type="text" v-on:click="e => {e.preventDefault(); openDropFilterMenu(index, orIndex);}"
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'drops'"
-                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
-                        v-bind:value="dOrFilterValues[index][orIndex]" readonly
-                        :id="'filter-value-' + index + '-' + orIndex"
-                      >
-
-                      <!-- Target Selectors
-                        opens a custom modal -->
-                      <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && orFilterTopLevelOptions[index][orIndex] == 'target'"
-                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
-                        v-bind:value="dOrFilterValues[index][orIndex]" readonly
-                        :id="'filter-value-' + index + '-' + orIndex"
-                      >
-
-                      <!-- Launch/Return Date Selectors
-                        Min: 20 January 2021  
-                        Max: Today + 5 days -->
-                      <input type="date" min="2021-01-20" :max="new Date().toISOString().split('T')[0]" v-model="orFilterValues[index][orIndex]"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && orFilterOperators[index][orIndex] != null && (orFilterTopLevelOptions[index][orIndex] == 'launchDT' || orFilterTopLevelOptions[index][orIndex] == 'returnDT')"
-                        v-on:change="handleOrFilterChange" :id="'filter-value-' + index + '-' + orIndex" required
-                      >
-                      <!-- Clear button-->
-                      <button 
-                        class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
-                        title="Remove filter condition"
-                        v-on:click="e => {e.preventDefault(); removeOrAndShift(index, orIndex); }">
-                        ×
-                      </button>
-                      <!-- Show a warning div if the filter is incomplete -->
-                      <span
-                        v-if="orFilterTopLevelOptions[index][orIndex] != null && (orFilterOperators[index][orIndex] == null || orFilterValues[index][orIndex] == null)"
-                        class="whitespace-pre max-h-9 tooltip-custom items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
-                        (!) Incomplete, will not apply
-                      </span>
-                  </div>
-                </div>
-              </div>
-
+              <full-filter
+                :filter-array="generateFilterConditionsArr()" :mod-vals="filterModVals()" :is-lifetime="false"
+                :artifact-configs="artifactConfig" :possible-targets="possibleTargets"
+                @handle-filter-change="handleFilterChange" @handle-or-filter-change="handleOrFilterChange"
+                @remove-and-shift="removeAndShift" @remove-or-and-shift="removeOrAndShift"
+                @open-target-filter-menu="openTargetFilterMenu" @open-drop-filter-menu="openDropFilterMenu"
+                @add-or="addOr" @change-filter-value="changeFilterValue" 
+              ></full-filter>
+              
               <!-- Create a 2 px visible gray line that goes across the entire div-->
               <hr class="mt-1rem w-full">
 
@@ -989,7 +820,7 @@
               viewLifetimeDropsOfEid();
           }">
             <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
-              <!-- Overlay to tag inmput with number of missions -->
+              <!-- Overlay to tag input with number of missions -->
               <div v-if="selectedLifetimeAccount != null && objectedExistingData.find(acc => acc.id == selectedLifetimeAccount) != null" class="ledger-input-overlay">
                 <span class="invisible whitespace-pre">
                   {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.id }}
@@ -1015,7 +846,7 @@
                 <li
                   v-for="account in objectedExistingData"
                   v-bind:key="account.id" class="drop-opt"
-                  v-on:click="selectLifetimeAccount(account)"
+                  v-on:click="closeLifetimeAccountDropdown(account)"
                 >
                   {{account.id}} (<span :style="'color: #' + account.accountColor">{{ account.nickname }} {{ account.ebString }}</span> - {{ account.missionCount }} missions)
                 </li>
@@ -1051,10 +882,9 @@
               v-on:click="e => {
                 e.preventDefault();
                 hideLifetimeFilter = !hideLifetimeFilter;
-                e.target.innerHTML = hideLifetimeFilter ? 'Show' : 'Hide';
               }"
             >
-              Hide
+              {{ hideLifetimeFilter ? 'Show' : 'Hide' }}
             </button>
             <form 
               id="lifetimeFilterForm"
@@ -1066,128 +896,14 @@
                 viewLifetimeDropsOfEid(true);
               }"
             >
-              <div class="max-h-60 overflow-y-auto">
-                <div class="relative flex-grow max-h-6/10" v-for="(item, index) in generateFilterConditionsArr()" :key="index">
-                  <!-- Separator -->
-                  <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
-
-                  <div class="filter-container focus-within:z-10">
-                    <!-- Top level filter options -->
-                    <select class="filter-select border-gray-300 text-gray-400"
-                      v-on:change="handleFilterChange"
-                      v-model="lifetimeTopLevelFilterOptions[index]" :id="'lifetime-filter-top-' + index">
-                      <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions(true)" v-bind:key="validOption" v-bind:value="validOption.value">
-                        {{ validOption.text }}
-                    </select>
-
-                    <!-- Operator options -->
-                    <select class="filter-select border-gray-300 text-gray-400"
-                      v-on:change="handleFilterChange"
-                      v-if="lifetimeTopLevelFilterOptions[index] != null" v-model="lifetimeFilterOperators[index]" :id="'lifetime-filter-op-' + index">
-                      <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(lifetimeTopLevelFilterOptions[index])" v-bind:key="validOperator" v-bind:value="validOperator.value">
-                        {{ validOperator.text }}
-                    </select>
-
-                    <!-- Value options (Base) -->
-                    <select class="filter-select border-gray-300 text-gray-400"
-                      v-on:change="handleFilterChange"
-                      v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && isBaseFilter(lifetimeTopLevelFilterOptions[index])"
-                      v-model="lifetimeFilterValues[index]" :id="'lifetime-filter-value-' + index">
-                      <option class="filter-select-option" v-for="validValue in getFilterValueOptions(lifetimeTopLevelFilterOptions[index])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
-                        {{ validValue.text }}
-                    </select>
-
-                    <!-- Target Selectors
-                      opens a custom modal -->
-                    <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, null);}"
-                      v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && lifetimeTopLevelFilterOptions[index] == 'target'"
-                      class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select" readonly
-                      v-model="dLifetimeFilterValues[index]" :id="'lifetime-filter-value-' + index"
-                    >
-
-                    <!-- OR controls -->
-                    <button type="button" v-on:click="e => {e.preventDefault(); addOr(index);}"
-                      title="Add alternate filter condition"
-                      class="mr-1rem flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
-                      v-if="lifetimeTopLevelFilterOptions[index] != null && lifetimeFilterOperators[index] != null && lifetimeFilterValues[index] != null && ((lifetimeTopLevelFilterOptions[index] != 'returnDT' && lifetimeTopLevelFilterOptions[index] != 'launchDT') || lifetimeFilterValues[index] != '')"
-                      v-bind:disabled="lifetimeOrFilterConditionsCount[index] != null && lifetimeOrFilterConditionsCount[index] != 0 && 
-                        (lifetimeOrFilterTopLevelOptions[index][lifetimeOrFilterConditionsCount[index] - 1] == null || lifetimeOrFilterOperators [index][lifetimeOrFilterConditionsCount[index] - 1] == null || orFilterValues[index][lifetimeOrFilterConditionsCount[index] - 1] == null)">
-                      OR
-                    </button>
-
-                    <!-- Clear button-->
-                    <button 
-                      v-if="lifetimeTopLevelFilterOptions[index] != null"
-                      class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
-                      title="Remove filter condition"
-                      v-on:click="e => { e.preventDefault(); removeAndShift(index); }">
-                      ×
-                    </button>
-
-                    <!-- Show a warning div if the filter is incomplete -->
-                    <span
-                      v-if="lifetimeTopLevelFilterOptions[index] != null && (lifetimeFilterOperators[index] == null || lifetimeFilterValues[index] == null || ((lifetimeTopLevelFilterOptions[index] == 'returnDT' || lifetimeTopLevelFilterOptions[index] == 'launchDT') && lifetimeFilterValues[index] == ''))"
-                      class="whitespace-pre max-h-9 items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
-                      (!) Incomplete, will not apply
-                    </span>
-                  </div>
-                  <div class="ml-2rem filter-container focus-within:z-10" 
-                    v-if="lifetimeOrFilterConditionsCount[index] != null && lifetimeOrFilterConditionsCount[index] > 0"
-                    v-for="(orItem, orIndex) in generateOrFiltersConditionsArr(index)">
-                      <!-- Separator -->
-                      <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
-
-                      <!-- Top level filter options -->
-                      <select v-model="lifetimeOrFilterTopLevelOptions[index][orIndex]"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleOrFilterChange" :id="'lifetime-filter-top-' + index + '-' + orIndex">
-                        <option class="filter-select-option" v-for="validOption in getTopLevelFilterOptions(true)" v-bind:key="validOption" v-bind:value="validOption.value">
-                          {{ validOption.text }}
-                      </select>
-
-                      <!-- Operator options -->
-                      <select
-                        v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null" v-model="lifetimeOrFilterOperators[index][orIndex]"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleOrFilterChange" :id="'lifetime-filter-op-' + index + '-' + orIndex">
-                        <option class="filter-select-option" v-for="validOperator in getFilterOpOptions(lifetimeOrFilterTopLevelOptions[index][orIndex])" v-bind:key="validOperator" v-bind:value="validOperator.value">
-                          {{ validOperator.text }}
-                      </select>
-
-                      <!-- Value options -->
-                      <select v-model="lifetimeOrFilterValues[index][orIndex]"
-                        v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null && lifetimeOrFilterOperators[index][orIndex] != null && isBaseFilter(lifetimeOrFilterTopLevelOptions[index][orIndex])"
-                        class="filter-select border-gray-300 text-gray-400"
-                        v-on:change="handleOrFilterChange" :id="'lifetime-filter-value-' + index + '-' + orIndex">
-                        <option class="filter-select-option" v-for="validValue in getFilterValueOptions(lifetimeOrFilterTopLevelOptions[index][orIndex])" :class="validValue.styleClass ?? ''" v-bind:key="validValue" v-bind:value="validValue.value">
-                          {{ validValue.text }}
-                      </select>
-
-                      <!-- Target Selectors
-                        opens a custom modal -->
-                      <input type="text" v-on:click="e => {e.preventDefault(); openTargetFilterMenu(index, orIndex);}"
-                        v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null && lifetimeOrFilterOperators[index][orIndex] != null && lifetimeOrFilterTopLevelOptions[index][orIndex] == 'target'"
-                        class="filter-select w-auto border-gray-300 text-gray-400" placeholder="Click to select"
-                        v-bind:value="dLifetimeOrFilterValues[index][orIndex]" readonly
-                        :id="'lifetime-filter-value-' + index + '-' + orIndex"
-                      >
-
-                      <!-- Clear button-->
-                      <button 
-                        class="mr-1rem flex items-center justify-center text-red-700 text-lg max-w-6 max-h-6 min-w-6 min-h-6 border border-red-700 rounded-md bg-transparent mt-05rem filter-button"
-                        title="Remove filter condition"
-                        v-on:click="e => {e.preventDefault(); removeOrAndShift(index, orIndex); }">
-                        ×
-                      </button>
-                      <!-- Show a warning div if the filter is incomplete -->
-                      <span
-                        v-if="lifetimeOrFilterTopLevelOptions[index][orIndex] != null && (lifetimeOrFilterOperators[index][orIndex] == null || lifetimeOrFilterValues[index][orIndex] == null)"
-                        class="whitespace-pre max-h-9 tooltip-custom items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem">
-                        (!) Incomplete, will not apply
-                      </span>
-                  </div>
-                </div>
-              </div>
+              <full-filter
+                :filter-array="generateFilterConditionsArr()" :mod-vals="filterModVals()" :is-lifetime="true"
+                :artifact-configs="artifactConfig" :possible-targets="possibleTargets"
+                @handle-filter-change="handleFilterChange" @handle-or-filter-change="handleOrFilterChange"
+                @remove-and-shift="removeAndShift" @remove-or-and-shift="removeOrAndShift"
+                @open-target-filter-menu="openTargetFilterMenu" @open-drop-filter-menu="openDropFilterMenu"
+                @add-or="addOr" @change-filter-value="changeFilterValue" 
+              ></full-filter>
 
               <!-- Create a 2 px visible gray line that goes across the entire div-->
               <hr class="mt-1rem w-full">
@@ -1239,35 +955,12 @@
                   <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
                 </span>
               </div>
-
-              <!-- Artifacts -->
-              <drop-display
-                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-blue-900 text-gray-300"
-                label-display-value="Artifacts" :if-count="lifetimeDrops.artifactCount" :item-array="lifetimeDrops.artifacts"
-                spec-path-offset="1" type="artifact" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
+              <drop-display-container
+                :use-gifs-for-rarity="useGifsForRarity" ledger-type="lifetime"
                 :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
-              ></drop-display>
-
-              <!-- Stones -->
-              <drop-display
-                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div bg-fuchsia-900 text-gray-300"
-                label-display-value="Eggfinity Stones" :if-count="lifetimeDrops.stoneCount" :item-array="lifetimeDrops.stones"
-                spec-path-offset="2" type="stone" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
-              ></drop-display>
-
-              <!-- Ingredients -->
-              <drop-display
-                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
-                label-display-value="Ingredients" :if-count="lifetimeDrops.ingredientCount" :item-array="lifetimeDrops.ingredients"
-                spec-path-offset="1" type="ingredient" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
-              ></drop-display>
-
-              <!-- Stone Fragments -->
-              <drop-display 
-                :use-gifs-for-rarity="useGifsForRarity" label-class-list="mission-view-div text-gray-400 bg-darkerer"
-                label-display-value="Stone Fragments" :if-count="lifetimeDrops.stoneFragmentCount" :item-array="lifetimeDrops.stoneFragments"
-                spec-path-offset="1" type="stone_frag" ledger-type="lifetime" :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
-              ></drop-display>
+                :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
+                :data="lifetimeDrops"
+              ></drop-display-container>
             </div>
           </div>
 
@@ -1477,7 +1170,8 @@
         const app = Vue.createApp({
           //Load in templates for repetitive components
           components: {
-            'drop-display': Vue.defineAsyncComponent(() => loadModule('./templates/DropDisplay.vue', options)),
+            'drop-display-container': Vue.defineAsyncComponent(() => loadModule('./templates/DropDisplayContainer.vue', options)),
+            'full-filter': Vue.defineAsyncComponent(() => loadModule('./templates/FullFilter.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1623,14 +1317,11 @@
             const lifetimeAccountSubmitRef = Vue.ref(null);
             const lifetimeAccountDropdownOpen = Vue.ref(false);
             const openLifetimeAccountDropdown = () => { lifetimeAccountDropdownOpen.value = true; };
-            const closeLifetimeAccountDropdown = () => {
+            const closeLifetimeAccountDropdown = (account) => {
+              if(account != null && account.id != null && account.id.trim() !== '') selectedLifetimeAccount.value = account.id;
               lifetimeAccountDropdownOpen.value = false;
               if (selectedLifetimeAccount.value != null && selectedLifetimeAccount.value.trim() !== '' && lifetimeAccountSubmitRef.value !== null) lifetimeAccountSubmitRef.value.focus();
               else lifetimeAccountInputRef.value?.blur();
-            };
-            const selectLifetimeAccount = account => {
-              closeLifetimeAccountDropdown();
-              selectedLifetimeAccount.value = account.id;
             };
             const lifetimeDrops = Vue.ref(null);
             const lifetimeFilterConditionsCount = Vue.ref(1);
@@ -1645,6 +1336,16 @@
 
             const dLifetimeFilterValues = Vue.ref([]);
             const dLifetimeOrFilterValues = Vue.ref([[]]);
+            //When lifetimeFilterValues changes, keep dLifetimeFilterValues in sync in terms of size
+            Vue.watch(lifetimeFilterValues, () => { 
+                dLifetimeFilterValues.value = lifetimeFilterValues.value.map((filter, index) => {return(dLifetimeFilterValues.value[index] == undefined ? "" : dLifetimeFilterValues.value[index]);});
+              }, { deep: true }
+            );
+            //When lifetimeOrFilterValues changes, keep dLifetimeOrFilterValues in sync in terms of array size
+            Vue.watch(lifetimeOrFilterValues, () => { 
+                dLifetimeOrFilterValues.value = lifetimeOrFilterValues.value.map((orFilter, index) => {return(dLifetimeOrFilterValues.value[index] == undefined ? [] : dLifetimeOrFilterValues.value[index].slice(0, orFilter.length))});
+              }, { deep: true }
+            );
 
             const lifetimeDataFilter = Vue.ref([]);
             const lifetimeOrDataFilter = Vue.ref([[]]);
@@ -1978,7 +1679,7 @@
             const viewByDate = Vue.ref(false);
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
-            const useGifsForRarity = Vue.ref(true);
+            const useGifsForRarity = Vue.ref(false);
             const viewMissionData = Vue.ref({});
             const doesDataExist = Vue.ref(false);
             const existingData = Vue.ref([]); //Empty array of strings
@@ -2053,17 +1754,6 @@
             const shuffle = (collection) => {
               return collection.sort(() => Math.random() - 0.5);
             };
-            const numToDigClass = (num) => {
-              const parsedNum = parseInt(num.toString());
-              switch (true) {
-                case parsedNum > 99999: return "w-sixdig";
-                case parsedNum > 9999: return "w-fivedig";
-                case parsedNum > 999: return "w-fourdig";
-                case parsedNum > 99: return "w-threedig";
-                case parsedNum > 9: return "w-twodig";
-                default: return "w-onedig";
-              }
-            };
             const properCase = (string) => {
               string = string.toLowerCase();
               // Capitalize the first letter of each word, unless it is 'of' or 'the'
@@ -2075,15 +1765,6 @@
               }
               const finalString = words.join(" ");
               return finalString.charAt(0).toUpperCase() + finalString.slice(1);
-            };
-            //Return three strings in an array, the first is the string before the effect, the second is the effect, and the third is the string after the effect
-            const boundEffectString = (str) => {
-              if(str.startsWith('!!')){
-                const match = /<([^>]+)>/g.exec(str);
-                return (!match ? ["?", "?", "?"] : [str.substring(2, match.index), match[1], ""]);
-              }
-              const match = /\[(.*?)\]/g.exec(str);
-              return (!match ? ["?", "?", "?"] : [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)]);
             };
             const durToTextClass = (dur) => {
               switch(dur){
@@ -2108,18 +1789,6 @@
               const rarity = afRarityText(drop, bypass ?? false);
               return (rarity == "" ? "" : "text-" + rarity.toLowerCase());
             };
-            const afBackgroundClass = (af) => {
-              switch (af.rarity) {
-                case 0: return 'bg-common';
-                case 1: return (useGifsForRarity.value ? "bg-cover bg-rare-animated" : 'bg-rare');
-                case 2: return (useGifsForRarity.value ? "bg-cover bg-epic-animated" : 'bg-epic')
-                case 3: return (useGifsForRarity.value ? "bg-cover bg-legendary-animated" : 'bg-legendary');
-                default: return 'bg-common';
-              }
-            };
-            const afExplorerName = (drop, addend) => {
-              return drop.name.replace('_FRAGMENT', '').toLowerCase().replace("_", "-") + '-' + (parseInt(drop.level) + addend);
-            };
             const closeMissionOverlay = () => {
               const el = document.querySelector('.overlay-mission');
               el.style.display = 'none';
@@ -2133,10 +1802,6 @@
               el.style.display = 'flex';
               //Toggle the hidden class on the overlay
               el.classList.remove('hidden');
-            };
-            const specPath = (spec, addend) => {
-              const fixedName = spec.name.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
-              return "images/artifacts/" + fixedName + "/" + fixedName + "_" + (parseInt(spec.level) + addend) + ".png";
             };
             const dropPath = (drop) => {
               const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
@@ -2251,6 +1916,25 @@
             // Filter stuff :^)
             //==============================================
 
+            const changeFilterValue = (index, orIndex, level, value) => {
+              const intIndex = parseInt(index);
+              const intOrIndex = orIndex != null ? parseInt(orIndex) : null;
+              switch(level){
+                  case 'top':
+                    if(intOrIndex == null) topLevRef().value[intIndex] = value;
+                    else ofTopLevRef().value[intIndex][intOrIndex] = value;
+                    break;
+                  case 'operator':
+                    if(intOrIndex == null) opRef().value[intIndex] = value;
+                    else ofOpRef().value[intIndex][intOrIndex] = value;
+                    break;
+                  case 'value':
+                    if(intOrIndex == null) valRef().value[intIndex] = value;
+                    else ofValRef().value[intIndex][intOrIndex] = value;
+                    break;
+                }
+            };
+
             const filterApplyTime = Vue.ref("");
             const filterConditionsCount = Vue.ref(1);
             const topLevelFilterOptions = Vue.ref([]);
@@ -2265,26 +1949,14 @@
             const dFilterValues = Vue.ref([]);
             const dOrFilterValues = Vue.ref([[]]);
             //When filterValues changes, keep dFilterValues in sync in terms of size
-            Vue.watch(filterValues, 
-              () => {
-                //Expand dFilterValues to match the size of filterValues, or shrink it if filterValues has shrunk
-                dFilterValues.value = filterValues.value.map((filter, index) => {
-                  if(dFilterValues.value[index] == undefined) return "";
-                  else return dFilterValues.value[index];
-                });
-              },
-              { deep: true }
+            Vue.watch(filterValues, () => {
+                dFilterValues.value = filterValues.value.map((filter, index) => {return(dFilterValues.value[index] == undefined ? "" : dFilterValues.value[index]);});
+              }, { deep: true }
             );
             //When orFilterValues changes, keep dOrFilterValues in sync in terms of array size
-            Vue.watch(orFilterValues, 
-              () => {
-                //Expand dOrFilterValues to match the size of orFilterValues, or shrink it if orFilterValues has shrunk
-                dOrFilterValues.value = orFilterValues.value.map((orFilter, index) => {
-                  if(dOrFilterValues.value[index] == undefined) return [];
-                  else return dOrFilterValues.value[index].slice(0, orFilter.length);
-                });
-              },
-              { deep: true }
+            Vue.watch(orFilterValues, () => {
+                dOrFilterValues.value = orFilterValues.value.map((orFilter, index) => {return(dOrFilterValues.value[index] == undefined ? [] : dOrFilterValues.value[index].slice(0, orFilter.length));});
+              }, { deep: true }
             );
 
             const dataFilter = Vue.ref([]);
@@ -2306,48 +1978,6 @@
               durationConfigs.value = JSON.parse(await window.getDurationConfigs());
               possibleTargets.value = JSON.parse(await window.getPossibleTargets());
             });
-
-            const getTopLevelFilterOptions = () => {
-              const commonOptions = [
-                { text: 'Ship', value: 'ship' },
-                { text: 'Duration', value: 'duration' },
-                { text: 'Level', value: 'level' },
-                { text: 'Target', value: 'target' },
-                { text: 'Double Cap', value: 'dubcap'}
-              ];
-              if(isLifetime.value) return commonOptions;
-              return commonOptions.concat({ text: 'Drops/Loot', value: 'drops' }, { text: 'Launch Date', value: 'launchDT' }, { text: 'Return Date', value: 'returnDT' });
-            }
-
-            const getFilterOpOptions = (topLevel) => {
-              switch(topLevel){
-                case 'ship':
-                case 'duration':
-                case 'level': return [
-                  { text: 'is', value: '=' },
-                  { text: 'is not', value: '!=' },
-                  { text: 'greater than', value: '>' },
-                  { text: 'less than', value: '<' }
-                ];
-                case 'target': return [
-                  { text: 'is', value: '=' },
-                  { text: 'is not', value: '!=' }
-                ];
-                case 'drops': return [
-                  { text: 'contains', value: 'c' },
-                  { text: 'does not contain', value: 'dnc' }
-                ];
-                case 'launchDT':
-                case 'returnDT': return [
-                  { text: 'on', value: 'on' },
-                  { text: 'before', value: 'before' },
-                  { text: 'after', value: 'after' }
-                ];
-                case 'dubcap': return [
-                  { text: 'is', value: '=' },
-                ];
-              }
-            }
 
             const getFilterValueOptions = (topLevel) => {
               switch(topLevel){
@@ -2394,18 +2024,12 @@
               return new Array(condCountRef().value);
             };
 
-            function generateOrFiltersConditionsArr(index){
-              return new Array(ofCondCountRef().value[index]);
-            };
-
             const updateValueStyling = (passedEl, isOr) => {
               //Extract the index from the element's id (split on the last dash)
               const index = parseInt(passedEl.id.split("-")[isLifetime.value ? 3 : 2]);
               const orIndex = isOr ? parseInt(passedEl.id.split("-").pop()) : null;
               if(isOr && orIndex == null) return;
-
               const el = document.getElementById(filterValSelector.value + index + (isOr ? ('-' + orIndex) : ''));
-
               if(!el) return;
               const existingBorder = el ? 'border-' + el.classList.toString().match(/ border-(.*?)(\s|"|'|$)/)[1].trim() : '';
               const existingText =  el ? 'text-' + el.classList.toString().replace('text-sm', ' ').match(/ text-(.*?)(\s|"|'|$)/)[1].trim() : ''; 
@@ -2570,7 +2194,7 @@
                 valRef().value[i] = valRef().value[i + 1];
                 dValRef().value[i] = dValRef().value[i + 1];
               
-                orFilterConditionsCount.value[i] = orFilterConditionsCount.value[i + 1];
+                ofCondCountRef().value[i] = ofCondCountRef().value[i + 1];
                 ofTopLevRef().value[i] = ofTopLevRef().value[i + 1];
                 ofOpRef().value[i] = ofOpRef().value[i + 1];
                 ofValRef().value[i] = ofValRef().value[i + 1];
@@ -2580,8 +2204,10 @@
               updateFilterNoReCount();
               hasChangedRef().value = true;
 
-              //Look for all `filter-top` elements and update their stylings
-              document.querySelectorAll(filterTopQuerySelector.value).forEach(el => updateValueStyling(el, false));
+              //Look for all `filter-top` elements and update their stylings after 500 ms
+              setTimeout(() => {
+                document.querySelectorAll("[id^='" + filterTopSelector.value + "']").forEach(el => updateValueStyling(el, false));
+              }, 10);
             }
 
             const removeOrAndShift = (index, orIndex) => {
@@ -2868,19 +2494,20 @@
 
             const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeDrops);
             const filterTopSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-top' : 'filter-top');
-            const filterTopQuerySelector = Vue.computed(() => isLifetime.value ? '.lifetime-filter-top' : '.filter-top');
             const filterValSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-value-' : 'filter-value-');
             const tSearchBarSelector = Vue.computed(() => isLifetime.value ? 'target-search-lifetime' : 'target-search');
             const targetQuerySelector = Vue.computed(() => isLifetime.value ? '.overlay-target-lifetime' : '.overlay-target');
-            const ofTopLevRef = () => {return(isLifetime.value ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions)};
+
             const topLevRef = () => {return(isLifetime.value ? lifetimeTopLevelFilterOptions : topLevelFilterOptions)};
-            const ofValRef = () => {return(isLifetime.value ? lifetimeOrFilterValues : orFilterValues)};
-            const valRef = () => {return(isLifetime.value ? lifetimeFilterValues : filterValues)};
-            const hasChangedRef = () => {return(isLifetime.value ? lifetimeFilterHasChanged : filterHasChanged)};
+            const ofTopLevRef = () => {return(isLifetime.value ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions)};
             const opRef = () => {return(isLifetime.value ? lifetimeFilterOperators : filterOperators)};
+            const ofOpRef = () => {return(isLifetime.value ? lifetimeOrFilterOperators : orFilterOperators)};
+            const valRef = () => {return(isLifetime.value ? lifetimeFilterValues : filterValues)};
+            const ofValRef = () => {return(isLifetime.value ? lifetimeOrFilterValues : orFilterValues)};
+
+            const hasChangedRef = () => {return(isLifetime.value ? lifetimeFilterHasChanged : filterHasChanged)};
             const dataFilterRef = () => {return(isLifetime.value ? lifetimeDataFilter : dataFilter)};
             const ofCondCountRef = () => {return(isLifetime.value ? lifetimeOrFilterConditionsCount : orFilterConditionsCount)};
-            const ofOpRef = () => {return(isLifetime.value ? lifetimeOrFilterOperators : orFilterOperators)};
             const orDataFilterRef = () => {return(isLifetime.value ? lifetimeOrDataFilter : orDataFilter)};
             const ofDValRef = () => {return(isLifetime.value ? dLifetimeOrFilterValues : dOrFilterValues)};
             const condCountRef = () => {return(isLifetime.value ? lifetimeFilterConditionsCount : filterConditionsCount)};
@@ -2890,6 +2517,19 @@
             const tSearchTermRef = () => {return(isLifetime.value ? lifetimeTargetSearchTerm : targetSearchTerm)};
             const tFilterMenuOpenRef = () => {return(isLifetime.value ? lifetimeTargetFilterMenuOpen : targetFilterMenuOpen)};
             const tSelectListRef = () => {return(isLifetime.value ? lifetimeTargetSelectList : targetSelectList)};
+            const filterModVals = () => {
+              return({
+                'top': topLevRef().value,
+                'operator': opRef().value,
+                'value': valRef().value,
+                'dValue': dValRef().value,
+                'orTop': ofTopLevRef().value,
+                'orOperator': ofOpRef().value,
+                'orValue': ofValRef().value,
+                'orDValue': ofDValRef().value,
+                'orCount': ofCondCountRef().value,
+              });
+            };
             
             return {
               appVersion,
@@ -2943,7 +2583,6 @@
               lifetimeAccountDropdownOpen,
               openLifetimeAccountDropdown,
               closeLifetimeAccountDropdown,
-              selectLifetimeAccount,
               viewLifetimeDropsOfEid,
               getLifetimeStatusColor,
               getLifetimeStatusText,
@@ -3012,16 +2651,9 @@
               groupedDayArray,
               allVisible,
               viewMissionSortMethod,
-              boundEffectString,
               afRarityClass,
               afRarityText,
-              afBackgroundClass,
-              afExplorerName,
-              specPath,
-              dropPath,
-              dropRarityPath,
               groupedSpecType,
-              numToDigClass,
               properCase,
               durToTextClass,
 
@@ -3067,13 +2699,12 @@
               updateFilterConditionsCount,
               updateValueStyling,
               updateFilterNoReCount,
-              getTopLevelFilterOptions,
-              getFilterOpOptions,
               getFilterValueOptions,
               removeAndShift,
               removeOrAndShift,
               generateFilterConditionsArr,
-              generateOrFiltersConditionsArr,
+              changeFilterValue,
+              filterModVals,
 
               //Self-update
               appReleaseNotes,

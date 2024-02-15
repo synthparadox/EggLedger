@@ -6,13 +6,13 @@
         <div :class="getRepeatClass()">
             <div :class="getInnerRepeatClass()" v-for="(item, itemIndex) in itemArray">
                 <a v-external-link :class="getAClass(item)"
-                    target="_blank" :href="afExplorerName(item, specPathOffset)">
-                    <img class="h-full w-full" :alt="item.gameName" :src="specPath(item, specPathOffset)"/>
-                    <div v-if="item.count > 1" :class="'ledger-af-count ' + numToDigClass(item.count)">
+                    target="_blank" :href="afExplorerName(item, getSpecPathOffset())">
+                    <img class="h-full w-full" :alt="item.gameName" :src="specPath(item, getSpecPathOffset())"/>
+                    <div v-if="item.count > 1" :class="'ledger-af-count ' + this.numToDigClass(item.count)">
                         {{ item.count }}
                     </div>
                     <span class="text-sm tooltiptext-custom speech-bubble">
-                        {{ item.gameName }} (T{{parseInt(item.level) + parseInt(specPathOffset)}}) 
+                        {{ item.gameName }} (T{{parseInt(item.level) + parseInt(getSpecPathOffset())}}) 
                         <span v-if="type == 'artifact'" :class="afRarityClass(item)">
                           {{ afRarityText(item) }}
                         </span>
@@ -28,20 +28,13 @@
                         <hr v-if="ledgerType == 'lifetime' && lifetimeShowPerShip" class="mt-05rem mb-05rem w-full">
                         <span v-if="ledgerType == 'lifetime' && lifetimeShowPerShip">
                             (<span class="text-green-500">{{ (item.count / lifetimeMissionCount).toFixed(5) }}</span> per ship - 
-                            <span class="text-green-500">1</span>:
-                            <span class="text-green-500">{{ (1 / (item.count / lifetimeMissionCount)).toFixed(2) }}</span>)
+                            <span class="text-green-500">1</span>:<span class="text-green-500">{{ (1 / (item.count / lifetimeMissionCount)).toFixed(2) }}</span>)
                         </span>
                     </span>
                 </a>
             </div>
         </div>
         <br />
-    </div>
-    <div v-else>
-        <div :class="labelClassList">
-            {{ labelDisplayValue }} (0)
-            ifCount: {{ ifCount }}
-        </div>
     </div>
 </template>
 
@@ -60,7 +53,6 @@
             labelDisplayValue: String,
             ifCount: Number,
             itemArray: Array,
-            specPathOffset: Number,
             type: String,
             ledgerType: String,
             lifetimeShowPerShip: Boolean,
@@ -76,6 +68,10 @@
             getInnerRepeatClass(){
                 if(this.ledgerType === 'lifetime') return 'af-view-rep-lifetime';
                 else return 'mission-view-rep';
+            },
+            getSpecPathOffset(){
+                if(this.type == 'stone') return '2';
+                else return '1';
             },
             afBackgroundClass(item){
               switch (item.rarity) {
