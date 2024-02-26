@@ -515,6 +515,7 @@
 
           <!-- All the shit that resizes -->
           <form
+            v-if="doesDataExist"
             id="viewAccountForm" name="viewAccountForm" class="select-form"
             v-on:submit="event => {
               event.preventDefault();
@@ -560,7 +561,7 @@
             </button>
           </form>
 
-          <div class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
             <span class="h-20 font-bold text-gray-400" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">Filter: </span>
             <button
               v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)"
@@ -636,7 +637,7 @@
             </form>
           </div>
 
-          <div class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <span class="font-bold text-base text-gray-400">Options</span><br />
               <span class="mr-5">
@@ -669,7 +670,7 @@
             </div>
           </div>
 
-          <div class="flex-1 px-2 overflow-auto shadow-sm bg-darkest rounded-md mt-075rem">
+          <div v-if="doesDataExist" class="flex-1 px-2 overflow-auto shadow-sm bg-darkest rounded-md mt-075rem">
             <div ref="resultsDiv" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div class="filter-form text-lg" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
@@ -736,7 +737,7 @@
           </div>
 
           <!-- Data does not exist -->
-          <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
+          <div v-if="!doesDataExist" class="text-center mt-1rem rounded-md border border-red-700 py-2" ref="noDataToView">
             <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
           </div>
         </div>
@@ -796,8 +797,8 @@
             </button>
           </form>
 
-          <div class="h-14 px-2 py-1 text-sm text-gray-400 bg-darkest rounded-md tabular-nums">
-            <div v-if="doesDataExist && lifetimeState !== LifetimeLoadState.Idle">
+          <div v-if="doesDataExist" class="h-14 px-2 py-1 text-sm text-gray-400 bg-darkest rounded-md tabular-nums">
+            <div v-if="lifetimeState !== LifetimeLoadState.Idle">
               <div>
                 <img v-if="getLifetimeIsProgressSpinning()" src="images/loading.gif" alt="Loading..." class="target-ico" /> <span :class="getLifetimeStatusColor()">{{ getLifetimeStatusText() }}</span>
               </div>
@@ -810,7 +811,7 @@
             </div>
           </div>
 
-          <div class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
             <span class="h-20 font-bold text-gray-400" v-if="(lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">Mission Filter: </span>
             <button
               v-if="(lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered"
@@ -858,7 +859,7 @@
             </form>
           </div>
 
-          <div class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
+          <div v-if="doesDataExist" class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
             <div class="mt-4" v-if="(doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">
               <span class="ledger-underline text-base text-gray-400">Data Coalesced from {{ lifetimeDrops.missionCount }} Missions <span v-if="lifetimeDropsExcludedCount != 0">({{lifetimeDropsExcludedCount}} Filtered Out)</span></span>
               <div class="mb-05rem">
