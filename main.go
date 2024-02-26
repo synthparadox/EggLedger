@@ -123,6 +123,7 @@ type LoadedMission struct {
 	ReturnTime     string                       `json:"returnTime"`
 	MissiondId     string                       `json:"missionId"`
 	Ship           *ei.MissionInfo_Spaceship    `json:"ship"`
+	ShipString     string                       `json:"shipString"`
 	DurationType   *ei.MissionInfo_DurationType `json:"durationType"`
 	Level          int32                        `json:"level"`
 	Capacity       int32                        `json:"capacity"`
@@ -188,6 +189,19 @@ type PossibleArtifact struct {
 
 type ReleaseInfo struct {
 	Body string `json:"body"`
+}
+
+var MissionInfo_Spaceship_name_fixed = map[int32]string{
+	0: "Chicken One",
+	1: "Chicken Nine",
+	2: "Chicken Heavy",
+	3: "BCR",
+	4: "Quintillion Chicken",
+	5: "Cornish-Hen Corvette",
+	6: "Galeggtica",
+	7: "Defihent",
+	8: "Voyegger",
+	9: "Henerprise",
 }
 
 func init() {
@@ -363,6 +377,7 @@ func viewMissionsOfId(eid string) (string, error) {
 
 			MissiondId:     info.GetIdentifier(),
 			Ship:           info.Ship,
+			ShipString:     MissionInfo_Spaceship_name_fixed[int32(info.GetShip())],
 			DurationType:   info.DurationType,
 			Level:          int32(info.GetLevel()),
 			Capacity:       int32(info.GetCapacity()),
@@ -1047,25 +1062,13 @@ func main() {
 		return string(jsonData)
 	})
 
-	ui.MustBind("viewMissionsEID", func(eid string) string {
-		if LoadedMissionYears, err := viewMissionsOfId(eid); err != nil {
+	ui.MustBind("viewMissionsOfEid", func(eid string) string {
+		if loadedMissions, err := viewMissionsOfId(eid); err != nil {
 			log.Error(err)
 			return ""
 		} else {
-			return LoadedMissionYears
+			return loadedMissions
 		}
-	})
-
-	ui.MustBind("getTargetName", func(target int) string {
-		return ei.ArtifactSpec_Name_name[int32(target)]
-	})
-
-	ui.MustBind("getShipName", func(ship int) string {
-		return ei.MissionInfo_Spaceship_name[int32(ship)]
-	})
-
-	ui.MustBind("getDurationName", func(duration int) string {
-		return ei.MissionInfo_DurationType_name[int32(duration)]
 	})
 
 	ui.MustBind("getMaxQuality", func() float32 {
@@ -1308,6 +1311,7 @@ func main() {
 
 			MissiondId:     *info.Identifier,
 			Ship:           info.Ship,
+			ShipString:     MissionInfo_Spaceship_name_fixed[int32(*info.Ship)],
 			DurationType:   info.DurationType,
 			Level:          int32(info.GetLevel()),
 			Capacity:       int32(info.GetCapacity()),

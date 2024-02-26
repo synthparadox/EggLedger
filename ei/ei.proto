@@ -776,6 +776,19 @@ message PlayerFarmInfo {
 }
 
 message ContractCoopStatusResponse {
+    optional ResponseStatus response_status = 19;
+    enum ResponseStatus {
+        NO_ERROR = 0;
+        MISSING_USER = 1;
+        MISSING_COOP_ID = 2;
+        MISSING_CONTRACT_ID = 3;
+        MEMBERSHIP_NOT_FOUND = 4;
+        COOP_NOT_FOUND = 5;
+        CONTRACT_NOT_FOUND = 6;
+        INVALID_MEMBERSHIP = 7;
+        NO_HTTP_RESPONSE = 500;
+    }
+    
     optional string contract_identifier = 1;
     optional double total_amount = 2;
     optional string coop_identifier = 3;
@@ -1271,6 +1284,24 @@ message LiveConfig {
         optional bool contracts_club_available = 12;
         optional bool contracts_beta = 13;
     }
+    
+    optional HelpConfig help_config = 5;
+    message HelpConfig {
+        repeated HowToVideoInfo video_infos = 1;
+        message HowToVideoInfo {
+            optional Type type = 6;
+            enum Type {
+                VIDEO = 0;
+                ARTICLE = 1;
+            }
+            
+            optional string name = 1;
+            optional string description = 2;
+            optional string duration = 5;
+            optional string url = 3;
+            optional double soul_eggs = 4;
+        }
+    }
 }
 
 message InGameMail {
@@ -1335,6 +1366,12 @@ message PeriodicalsResponse {
     optional LiveConfig live_config = 5;
     optional MailDB mail_bag = 6;
     optional ContractPlayerInfo contract_player_info = 7;
+    
+    repeated RoyaltyInfo showcase_royalties = 10;
+    message RoyaltyInfo {
+        optional string id = 1;
+        optional uint32 amount = 2;
+    }
 }
 
 message GetPeriodicalsRequest {
@@ -1761,6 +1798,7 @@ message AuthenticatedMessage {
     optional string code = 2;
     optional bool compressed = 4;
     optional uint32 original_size = 5;
+    optional string user_id = 6;
 }
 
 message LogCompleteMissionPayload {
@@ -2037,6 +2075,7 @@ message DLCCatalog {
     repeated ShellSetSpec decorators = 6;
     repeated ShellObjectSpec shell_objects = 4;
     repeated ShellGroupSpec shell_groups = 5;
+    optional double shells_showcase_last_featured_time = 7;
 }
 
 message ShellDB {
@@ -2075,13 +2114,17 @@ message ShellDB {
     
     repeated SavedFarmConfiguration saved_configs = 9;
     message SavedFarmConfiguration {
-        optional string name = 1;
+        optional string id = 1;
         optional FarmConfiguration config = 2;
         optional double client_save_time = 3;
+        optional string server_id = 4;
+        optional string display_name = 5;
+        optional bool purchased = 6;
     }
     
     repeated string new_shells_downloaded = 6;
     repeated string new_shells_seen = 7;
+    optional double last_showcase_featured_time_seen = 11;
     optional bool lighting_controls_unlocked = 10;
     
     message ShellConfiguration {
@@ -2166,38 +2209,61 @@ message ShellsActionLog {
 }
 
 message SubmitShellShowcaseRequest {
-    optional string id = 1;
+    optional BasicRequestInfo rinfo = 4;
+    optional string local_id = 1;
     optional string user_id = 2;
+    optional bool public_username = 5;
     optional ShellDB.FarmConfiguration farm_config = 3;
 }
 
 message ShellShowcase {
-    repeated ShellShowcaseListing top = 1;
-    repeated ShellShowcaseListing featured = 2;
-    repeated ShellShowcaseListing random = 3;
+    repeated ShellShowcaseListingInfo top = 1;
+    repeated ShellShowcaseListingInfo featured = 2;
+    repeated ShellShowcaseListingInfo fresh = 3;
 }
 
-message ShellShowcaseListing {
+message ShellShowcaseListingInfo {
     optional string id = 1;
+    optional string local_id = 12;
     optional string name = 2;
     optional string description = 3;
+    optional bool is_new = 15;
+    optional string creator_name = 14;
+    
+    optional Status status = 11;
+    enum Status {
+        NONE = 0;
+        SUBMITTED = 1;
+        LIVE = 2;
+        FEATURED = 3;
+        FEATURED_ALUM = 5;
+        ARCHIVED = 6;
+        INVALID = 4;
+    }
+    
     optional ShellDB.FarmConfiguration farm_config = 4;
     optional uint32 sales = 5;
     optional uint64 gross = 6;
     optional uint64 views = 7;
+    optional uint64 equips = 13;
     optional uint32 likes = 8;
     optional uint32 dislikes = 9;
+    optional string share_url = 10;
+}
+
+message ShowcaseRoyaltyDeliveryConfirmation {
+    optional BasicRequestInfo rinfo = 3;
+    repeated string ids = 1;
+    optional uint32 amount = 2;
 }
 
 message ShellShowcaseListingSet {
-    repeated ShellShowcaseListing listings = 1;
+    repeated ShellShowcaseListingInfo listings = 1;
 }
 
-message ShellShowcaseAction {
-    optional string action = 1;
-    optional string user_id = 2;
-    optional string id = 3;
-    optional string value = 4;
+message ShellsActionBatch {
+    optional BasicRequestInfo rinfo = 1;
+    repeated ShellsActionLog actions = 2;
 }
 
 message UserVerificationAnalysis {
@@ -2363,10 +2429,13 @@ enum UILocation {
     ULTRA_SHOP = 10;
     SHELLS = 5;
     SHELL_SETS = 6;
+    SHELLS_SHOWCASE = 12;
     CHICKENS = 7;
     CHICKEN_HATS = 11;
     EPIC_RESEARCH = 8;
     SETTINGS = 9;
+    HELP = 13;
+    UNIVERSITY = 14;
 }
 
 enum UserType {

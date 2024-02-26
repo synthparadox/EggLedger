@@ -18,13 +18,6 @@
 <script>
     export default {
         emits: ['changeFilterValue', 'handleFilterChange'],
-        errorCaptured(err, vm, info) {
-            console.error('Error captured in component:', err);
-            console.error('Vue instance:', vm);
-            console.error('Error info:', info);
-            // Return false to stop the error from propagating further to the global error handler
-            return false;
-        },
         props: {
             internalId: String,
             optionList: Array,

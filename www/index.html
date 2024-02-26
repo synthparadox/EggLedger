@@ -426,65 +426,21 @@
         </div>
 
         <div v-show="activeTab === UITab.ViewData" class="flex-1 flex flex-col w-full mx-auto px-4 overflow-hidden bg-darker" >
-          <!-- Statically located divs-->
-          <div class="top-click-detect popup-selector-main overlay-drop">
-            <div class="inner-click-detect popup-selector-inner">
-              <button class="detect-trigger close-button" v-on:click="closeDropFilterMenu()">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-              <input
-                id="drop-search" class="input-search" type="text" placeholder="Search..."
-                v-bind:value="dropSearchTerm"
-                v-on:focus="e => {e.preventDefault(); e.stopPropagation(); }"
-                v-on:input="dropSearchTerm = $event.target.value"
-              />
-              <div class="popup-opt-container">
-                <div v-for="drop in dropSelectList" v-bind:key="drop" class="popup-opt" v-on:click="e => {e.preventDefault(); selectDropFilter(drop); }">
-                  <img class="mr-1rem max-w-7" v-if="drop.imagePath != null && drop.imagePath != ''" :alt="drop.text" :src="`images/${drop.imagePath}`" 
-                    :style="(drop.rarityGif ? 'background: url(' + drop.rarityGif + ') center center no-repeat; background-size: cover;' : '')"
-                  />
-                  <span :class="(drop.styleClass ?? '')">
-                    {{ drop.text }}
-                  </span>
-                </div>
-                <div v-if="dropSelectList == [] || dropSelectList.length == 0">
-                  <span class="text-gray-400">
-                    No results found.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="top-click-detect popup-selector-main overlay-target">
-            <div class="inner-click-detect popup-selector-inner">
-              <button class="detect-trigger close-button" v-on:click="closeTargetFilterMenu()">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-              <input
-                id="target-search" class="input-search" type="text" placeholder="Search..."
-                v-bind:value="targetSearchTerm"
-                v-on:focus="e => {e.preventDefault(); e.stopPropagation(); }"
-                v-on:input="targetSearchTerm = $event.target.value"
-              />
-              <div class="popup-opt-container">
-                <div v-for="target in targetSelectList" v-bind:key="target" class="popup-opt" v-on:click="e => {e.preventDefault(); selectTargetFilter(target); }">
-                  <img class="mr-1rem max-w-7" v-if="target.imagePath != null && target.imagePath != ''" :alt="target.text" :src="`images/targets/${target.imagePath}`"/>
-                  <span class="text-gray-400">
-                    {{ target.text }}
-                  </span>
-                </div>
-                <div v-if="targetSelectList == [] || targetSelectList.length == 0">
-                  <span class="text-gray-400">
-                    No results found.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+
+          <search-over-selector
+            :item-list="dropSelectList"
+            ledger-type="drop" :is-lifetime="false"
+            @close="closeDropFilterMenu" @select="selectDropFilter"
+            @input="val => dropSearchTerm = val"
+          ></search-over-selector>
+
+          <search-over-selector
+            :item-list="targetSelectList"
+            ledger-type="target" :is-lifetime="false"
+            @close="closeTargetFilterMenu" @select="selectTargetFilter"
+            @input="val => targetSearchTerm = val"
+          ></search-over-selector>
+
           <div class="top-click-detect w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
             <div class="inner-click-detect max-h-80vw bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
@@ -495,7 +451,7 @@
               <div v-if="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)" 
                 class="min-w-30vw max-w-35vw max-h-70vh text-gray-300 text-center overflow-auto">
                 <!-- Header information about the mission -->
-                <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ shipToName(viewMissionData.shipInfo.ship) }}</span><br />
+                <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ viewMissionData.shipInfo.shipString }}</span><br />
                 <span class="text-star text-goldenstar" v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0">{{ "★".repeat(viewMissionData.shipInfo.level) }}</span>
                 <br v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0" />
                 <span>Launched: {{ viewMissionData.launchStr }}</span> <br />
@@ -751,13 +707,17 @@
                                 type="button" v-on:click="viewSpecificMission(mission.missionId)"
                               >
                                 <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
-                                  {{padDateOut(groupedYearArray[yearIndex].year, groupedMonthArray[yearIndex][monthIndex].month, groupedDayArray[yearIndex][monthIndex][dayIndex].day)}}
+                                  {{
+                                    groupedYearArray[yearIndex].year + '-' + 
+                                    (groupedMonthArray[yearIndex][monthIndex].month < 10 ? '0' : '') + groupedMonthArray[yearIndex][monthIndex].month + '-' + 
+                                    (groupedDayArray[yearIndex][monthIndex][dayIndex].day < 10 ? '0' : '') + groupedDayArray[yearIndex][monthIndex][dayIndex].day
+                                  }}
                                 </span>
-                                <span v-if="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
+                                <span v-show="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
                                   {{' ' + mission.launchTime}}
                                 </span>
                                 <span class="text-gray-400 ml-05rem">
-                                  <span :class="durToTextClass(mission.durationType)">{{shipToName(mission.ship)}}</span>
+                                  <span :class="durToTextClass(mission.durationType)">{{mission.shipString}}</span>
                                   <span v-if="mission.level != null && mission.level > 0"> ({{mission.level}}<span class="text-goldenstar">★</span>)</span>
                                   <img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
                                 </span>
@@ -782,34 +742,12 @@
         </div>
 
         <div v-show="activeTab === UITab.LifetimeDrops" class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
-          <div class="top-click-detect popup-selector-main overlay-target-lifetime">
-            <div class="inner-click-detect popup-selector-inner">
-              <button class="detect-trigger close-button" v-on:click="closeTargetFilterMenu()">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-              <input
-                id="target-search-lifetime" class="input-search" type="text" placeholder="Search..."
-                v-bind:value="lifetimeTargetSearchTerm"
-                v-on:focus="e => {e.preventDefault(); e.stopPropagation(); }"
-                v-on:input="lifetimeTargetSearchTerm = $event.target.value"
-              />
-              <div class="popup-opt-container">
-                <div v-for="target in lifetimeTargetSelectList" v-bind:key="target" class="popup-opt" v-on:click="e => {e.preventDefault(); selectTargetFilter(target); }">
-                  <img class="mr-1rem max-w-7" v-if="target.imagePath != null && target.imagePath != ''" :alt="target.text" :src="`images/targets/${target.imagePath}`"/>
-                  <span class="text-gray-400">
-                    {{ target.text }}
-                  </span>
-                </div>
-                <div v-if="lifetimeTargetSelectList == [] || lifetimeTargetSelectList.length == 0">
-                  <span class="text-gray-400">
-                    No results found.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <search-over-selector
+            :item-list="lifetimeTargetSelectList"
+            ledger-type="target" :is-lifetime="true"
+            @close="closeTargetFilterMenu" @select="selectTargetFilter"
+            @input="val => lifetimeTargetSearchTerm = val"
+          ></search-over-selector>
           <!-- Absolutely _fuck_ space-y-3 -->
           <form
             v-if="doesDataExist"
@@ -1037,10 +975,18 @@
       // - openURL(url string)
       // - checkForUpdates()
 
-      //Daveed additions :^)
       // - doesDataExist(): bool
-      // - getExistingData(): []string
-      // - filterWarningRead(): void
+      // - getExistingData(): []ExportAccount
+      // - filterWarningRead(): bool
+      // - setFilterWarningRead(flag bool)
+      // - getMissionIds(playerId string): string{json}
+      // - viewMissionsOfEid(playerId string): string{json}
+      // - getMaxQuality(): float32
+      // - getDurationConfigs(): string{json}
+      // - getAfxConfigs(): string{json}
+      // - getPossibleTargets(): string{json}
+      // - getShipDrops(playerId string, shipId string): string{json}
+      // - getShipInfo(playerId string, shipId string): string{json}
 
       // Interrupt worker if the page is reloaded or closed.
       window.addEventListener('beforeunload', async () => {
@@ -1101,55 +1047,6 @@
           return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
         }
 
-        function padDateOut(year, month, day){
-          if(month < 10) month = "0" + month;
-          if(day < 10) day = "0" + day;
-          return year + "-" + month + "-" + day;
-        }
-
-        function durToName(dur){
-          if(dur === "" || dur === null || dur === undefined){
-            return "";
-          }else{
-            switch(dur){
-              case 0: return "Short";
-              case 1: return "Standard";
-              case 2: return "Extended";
-              case 3: return "Tutorial";
-              default: return "Unknown";
-            }
-          }
-        }
-
-        function shipToName(ship){
-          if(ship === "" || ship === null || ship === undefined){
-            return "";
-          }else{
-            switch(ship){
-              case 0: return "Chicken One";
-              case 1: return "Chicken Nine";
-              case 2: return "Chicken Heavy";
-              case 3: return "BCR";
-              case 4: return "Quintillion Chicken";
-              case 5: return "Cornish-Hen Corvette";
-              case 6: return "Galeggtica";
-              case 7: return "Defihent";
-              case 8: return "Voyegger";
-              case 9: return "Henerprise";
-              default: return "Unknown";
-            }
-          }
-        }
-
-        const isBaseFilter = (filterOp) => {
-          return(
-            filterOp != 'launchDT' &&
-            filterOp != 'returnDT' &&
-            filterOp != 'drops' &&
-            filterOp != 'target'
-          );
-        };
-
         const filterWarningRead = Vue.ref((await window.filterWarningRead()) ?? false);
         const hideFilterWarning = Vue.ref(false);
         const dismissFilterWarning = async () => {
@@ -1172,6 +1069,7 @@
           components: {
             'drop-display-container': Vue.defineAsyncComponent(() => loadModule('./templates/DropDisplayContainer.vue', options)),
             'full-filter': Vue.defineAsyncComponent(() => loadModule('./templates/FullFilter.vue', options)),
+            'search-over-selector': Vue.defineAsyncComponent(() => loadModule('./templates/SearchOverSelector.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1370,18 +1268,10 @@
               if(lifetimeDrops.value != null && lifetimeDrops.value.artifacts != null && lifetimeDrops.value.stones != null && lifetimeDrops.value.stoneFragments != null && lifetimeDrops.value.ingredients != null){
                 var useThisFunc;
                 switch(lifetimeSortMethod.value){
-                  case 'default':
-                    useThisFunc = sortGroupAlreadyCombed;
-                    break;
-                  case 'iv':
-                    useThisFunc = inventoryVisualizerSort;
-                    break;
-                  case 'random':
-                    useThisFunc = shuffle;
-                    break;
-                  case 'count':
-                    useThisFunc = sortGroupByCount;
-                    break;
+                  case 'default': useThisFunc = sortGroupAlreadyCombed; break;
+                  case 'iv': useThisFunc = inventoryVisualizerSort; break;
+                  case 'random': useThisFunc = shuffle; break;
+                  case 'count': useThisFunc = sortGroupByCount; break;
                 }
                 lifetimeDrops.value.artifacts = useThisFunc(lifetimeDrops.value.artifacts);
                 lifetimeDrops.value.stones = useThisFunc(lifetimeDrops.value.stones);
@@ -1394,12 +1284,9 @@
             }
             const getLifetimeStatusColor = () => {
               switch(lifetimeState.value){
-                case LifetimeLoadState.Success:
-                  return "text-green-500";
-                case LifetimeLoadState.Failed:
-                  return "text-red-700";
-                default:
-                  return "text-gray-300";
+                case LifetimeLoadState.Success: return "text-green-500";
+                case LifetimeLoadState.Failed: return "text-red-700";
+                default: return "text-gray-300";
               }
             };
             const getLifetimeStatusText = () => {
@@ -1444,7 +1331,7 @@
                 };
                 const newIds = [];
                 lifetimeState.value = LifetimeLoadState.FilteringIds;
-                const missionsJSON = JSON.parse(await window.viewMissionsEID(selectedLifetimeAccount.value));
+                const missionsJSON = JSON.parse(await window.viewMissionsOfEid(selectedLifetimeAccount.value));
                 for(const id of ids){
                   const mission = missionsJSON.find(mission => mission.missionId == id);
                   if(await missionMatchesFilter(mission, lifetimeDataFilter.value, lifetimeOrDataFilter.value)){
@@ -1789,6 +1676,7 @@
               const rarity = afRarityText(drop, bypass ?? false);
               return (rarity == "" ? "" : "text-" + rarity.toLowerCase());
             };
+            const boolMissionBeingViewed = Vue.ref(false);
             const closeMissionOverlay = () => {
               const el = document.querySelector('.overlay-mission');
               el.style.display = 'none';
@@ -1796,13 +1684,31 @@
               el.classList.add('hidden');
               viewMissionData.value = {};
               missionBeingViewed.value = null;
+              boolMissionBeingViewed.value = false;
             };
             const openMissionOverlay = () => {
               const el = document.querySelector('.overlay-mission');
               el.style.display = 'flex';
               //Toggle the hidden class on the overlay
               el.classList.remove('hidden');
+              boolMissionBeingViewed.value = true;
             };
+            //Add listeners for left and right arrow keys to cycle through next and previous missions
+            const handleKeyDown = (event) => {
+              if(boolMissionBeingViewed.value){
+                event.preventDefault();
+                event.stopPropagation();
+                if((event.key === "ArrowLeft" && viewMissionData.value.prevMission) || 
+                  (event.key === "ArrowRight" && viewMissionData.value.nextMission)){
+                  viewSpecificMission(event.key == "ArrowLeft" ? viewMissionData.value.prevMission : viewMissionData.value.nextMission);
+                }
+              }
+            };
+            Vue.watch(boolMissionBeingViewed, () => {
+              if(boolMissionBeingViewed.value) window.addEventListener('keydown', handleKeyDown);
+              else window.removeEventListener('keydown', handleKeyDown);
+            });
+
             const dropPath = (drop) => {
               const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
               const fixedName = drop.protoName.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
@@ -1903,7 +1809,7 @@
             const viewMissionsOfEid = async () => {
               filterApplyTime.value = ""; //Reset the filter apply time
               eidMissionsBeingLoaded.value = true;
-              const missionsLoadValue = await window.viewMissionsEID(selectedMissionAccount.value.toString());
+              const missionsLoadValue = await window.viewMissionsOfEid(selectedMissionAccount.value.toString());
               if (missionsLoadValue !== "") {
                 allLoadedMissions.value = JSON.parse(missionsLoadValue);
                 filteredMissions.value = allLoadedMissions.value;
@@ -1915,7 +1821,6 @@
             //==============================================
             // Filter stuff :^)
             //==============================================
-
             const changeFilterValue = (index, orIndex, level, value) => {
               const intIndex = parseInt(index);
               const intOrIndex = orIndex != null ? parseInt(orIndex) : null;
@@ -1982,11 +1887,15 @@
             const getFilterValueOptions = (topLevel) => {
               switch(topLevel){
                 case 'ship': return Array.from({ length: 10 }, (_, index) => ({
-                    text: shipToName(index),
+                    text: Array.of(
+                        'Chicken One', 'Chicken Nine', 'Chicken Heavy',
+                        'BCR', 'Quintillion Chicken', 'Cornish-Hen Corvette',
+                        'Galeggtica', 'Defihent', 'Voyegger', 'Henerprise'
+                      )[index],
                     value: index,
                   }));
                 case 'duration': return Array.from({ length: 4 }, (_, index) => ({
-                    text: durToName(index),
+                    text: Array.of('Short', 'Standard', 'Extended', 'Tutorial')[index],
                     value: index,
                     styleClass: durToTextClass(index)
                   }));
@@ -2623,8 +2532,6 @@
               missionBeingViewed,
               viewMissionsOfEid,
               toggleElements,
-              padDateOut,
-              shipToName,
               viewSpecificMission,
               targetImage,
               closeMissionOverlay,
@@ -2690,7 +2597,6 @@
               openDropFilterMenu,
               closeDropFilterMenu,
               selectDropFilter,
-              isBaseFilter,
               dismissFilterWarning,
               addOr,
               applyFilter,

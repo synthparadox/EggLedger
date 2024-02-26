@@ -30,6 +30,16 @@ I have since forked [my own version](https://github.com/DavidArthurCole/lorca) o
 
 For other operating systems, or in the lack of any of the above browsers, the app will rely on a Chrome or Chromium installation.
 
+**Can I run EggLedger on Mobile?**
+
+Short answer, no. Long answer, if you're able to emulate a linux environment on your phone, or you are one of the few people with a Windows Phone™, you can try to run the app. However, the app was designed, and styled for desktop use, and may not work as expected on mobile. Beyond emulating a desktop environment, there is no support for mobile devices. The process for porting what is ostensibly a web server to a mobile app is not trivial, and beyond this, the developer licenses and upfront cost of deploying to Google Play and or the App Store are not worth the effort for a free, open-source project.
+
+**Why does it take so long to load my data?**
+
+Ledger needs to pull every ship you've ever sent into your local database, and then process that data to generate the ledger. This can take a while, especially if you have a lot of ships. The app will show a loading screen while it's working, and you can check the progress in-window. Each ship is a separate request to the Egg, Inc. API, and due to not wanting to overload the servers, or raise any flags, artifical limitations and waits are in place to ensure the app (or your IP) is not banned from the API.
+
+<img width="238" src="assets/ledger_moment.png" alt="Ledger Moment">
+
 ## Security and privacy
 
 **When I use EggLedger, are my data shared with anyone?**
