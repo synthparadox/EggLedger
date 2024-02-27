@@ -215,11 +215,11 @@
             },
             getFilterValueOptions(topLevel) {
                 switch (topLevel) {
-                    case 'ship': return Array.from({ length: 10 }, (_, index) => ({
+                    case 'ship': return Array.from({ length: 11 }, (_, index) => ({
                         text: Array(
                             "Chicken One", "Chicken Nine", "Chicken Heavy",
                             "BCR", "Quintillion Chicken", "Cornish-Hen Corvette",
-                            "Galeggtica", "Defihent", "Voyegger", "Henerprise",
+                            "Galeggtica", "Defihent", "Voyegger", "Henerprise", '???',
                         )[index],
                         value: index,
                     }));
@@ -228,7 +228,7 @@
                         value: index,
                         styleClass: Array("text-short", "text-standard", "text-extended", "text-tutorial")[index]
                     }));
-                    case 'level': return Array.from({ length: 8 }, (_, index) => ({
+                    case 'level': return Array.from({ length: 9 }, (_, index) => ({
                         text: index + '★',
                         value: index
                     }));
