@@ -9,7 +9,7 @@
   box-sizing: border-box;
 }
 
-.overlay-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update {
+.overlay-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update, .overlay-menno {
   background: rgba(0, 0, 0, 0.5);
 }
 
@@ -144,4 +144,8 @@
   padding: 2px 4px;
   border-radius: 4px;
   font-size: 0.9em;
+}
+
+.italic {
+  font-style: italic;
 }

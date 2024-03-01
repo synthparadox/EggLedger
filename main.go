@@ -55,6 +55,7 @@ var (
 	_eiAfxConfigMissions   []*ei.ArtifactsConfigurationResponse_MissionParameters
 	_eiAfxConfigArtis      []*ei.ArtifactsConfigurationResponse_ArtifactParameters
 	_nominalShipCapacities = map[ei.MissionInfo_Spaceship]map[ei.MissionInfo_DurationType][]float32{}
+	_latestMennoData       = MennoData{}
 )
 
 const (
@@ -1318,6 +1319,7 @@ func main() {
 			NominalCapcity: int32(_nominalShipCapacities[info.GetShip()][info.GetDurationType()][info.GetLevel()]),
 			IsDubCap:       isDubCap(completeMission),
 			Target:         properTargetName(info.TargetArtifact),
+			TargetInt:      int32(info.GetTargetArtifact()),
 		}
 
 		// Convert the single mission to a JSON string
@@ -1365,6 +1367,50 @@ func main() {
 			log.Infof("new version found: %s", newVersion)
 			return []string{newVersion, newReleaseNotes}
 		}
+	})
+
+	ui.MustBind("isMennoRefreshNeeded", func() bool {
+		return checkIfRefreshMennoDataIsNeeded()
+	})
+
+	ui.MustBind("updateMennoData", func() bool {
+		err := refreshMennoData()
+		if err != nil {
+			return false
+		} else {
+			return true
+		}
+	})
+
+	ui.MustBind("secondsSinceLastMennoUpdate", func() int {
+		_storage.Lock()
+		lastRefresh := _storage.LastMennoDataRefreshAt
+		_storage.Unlock()
+		if lastRefresh.IsZero() {
+			return 0
+		} else {
+			return int(time.Since(lastRefresh).Seconds())
+		}
+	})
+
+	ui.MustBind("loadMennoData", func() bool {
+		_latestMennoData, err = loadLatestMennoData()
+		if err != nil {
+			log.Error(err)
+			return false
+		}
+		return true
+	})
+
+	ui.MustBind("getMennoData", func(ship int, shipDuration int, shipLevel int, targetArtifact int) (data MennoData) {
+		filteredMennoData := MennoData{}
+		for _, configurationItem := range _latestMennoData.ConfigurationItems {
+			sc := configurationItem.ShipConfiguration
+			if sc.ShipType.Id == ship && sc.ShipDurationType.Id == shipDuration && sc.Level == shipLevel && sc.TargetArtifact.Id == targetArtifact {
+				filteredMennoData.ConfigurationItems = append(filteredMennoData.ConfigurationItems, configurationItem)
+			}
+		}
+		return filteredMennoData
 	})
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")

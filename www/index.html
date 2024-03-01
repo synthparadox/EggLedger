@@ -17,7 +17,7 @@
         <div class="h-11 flex-shrink-0 bg-dark">
           <div class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.ViewData, UITab.LifetimeDrops, UITab.About, UITab.Donate]"
+              v-for="tab in [UITab.Ledger, UITab.MissionData, UITab.LifetimeDrops, UITab.About]"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
               v-on:click="activeTab = tab" v-bind:key="tab">
@@ -392,7 +392,7 @@
                   </ul>
                 </li>
                 <li>
-                  Due to the immense number of elements generated, the "View Mission Data" tab may be slow to load
+                  Due to the immense number of elements generated, the "Mission Data" tab may be slow to load
                 </li>
               </ul>
             </div>
@@ -400,32 +400,7 @@
           </div>
         </div>
 
-        <div v-show="activeTab === UITab.Donate" class="flex-1 w-full mx-auto px-4 overflow-y-auto text-center items-center">
-          <div
-            class="border border-gray-300 rounded-md p-0.5"
-          >
-            <span class="text-gray-400 space-y-2">
-              <span class="text-lg ledger-underline mb-1rem">Hello</span><br />
-              Although I thoroughly enjoy developing this tool, it does take<br />
-              a lot of time and effort. If you find this tool, or any other tools<br />
-              I develop/support useful, please consider <a
-                v-external-link
-                href="https://www.buymeacoffee.com/davidarthurcole"
-                target="_blank"
-                class="file-link"
-                >buying me a coffee</a
-              >.<br />
-              to support continued development. Thank you. 🫶
-            </span><br />
-            <img 
-              src="https://ugokawaii.com/wp-content/uploads/2022/10/hot-coffee.gif"
-              alt="Coffee"
-              class="mx-auto bg-transparent max-w-80"
-            />
-          </div>
-        </div>
-
-        <div v-show="activeTab === UITab.ViewData" class="flex-1 flex flex-col w-full mx-auto px-4 overflow-hidden bg-darker" >
+        <div v-show="activeTab === UITab.MissionData" class="flex-1 flex flex-col w-full mx-auto px-4 overflow-hidden bg-darker" >
 
           <search-over-selector
             :item-list="dropSelectList"
@@ -497,7 +472,8 @@
                 <drop-display-container
                   :use-gifs-for-rarity="useGifsForRarity" ledger-type="mission"
                   :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
-                  :data="viewMissionData"
+                  :data="viewMissionData" 
+                  :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDropsPerShip"
                 ></drop-display-container>
 
                 <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
@@ -667,6 +643,28 @@
                 <label for="viewMissionSortIV" class="ext-opt-label">Inventory Visualizer</label>
                 <input id="viewMissionSortIV" type="radio" v-model="viewMissionSortMethod" value="iv" class="ext-opt-check"/>
               </span>
+            </div>
+          </div>
+
+          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
+            <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+              <span class="font-bold text-base text-gray-400">Menno's Ship Data</span><br>
+              <span class="mr-5">
+                <label for="showExpectedDropsPerShip" class="ext-opt-label">Show "Expected Drops Per Ship"</label>
+                <input id="showExpectedDropsPerShip" type="checkbox" v-model="showExpectedDropsPerShip" class="ext-opt-check"/>
+              </span> <br/>
+              <hr class="mt-05rem mb-05rem w-full">
+              <span class="italic text-gray-400">Data last refreshed on <span class="text-green-500">{{ lastMennoUpdateString }}</span></span><br>
+              <button class="mt-05rem mb-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+               v-bind:disabled="secondsSinceLastMennoUpdate < 86400"
+               v-on:click="e => {
+                 e.preventDefault();
+                 asyncUpdateMennoData();
+               }"
+               >
+               Refresh Data Now
+              </button><br v-if="secondsSinceLastMennoUpdate < 86400" />
+              <span class="italic text-sm text-gray-500" v-if="secondsSinceLastMennoUpdate < 86400">To reduce the load on Menno's API, manual refreshes can be performed once every day</span>
             </div>
           </div>
 
@@ -939,6 +937,24 @@
           >
         </footer>
       </div>
+
+      <div class="popup-selector-main overlay-menno h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
+        <div class="max-w-half bg-dark rounded-lg relative p-1rem">
+          <div class="text-gray-300 space-y-2 flex-auto flex-col text-center">
+            <span class="text-lg text-gray-400 mb-1rem">Data Refresh in Progress</span><br/>
+            <hr class="mt-1rem mb-1rem w-full">
+            <span class="mt-05rem">
+              <a v-external-link target="_blank" class="url-link" href="https://github.com/menno-egginc/eggincdatacollection-docs/blob/main/DataEndpoints.md">Menno's Ship Data</a>
+              is currently being loaded or refreshed. This data is used to provide further insights to the drops of your ships, and how "lucky" you've been.
+              {{ mennoDataAutoRefresh ? 'This task runs on Ledger Startup once every 7 days.' : '' }}
+            </span> <br/><br/>
+            <span>Depending on your internet speed, this may take a while. This window will automatically close when the task has completed.</span>
+            <hr class="mt-1rem mb-1rem w-full">
+            <img src="images/loading.gif" alt="Loading..." class="large-ico" />
+          </div>
+        </div>
+      </div>
+
       <div class="top-click-detect popup-selector-main overlay-update w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
         <div class="inner-click-detect max-w-half bg-dark rounded-lg relative p-1rem">
           <button class="detect-trigger close-button" v-on:click="closeUpdateModal()">
@@ -988,6 +1004,9 @@
       // - getPossibleTargets(): string{json}
       // - getShipDrops(playerId string, shipId string): string{json}
       // - getShipInfo(playerId string, shipId string): string{json}
+      // - isMennoRefreshNeeded(): bool
+      // - refreshMennoData(): void
+      // - getMennoData(ship int, shipDuration int, shipLevel int, targetArtifact int): string{json}
 
       // Interrupt worker if the page is reloaded or closed.
       window.addEventListener('beforeunload', async () => {
@@ -1003,10 +1022,9 @@
 
         const UITab = {
           Ledger: 'Ledger',
-          ViewData: 'View Mission Data',
+          MissionData: 'Mission Data',
           LifetimeDrops: 'Lifetime Drops',
           About: 'About',
-          Donate: 'Donate',
         };
 
         const AppState = {
@@ -1563,7 +1581,7 @@
               });
             };
 
-            // ===== Setup for 'View Mission Data' Tab =====
+            // ===== Setup for 'Mission Data' Tab =====
             const viewByDate = Vue.ref(false);
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
@@ -1878,12 +1896,51 @@
             const maxQuality = Vue.ref("");
             const durationConfigs = Vue.ref(null);
             const artifactConfigs = Vue.ref(null);
+            const mennoDataAutoRefresh = Vue.ref(false);
+            const mennoProgress = Vue.ref("");
+            const secondsSinceLastMennoUpdate = Vue.ref(null);
+            const lastMennoUpdateString = Vue.ref("");
+            const showExpectedDropsPerShip = Vue.ref(true);
+            Vue.watch(secondsSinceLastMennoUpdate, () => {
+              lastMennoUpdateString.value = new Date(Date.now() - (secondsSinceLastMennoUpdate.value * 1000)).toLocaleString();
+            });
+
+            const openMennoModal = () => {
+              const el = document.querySelector('.overlay-menno');
+              el.style.display = 'flex';
+              el.classList.remove('hidden');
+            };
+            const closeMennoModal = () => {
+              const el = document.querySelector('.overlay-menno');
+              el.style.display = 'none';
+              el.classList.add('hidden');
+            };
+
             Vue.onMounted(async () => {
               artifactConfigs.value = JSON.parse(await window.getAfxConfigs());
               maxQuality.value = JSON.parse(await window.getMaxQuality());
               durationConfigs.value = JSON.parse(await window.getDurationConfigs());
               possibleTargets.value = JSON.parse(await window.getPossibleTargets());
+
+              //Load Menno data
+              if (await window.isMennoRefreshNeeded()) {
+                mennoDataAutoRefresh.value = true;
+                openMennoModal();
+                await window.updateMennoData();
+                closeMennoModal();
+                mennoDataAutoRefresh.value = false;
+              }
+              secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
+              var mennoSuccess = await window.loadMennoData();
+              if(!mennoSuccess) window.alert("Failed to load Menno data. Please report this!");
             });
+
+            const asyncUpdateMennoData = async () => {
+              openMennoModal();
+              await window.updateMennoData();
+              closeMennoModal();
+              secondsSinceLastMennoUpdate.value = 0;
+            };
 
             const getFilterValueOptions = (topLevel) => {
               switch(topLevel){
@@ -2365,6 +2422,7 @@
               } else return commonProperties;
             };
 
+            const mennoMissionData = Vue.ref(null);
             const missionBeingViewed = Vue.ref(null);
             const viewMissionSortMethod = Vue.ref('default');
             const viewSpecificMission = async (missionId) => {
@@ -2381,6 +2439,19 @@
                   useThisFunc = inventoryVisualizerSort;
                   break;
               }
+
+              var mennoTargetInt = newMissionViewData.shipInfo.targetInt;
+              if(mennoTargetInt == -1) mennoTargetInt = 1000; //Accounting for "Unknown" targets
+              const mennoShip = newMissionViewData.shipInfo.ship;
+              const mennoDuration = newMissionViewData.shipInfo.durationType;
+              const mennoLevel = newMissionViewData.shipInfo.level;
+              const rawMennoData = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt)
+              const totalDropsCount = rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0);
+              mennoMissionData.value = {
+                totalDropsCount: totalDropsCount,
+                configs: rawMennoData.configurationItems
+              };
+
               newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
               newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
               newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
@@ -2618,6 +2689,15 @@
               openUpdateModal,
               closeUpdateModal,
               markedParser,
+
+              //Menno data
+              mennoProgress,
+              mennoDataAutoRefresh,
+              lastMennoUpdateString,
+              secondsSinceLastMennoUpdate,
+              showExpectedDropsPerShip,
+              mennoMissionData,
+              asyncUpdateMennoData,
 
               openFile: window.openFile,
               openFileInFolder: window.openFileInFolder,

@@ -125,6 +125,8 @@ func (a *ArtifactSpec) DropEffectString() string {
 				replString = "700%"
 			case ArtifactSpec_EPIC:
 				replString = "900%"
+			case ArtifactSpec_LEGENDARY:
+				replString = "1000%" //TODO COME NEW UPDATE
 			}
 		}
 	case ArtifactSpec_NEODYMIUM_MEDALLION:
