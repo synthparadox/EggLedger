@@ -32,6 +32,16 @@
                             <span class="text-green-500">1</span>:<span class="text-green-500">{{ (1 / (item.count / lifetimeMissionCount)).toFixed(2) }}</span>)
                         </span>
 
+                        <!--<hr v-if="ledgerType == 'lifetime' && showExpectedTotalDrops && mennoMissionData != null" class="mt-05rem mb-05rem w-full">
+                        <span v-if="ledgerType == 'lifetime' && showExpectedTotalDrops && mennoMissionData != null">
+                            <span v-if="getLifetimeDropCalcs(item.id, item.level, item.rarity) == null">
+                                <span class="text-red-700">Not enough data to determine drop rate.</span>
+                            </span>
+                            <span v-else class="text-gray-400">
+                                <span class="text-green-500">{{ getLifetimeDropCalcs(item.id, item.level, item.rarity) }}</span> expected drops
+                            </span>
+                        </span>-->
+
                         <hr v-if="ledgerType == 'mission' && showExpectedDrops" class="mt-05rem mb-05rem w-full">
                         <span v-if="ledgerType == 'mission' && showExpectedDrops">
                             <span v-if="getDropCalcs(item.id, item.level, item.rarity) == null">
@@ -69,6 +79,7 @@
             afRarityText: Function,
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
+            showExpectedTotalDrops: Boolean,
         },
         methods: {
             getRepeatClass(){
@@ -131,6 +142,15 @@
               );
               if(mennoItem == null) return null;
               return [mennoItem.totalDrops, this.mennoMissionData.totalDropsCount]
+            },
+            getLifetimeDropCalcs(dropId, dropLevel, dropRarity){
+                const mennoItem = this.mennoMissionData.configs.find(item => 
+                item.artifactConfiguration.artifactType.id == dropId &&
+                item.artifactConfiguration.artifactLevel == dropLevel &&
+                item.artifactConfiguration.artifactRarity.id == dropRarity
+              );
+              if(mennoItem == null) return null;
+              return ((mennoItem.totalDrops / this.mennoMissionData.totalDropsCount) * this.getTotalCount()).toFixed(3);
             },
             getTotalCount(){
                 return this.itemArray.reduce((acc, item) => acc + item.count, 0);

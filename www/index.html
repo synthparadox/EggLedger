@@ -69,13 +69,13 @@
               <div ref="playerIdSelectRef" class="tooltip-custom relative flex-grow focus-within:z-10">
                 <!-- Overlay to tag the input with the corresponding nickname (if the playerId in the input is known). -->
                 <div v-if="nicknameForSelectedPlayerId" class="ledger-input-overlay">
-                  <span class="invisible whitespace-pre">
+                  <span class="whitespace-pre">
                     {{ playerId }}</span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == playerId)?.accountColor">{{
                     nicknameForSelectedPlayerId }} {{ objectedExistingData.find(acc => acc.id == playerId)?.ebString ?? "???" }}
                   </span>) 
                 </div>
                 <div v-if="!isPlayerIdValid" class="ledger-input-overlay">
-                  <span class="invisible whitespace-pre">
+                  <span class="whitespace-pre">
                     {{ playerId }} ( <span class="text-red-700">Invalid EID: {{getEidProblem(playerId)}}</span> )
                   </span>
                 </div>
@@ -501,7 +501,7 @@
             <div ref="viewMissionAccountSelectRef" class="relative flex-grow focus-within:z-10">
               <!-- Overlay to tag inmput with number of missions -->
               <div v-if="selectedMissionAccount != null && objectedExistingData.find(acc => acc.id == selectedMissionAccount) != null" class="ledger-input-overlay">
-                <span class="invisible whitespace-pre">
+                <span class="whitespace-pre">
                   {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.id }}
                 </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.accountColor" >
                     {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedMissionAccount)?.ebString }}
@@ -759,7 +759,7 @@
             <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
               <!-- Overlay to tag input with number of missions -->
               <div v-if="selectedLifetimeAccount != null && objectedExistingData.find(acc => acc.id == selectedLifetimeAccount) != null" class="ledger-input-overlay">
-                <span class="invisible whitespace-pre">
+                <span class="whitespace-pre">
                   {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.id }}
                 </span> (<span :style="'color: #' + objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.accountColor" >
                     {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.nickname }} {{ objectedExistingData.find(acc => acc.id == selectedLifetimeAccount)?.ebString }}
@@ -871,6 +871,10 @@
                   <label for="lifetimeDropsPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
                   <input id="lifetimeDropsPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
                 </span>
+                <!--<span>
+                  <label for="lifetimeSortDefault" class="ext-opt-label">Show 'Expected Total Drops'</label>
+                  <input id="lifetimeExpectedTotals" type="checkbox" v-model="lifetimeShowExpectedTotals" class="ext-opt-check"/>
+                </span>-->
               </div>
               <div class="mb-05rem">
                 <span>Sort method</span>
@@ -896,7 +900,8 @@
                 :use-gifs-for-rarity="useGifsForRarity" ledger-type="lifetime"
                 :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
                 :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
-                :data="lifetimeDrops"
+                :data="lifetimeDrops" :menno-mission-data="lifetimeMennoMissionData"
+                :show-expected-total-drops="lifetimeShowExpectedTotals"
               ></drop-display-container>
             </div>
           </div>
@@ -1242,12 +1247,12 @@
             };
             const lifetimeDrops = Vue.ref(null);
             const lifetimeFilterConditionsCount = Vue.ref(1);
-            const lifetimeTopLevelFilterOptions = Vue.ref([]);
+            const lifetimeFilterTopLevel = Vue.ref([]);
             const lifetimeFilterOperators = Vue.ref([]);
             const lifetimeFilterValues = Vue.ref([]);
 
             const lifetimeOrFilterConditionsCount = Vue.ref([]);
-            const lifetimeOrFilterTopLevelOptions = Vue.ref([[]]);
+            const lifetimeOrFilterTopLevel = Vue.ref([[]]);
             const lifetimeOrFilterOperators = Vue.ref([[]]);
             const lifetimeOrFilterValues = Vue.ref([[]]);
 
@@ -1263,6 +1268,59 @@
                 dLifetimeOrFilterValues.value = lifetimeOrFilterValues.value.map((orFilter, index) => {return(dLifetimeOrFilterValues.value[index] == undefined ? [] : dLifetimeOrFilterValues.value[index].slice(0, orFilter.length))});
               }, { deep: true }
             );
+
+            const lifetimeShowExpectedTotals = Vue.ref(false);
+            const lifetimeHasExactlyOneTarget = Vue.ref(false);
+            const lifetimeOneTargetInt = Vue.ref(null);
+            Vue.watch([lifetimeFilterTopLevel, lifetimeFilterOperators, lifetimeFilterValues], () => {
+              const targetFilters = lifetimeFilterTopLevel.value.filter(filter => filter == 'target');
+              if(targetFilters.length != 1) return false;
+              //Ensure op and value are not empty
+              const targetIndex = lifetimeFilterTopLevel.value.indexOf(targetFilters[0]);
+              if (lifetimeFilterOperators.value[targetIndex] == null || lifetimeFilterValues.value[targetIndex] == null) return false;
+              if(lifetimeFilterOperators.value[targetIndex] != '=') return false;
+              lifetimeOneTargetInt.value = lifetimeFilterValues.value[targetIndex];
+              lifetimeHasExactlyOneTarget.value = true;
+            }, { deep: true });
+
+            const lifetimeHasExactlyOneShip = Vue.ref(false);
+            const lifetimeOneShipInt = Vue.ref(null);
+            Vue.watch([lifetimeFilterTopLevel, lifetimeFilterOperators, lifetimeFilterValues], () => {
+              const shipFilters = lifetimeFilterTopLevel.value.filter(filter => filter == 'ship');
+              if(shipFilters.length != 1) return;
+              //Ensure op and value are not empty
+              const shipIndex = lifetimeFilterTopLevel.value.indexOf(shipFilters[0]);
+              if (lifetimeFilterOperators.value[shipIndex] == null || lifetimeFilterValues.value[shipIndex] == null) return;
+              if(lifetimeFilterOperators.value[shipIndex] != '=') return;
+              lifetimeOneShipInt.value = lifetimeFilterValues.value[shipIndex];
+              lifetimeHasExactlyOneShip.value = true;
+            }, { deep: true });
+
+            const lifetimeHasExactlyOneDuration = Vue.ref(false);
+            const lifetimeOneDurationInt = Vue.ref(null);
+            Vue.watch([lifetimeFilterTopLevel, lifetimeFilterOperators, lifetimeFilterValues], () => {
+              const durationFilters = lifetimeFilterTopLevel.value.filter(filter => filter == 'duration');
+              if(durationFilters.length != 1) return;
+              //Ensure op and value are not empty
+              const durationIndex = lifetimeFilterTopLevel.value.indexOf(durationFilters[0]);
+              if (lifetimeFilterOperators.value[durationIndex] == null || lifetimeFilterValues.value[durationIndex] == null) return;
+              if(lifetimeFilterOperators.value[durationIndex] != '=') return;
+              lifetimeOneDurationInt.value = lifetimeFilterValues.value[durationIndex];
+              lifetimeHasExactlyOneDuration.value = true;
+            }, { deep: true });
+
+            const lifetimeHasExactlyOneLevel = Vue.ref(false);
+            const lifetimeOneLevelInt = Vue.ref(null);
+            Vue.watch([lifetimeFilterTopLevel, lifetimeFilterOperators, lifetimeFilterValues], () => {
+              const levelFilters = lifetimeFilterTopLevel.value.filter(filter => filter == 'level');
+              if(levelFilters.length != 1) return;
+              //Ensure op and value are not empty
+              const levelIndex = lifetimeFilterTopLevel.value.indexOf(levelFilters[0]);
+              if (lifetimeFilterOperators.value[levelIndex] == null || lifetimeFilterValues.value[levelIndex] == null) return;
+              if(lifetimeFilterOperators.value[levelIndex] != '=') return;
+              lifetimeOneLevelInt.value = lifetimeFilterValues.value[levelIndex];
+              lifetimeHasExactlyOneLevel.value = true;
+            }, { deep: true });
 
             const lifetimeDataFilter = Vue.ref([]);
             const lifetimeOrDataFilter = Vue.ref([[]]);
@@ -1327,6 +1385,7 @@
             const lifetimeDropsBeingLoaded = Vue.computed(() => lifetimeState.value == LifetimeLoadState.FetchingIds || lifetimeState.value == LifetimeLoadState.LoadingMissionData);
             const lifetimeDropsLoadedProgress = Vue.ref({});
             const lifetimeDropsExcludedCount = Vue.ref(0);
+            const lifetimeMennoMissionData = Vue.ref(null);
             const viewLifetimeDropsOfEid = async (filterLoad) => {
               lifetimeDataBeingFiltered.value = filterLoad;
               //Reset allLoadedMissions - potential insane lag spikes for some reason
@@ -1395,6 +1454,17 @@
               lifetimeDrops.value.stoneCount = lifetimeDrops.value.stones.map(stone => stone.count).reduce((acc, cur) => acc + cur, 0);
               lifetimeDrops.value.stoneFragmentCount = lifetimeDrops.value.stoneFragments.map(fragment => fragment.count).reduce((acc, cur) => acc + cur, 0);
               lifetimeDrops.value.ingredientCount = lifetimeDrops.value.ingredients.map(ingredient => ingredient.count).reduce((acc, cur) => acc + cur, 0);
+
+              if(lifetimeHasExactlyOneShip.value && lifetimeHasExactlyOneTarget.value){
+                var mennoTargetInt = lifetimeOneTargetInt.value;
+                if(mennoTargetInt == -1) mennoTargetInt = 1000; //Accounting for "Unknown" targets
+                const rawMennoData = await window.getMennoData(parseInt(lifetimeOneShipInt.value), parseInt(lifetimeOneDurationInt.value), parseInt(lifetimeOneLevelInt.value), parseInt(mennoTargetInt))
+                const totalDropsCount = rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0);
+                lifetimeMennoMissionData.value = {
+                  totalDropsCount: totalDropsCount,
+                  configs: rawMennoData.configurationItems
+                };
+              } else lifetimeMennoMissionData.value = null;
 
               const end = performance.now();
               lifetimeSuccessTime.value = Math.floor((end - start) / 1000) + "." + Math.floor((end - start) % 1000) + "s";
@@ -1866,7 +1936,7 @@
             const filterValues = Vue.ref([]);
 
             const orFilterConditionsCount = Vue.ref([]);
-            const orFilterTopLevelOptions = Vue.ref([[]]);
+            const orFilterTopLevel = Vue.ref([[]]);
             const orFilterOperators = Vue.ref([[]]);
             const orFilterValues = Vue.ref([[]]);
 
@@ -1948,7 +2018,7 @@
                     text: Array.of(
                         'Chicken One', 'Chicken Nine', 'Chicken Heavy',
                         'BCR', 'Quintillion Chicken', 'Cornish-Hen Corvette',
-                        'Galeggtica', 'Defihent', 'Voyegger', 'Henerprise', '???'
+                        'Galeggtica', 'Defihent', 'Voyegger', 'Henerprise', 'Atreggies Henliner'
                       )[index],
                     value: index,
                   }));
@@ -2479,8 +2549,8 @@
             const tSearchBarSelector = Vue.computed(() => isLifetime.value ? 'target-search-lifetime' : 'target-search');
             const targetQuerySelector = Vue.computed(() => isLifetime.value ? '.overlay-target-lifetime' : '.overlay-target');
 
-            const topLevRef = () => {return(isLifetime.value ? lifetimeTopLevelFilterOptions : topLevelFilterOptions)};
-            const ofTopLevRef = () => {return(isLifetime.value ? lifetimeOrFilterTopLevelOptions : orFilterTopLevelOptions)};
+            const topLevRef = () => {return(isLifetime.value ? lifetimeFilterTopLevel : topLevelFilterOptions)};
+            const ofTopLevRef = () => {return(isLifetime.value ? lifetimeOrFilterTopLevel : orFilterTopLevel)};
             const opRef = () => {return(isLifetime.value ? lifetimeFilterOperators : filterOperators)};
             const ofOpRef = () => {return(isLifetime.value ? lifetimeOrFilterOperators : orFilterOperators)};
             const valRef = () => {return(isLifetime.value ? lifetimeFilterValues : filterValues)};
@@ -2569,11 +2639,11 @@
               getLifetimeStatusText,
               getLifetimeIsProgressSpinning,
               lifetimeFilterConditionsCount,
-              lifetimeTopLevelFilterOptions,
+              lifetimeFilterTopLevel,
               lifetimeFilterOperators,
               lifetimeFilterValues,
               lifetimeOrFilterConditionsCount,
-              lifetimeOrFilterTopLevelOptions,
+              lifetimeOrFilterTopLevel,
               lifetimeOrFilterOperators,
               lifetimeOrFilterValues,
               dLifetimeFilterValues,
@@ -2590,6 +2660,8 @@
               lifetimeTargetSearchTerm,
               lifetimeDropsExcludedCount,
               lifetimeShowDropsPerShip,
+              lifetimeMennoMissionData,
+              lifetimeShowExpectedTotals,
 
               //View all missions
               doesDataExist,
@@ -2646,7 +2718,7 @@
               filterOperators,
               filterValues,
               orFilterConditionsCount,
-              orFilterTopLevelOptions,
+              orFilterTopLevel,
               orFilterOperators,
               orFilterValues,
               filterWarningRead,
