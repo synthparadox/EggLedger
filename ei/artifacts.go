@@ -102,29 +102,31 @@ func (a *ArtifactSpec) DropEffectString() string {
 	case ArtifactSpec_LUNAR_TOTEM:
 		switch *a.Level {
 		case ArtifactSpec_INFERIOR:
-			replString = "50%"
+			replString = "100%"
 		case ArtifactSpec_LESSER:
-			switch *a.Rarity {
-			case ArtifactSpec_COMMON:
-				replString = "100%"
-			case ArtifactSpec_RARE:
-				replString = "150%"
-			}
-		case ArtifactSpec_NORMAL:
 			switch *a.Rarity {
 			case ArtifactSpec_COMMON:
 				replString = "300%"
 			case ArtifactSpec_RARE:
-				replString = "400%"
+				replString = "8x"
+			}
+		case ArtifactSpec_NORMAL:
+			switch *a.Rarity {
+			case ArtifactSpec_COMMON:
+				replString = "20x"
+			case ArtifactSpec_RARE:
+				replString = "40x"
 			}
 		case ArtifactSpec_GREATER:
 			switch *a.Rarity {
 			case ArtifactSpec_COMMON:
-				replString = "500%"
+				replString = "50x"
 			case ArtifactSpec_RARE:
-				replString = "700%"
+				replString = "100x"
 			case ArtifactSpec_EPIC:
-				replString = "900%"
+				replString = "150x"
+			case ArtifactSpec_LEGENDARY:
+				replString = "200x"
 			}
 		}
 	case ArtifactSpec_NEODYMIUM_MEDALLION:

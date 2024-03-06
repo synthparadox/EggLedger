@@ -15,6 +15,7 @@ type AppStorage struct {
 
 	KnownAccounts []Account `json:"known_accounts"`
 
+	LastMennoDataRefreshAt  time.Time `json:"last_menno_data_refresh_at"`
 	LastUpdateCheckAt       time.Time `json:"last_update_check_at"`
 	KnownLatestReleaseNotes string    `json:"known_latest_release_notes"`
 	KnownLatestVersion      string    `json:"known_latest_version"`
@@ -93,6 +94,13 @@ func (s *AppStorage) SetUpdateCheck(latestVersion string, latestReleaseNotes str
 func (s *AppStorage) SetFilterWarningRead(flag bool) {
 	s.Lock()
 	s.FilterWarningRead = flag
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) SetLastMennoDataRefreshAt(t time.Time) {
+	s.Lock()
+	s.LastMennoDataRefreshAt = t
 	s.Unlock()
 	go s.Persist()
 }

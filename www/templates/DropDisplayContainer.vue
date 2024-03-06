@@ -5,6 +5,8 @@
         label-display-value="Artifacts" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
+        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
+        :show-expected-total-drops="showExpectedTotalDrops"
     ></drop-display>
 
     <!-- Stones -->
@@ -12,6 +14,8 @@
         :if-count="data.stoneCount" :item-array="data.stones" type="stone" label-class-list="mission-view-div bg-fuchsia-900"
         label-display-value="Eggfinity Stones" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
+        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
+        :show-expected-total-drops="showExpectedTotalDrops"
     ></drop-display>
 
     <!-- Ingredients -->
@@ -19,6 +23,8 @@
         :if-count="data.ingredientCount" :item-array="data.ingredients" type="ingredient" label-class-list="mission-view-div text-gray-400 bg-darkerer"
         label-display-value="Ingredients" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
+        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
+        :show-expected-total-drops="showExpectedTotalDrops"
     ></drop-display>
 
     <!-- Stone Fragments -->
@@ -26,6 +32,8 @@
         :if-count="data.stoneFragmentCount" :item-array="data.stoneFragments" type="stone_fragment" label-class-list="mission-view-div text-gray-400 bg-darkerer"
         label-display-value="Stone Fragments" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
+        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
+        :show-expected-total-drops="showExpectedTotalDrops"
     ></drop-display>
 
 </template>
@@ -45,6 +53,9 @@
             lifetimeMissionCount: Number,
             afRarityClass: Function,
             afRarityText: Function,
+            mennoMissionData: Object,
+            showExpectedDrops: Boolean,
+            showExpectedTotalDrops: Boolean,
         },
     }
 

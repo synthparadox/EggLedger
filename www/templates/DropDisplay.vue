@@ -25,10 +25,35 @@
                             </span>
                             {{ boundEffectString(item.effectString)[2] }}
                         </span>
+
                         <hr v-if="ledgerType == 'lifetime' && lifetimeShowPerShip" class="mt-05rem mb-05rem w-full">
                         <span v-if="ledgerType == 'lifetime' && lifetimeShowPerShip">
                             (<span class="text-green-500">{{ (item.count / lifetimeMissionCount).toFixed(5) }}</span> per ship - 
                             <span class="text-green-500">1</span>:<span class="text-green-500">{{ (1 / (item.count / lifetimeMissionCount)).toFixed(2) }}</span>)
+                        </span>
+
+                        <!--<hr v-if="ledgerType == 'lifetime' && showExpectedTotalDrops && mennoMissionData != null" class="mt-05rem mb-05rem w-full">
+                        <span v-if="ledgerType == 'lifetime' && showExpectedTotalDrops && mennoMissionData != null">
+                            <span v-if="getLifetimeDropCalcs(item.id, item.level, item.rarity) == null">
+                                <span class="text-red-700">Not enough data to determine drop rate.</span>
+                            </span>
+                            <span v-else class="text-gray-400">
+                                <span class="text-green-500">{{ getLifetimeDropCalcs(item.id, item.level, item.rarity) }}</span> expected drops
+                            </span>
+                        </span>-->
+
+                        <hr v-if="ledgerType == 'mission' && showExpectedDrops" class="mt-05rem mb-05rem w-full">
+                        <span v-if="ledgerType == 'mission' && showExpectedDrops">
+                            <span v-if="getDropCalcs(item.id, item.level, item.rarity) == null">
+                                <span class="text-red-700">Not enough data to determine drop rate.</span>
+                            </span>
+                            <span v-else class="text-gray-400">
+                                <span class="text-green-500">{{ getDropCalcs(item.id, item.level, item.rarity)[0].toLocaleString() }}</span>
+                                <span> seen out of </span>
+                                <span class="text-green-500">{{ getDropCalcs(item.id, item.level, item.rarity)[1].toLocaleString() }}</span> 
+                                <span> drops</span> <br>
+                                <span>(Average of <span class="text-green-500">{{ getExpectedPerShip(item.id, item.level, item.rarity) }}</span> expected in this ship)</span>
+                            </span>
                         </span>
                     </span>
                 </a>
@@ -52,6 +77,9 @@
             lifetimeMissionCount: Number,
             afRarityClass: Function,
             afRarityText: Function,
+            mennoMissionData: Object,
+            showExpectedDrops: Boolean,
+            showExpectedTotalDrops: Boolean,
         },
         methods: {
             getRepeatClass(){
@@ -105,6 +133,32 @@
               }
               const match = /\[(.*?)\]/g.exec(str);
               return (!match ? ["?", "?", "?"] : [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)]);
+            },
+            getDropCalcs (dropId, dropLevel, dropRarity) {
+              const mennoItem = this.mennoMissionData.configs.find(item => 
+                item.artifactConfiguration.artifactType.id == dropId &&
+                item.artifactConfiguration.artifactLevel == dropLevel &&
+                item.artifactConfiguration.artifactRarity.id == dropRarity
+              );
+              if(mennoItem == null) return null;
+              return [mennoItem.totalDrops, this.mennoMissionData.totalDropsCount]
+            },
+            getLifetimeDropCalcs(dropId, dropLevel, dropRarity){
+                const mennoItem = this.mennoMissionData.configs.find(item => 
+                item.artifactConfiguration.artifactType.id == dropId &&
+                item.artifactConfiguration.artifactLevel == dropLevel &&
+                item.artifactConfiguration.artifactRarity.id == dropRarity
+              );
+              if(mennoItem == null) return null;
+              return ((mennoItem.totalDrops / this.mennoMissionData.totalDropsCount) * this.getTotalCount()).toFixed(3);
+            },
+            getTotalCount(){
+                return this.itemArray.reduce((acc, item) => acc + item.count, 0);
+            },
+            getExpectedPerShip(dropId, dropLevel, dropRarity){
+                const ratios = this.getDropCalcs(dropId, dropLevel, dropRarity);
+                if(ratios == null) return null;
+                return ((ratios[0] / ratios[1]) * this.getTotalCount()).toFixed(3);
             }
         }
     }
