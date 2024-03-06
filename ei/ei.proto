@@ -1456,7 +1456,7 @@ message ArtifactsClientInfo {
     
     repeated LaunchCount launch_counts = 3;
     message LaunchCount {
-        optional MissionInfo.Spaceship ship = 1;
+        optional ei.MissionInfo.Spaceship ship = 1;
         optional uint32 num_launches = 2;
         optional double launch_points = 3;
     }
@@ -1625,7 +1625,7 @@ message ArtifactsConfigurationRequest {
 message ArtifactsConfigurationResponse {
     repeated MissionParameters mission_parameters = 1;
     message MissionParameters {
-        optional MissionInfo.Spaceship ship = 1;
+        optional ei.MissionInfo.Spaceship ship = 1;
         
         repeated Duration durations = 3;
         message Duration {
@@ -1701,7 +1701,7 @@ message CollectContractArtifactRewardsRequest {
     optional uint32 league = 5;
     optional Contract.PlayerGrade grade = 6;
     optional uint32 goal_index = 3;
-    optional MissionInfo.Spaceship best_ship = 4;
+    optional ei.MissionInfo.Spaceship best_ship = 4;
 }
 
 message CraftArtifactRequest {
