@@ -871,10 +871,10 @@
                   <label for="lifetimeDropsPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
                   <input id="lifetimeDropsPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
                 </span>
-                <!--<span>
+                <span v-if="lifetimeAllowExpectedTotals">
                   <label for="lifetimeSortDefault" class="ext-opt-label">Show 'Expected Total Drops'</label>
-                  <input id="lifetimeExpectedTotals" type="checkbox" v-model="lifetimeShowExpectedTotals" class="ext-opt-check"/>
-                </span>-->
+                  <input id="lifetimeExpectedTotals" type="checkbox" v-model="lifetimeShowExpectedTotalsPref" class="ext-opt-check"/>
+                </span>
               </div>
               <div class="mb-05rem">
                 <span>Sort method</span>
@@ -1269,7 +1269,9 @@
               }, { deep: true }
             );
 
-            const lifetimeShowExpectedTotals = Vue.ref(false);
+            const lifetimeAllowExpectedTotals = Vue.ref(false);
+            const lifetimeShowExpectedTotalsPref = Vue.ref(false);
+            const lifetimeShowExpectedTotals = Vue.computed(() => lifetimeAllowExpectedTotals.value && lifetimeShowExpectedTotalsPref.value);
             const lifetimeHasExactlyOneTarget = Vue.ref(false);
             const lifetimeOneTargetInt = Vue.ref(null);
             Vue.watch([lifetimeFilterTopLevel, lifetimeFilterOperators, lifetimeFilterValues], () => {
@@ -1438,9 +1440,31 @@
                 ingredients: [],
                 missionCount: ids.length,
               };
+              var firstMatchesCalced = false;
+              var firstMatches = [];
+              var nonMatch = false;
               for (const id of ids) {
                 const mission = await getSpecificMissionData(selectedLifetimeAccount.value, id, false);
+                const missionShipInfo = mission.shipInfo;
                 if (mission != null) {
+                  if(!firstMatchesCalced){
+                    firstMatches = [
+                      missionShipInfo.ship,
+                      missionShipInfo.durationType,
+                      missionShipInfo.level,
+                      missionShipInfo.targetArtifact
+                    ];
+                    firstMatchesCalced = true;
+                  } else if(!nonMatch) {
+                    if(firstMatches[0] != missionShipInfo.ship) firstMatches[0] = -1;
+                    if(firstMatches[1] != missionShipInfo.durationType) firstMatches[1] = -1;
+                    if(firstMatches[2] != missionShipInfo.level) firstMatches[2] = -1;
+                    if(firstMatches[3] != missionShipInfo.targetArtifact) firstMatches[3] = -1;
+                    if(firstMatches[0] == -1 && firstMatches[1] == -1 
+                      && firstMatches[2] == -1 && firstMatches[3] == -1){
+                      nonMatch = true;
+                    }
+                  }
                   mission.artifacts.forEach(artifact => mergeItems(lifetimeDrops.value.artifacts, artifact));
                   mission.stones.forEach(stone => mergeItems(lifetimeDrops.value.stones, stone));
                   mission.stoneFragments.forEach(stoneFragment => mergeItems(lifetimeDrops.value.stoneFragments, stoneFragment));
@@ -1455,16 +1479,33 @@
               lifetimeDrops.value.stoneFragmentCount = lifetimeDrops.value.stoneFragments.map(fragment => fragment.count).reduce((acc, cur) => acc + cur, 0);
               lifetimeDrops.value.ingredientCount = lifetimeDrops.value.ingredients.map(ingredient => ingredient.count).reduce((acc, cur) => acc + cur, 0);
 
-              if(lifetimeHasExactlyOneShip.value && lifetimeHasExactlyOneTarget.value){
-                var mennoTargetInt = lifetimeOneTargetInt.value;
-                if(mennoTargetInt == -1) mennoTargetInt = 1000; //Accounting for "Unknown" targets
-                const rawMennoData = await window.getMennoData(parseInt(lifetimeOneShipInt.value), parseInt(lifetimeOneDurationInt.value), parseInt(lifetimeOneLevelInt.value), parseInt(mennoTargetInt))
+              const lifetimeShipUnique = (lifetimeHasExactlyOneShip.value || firstMatches[0] != -1);
+              const lifetimeDurationUnique = (lifetimeHasExactlyOneDuration.value || firstMatches[1] != -1);
+              const lifetimeLevelUnique = (lifetimeHasExactlyOneLevel.value || firstMatches[2] != -1);
+              const lifetimeTargetUnique = (lifetimeHasExactlyOneTarget.value || firstMatches[3] != -1);
+
+              if(lifetimeShipUnique && lifetimeDurationUnique && lifetimeLevelUnique && lifetimeTargetUnique){
+
+                var targetUniqueValue = lifetimeOneTargetInt.value;
+                if(targetUniqueValue == null) targetUniqueValue = firstMatches[3];
+                if(targetUniqueValue == -1) targetUniqueValue = 1000; //Accounting for "Unknown" targets
+
+                const shipUniqueValue = lifetimeOneShipInt.value != null ? lifetimeOneShipInt.value : firstMatches[0];
+                const durationUniqueValue = lifetimeOneDurationInt.value != null ? lifetimeOneDurationInt.value : firstMatches[1];
+                const levelUniqueValue = lifetimeOneLevelInt.value != null ? lifetimeOneLevelInt.value : firstMatches[2];
+
+                const rawMennoData = await window.getMennoData(parseInt(shipUniqueValue), parseInt(durationUniqueValue), parseInt(levelUniqueValue), parseInt(targetUniqueValue))
                 const totalDropsCount = rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0);
                 lifetimeMennoMissionData.value = {
                   totalDropsCount: totalDropsCount,
                   configs: rawMennoData.configurationItems
                 };
-              } else lifetimeMennoMissionData.value = null;
+
+                lifetimeAllowExpectedTotals.value = true;
+              } else {
+                lifetimeMennoMissionData.value = null;
+                lifetimeAllowExpectedTotals.value = false;
+              }
 
               const end = performance.now();
               lifetimeSuccessTime.value = Math.floor((end - start) / 1000) + "." + Math.floor((end - start) % 1000) + "s";
@@ -2662,6 +2703,8 @@
               lifetimeShowDropsPerShip,
               lifetimeMennoMissionData,
               lifetimeShowExpectedTotals,
+              lifetimeShowExpectedTotalsPref,
+              lifetimeAllowExpectedTotals,
 
               //View all missions
               doesDataExist,

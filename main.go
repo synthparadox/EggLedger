@@ -193,16 +193,17 @@ type ReleaseInfo struct {
 }
 
 var MissionInfo_Spaceship_name_fixed = map[int32]string{
-	0: "Chicken One",
-	1: "Chicken Nine",
-	2: "Chicken Heavy",
-	3: "BCR",
-	4: "Quintillion Chicken",
-	5: "Cornish-Hen Corvette",
-	6: "Galeggtica",
-	7: "Defihent",
-	8: "Voyegger",
-	9: "Henerprise",
+	0:  "Chicken One",
+	1:  "Chicken Nine",
+	2:  "Chicken Heavy",
+	3:  "BCR",
+	4:  "Quintillion Chicken",
+	5:  "Cornish-Hen Corvette",
+	6:  "Galeggtica",
+	7:  "Defihent",
+	8:  "Voyegger",
+	9:  "Henerprise",
+	10: "Atreggies Henliner",
 }
 
 func init() {

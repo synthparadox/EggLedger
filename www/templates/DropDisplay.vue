@@ -32,7 +32,7 @@
                             <span class="text-green-500">1</span>:<span class="text-green-500">{{ (1 / (item.count / lifetimeMissionCount)).toFixed(2) }}</span>)
                         </span>
 
-                        <!--<hr v-if="ledgerType == 'lifetime' && showExpectedTotalDrops && mennoMissionData != null" class="mt-05rem mb-05rem w-full">
+                        <hr v-if="ledgerType == 'lifetime' && showExpectedTotalDrops && mennoMissionData != null" class="mt-05rem mb-05rem w-full">
                         <span v-if="ledgerType == 'lifetime' && showExpectedTotalDrops && mennoMissionData != null">
                             <span v-if="getLifetimeDropCalcs(item.id, item.level, item.rarity) == null">
                                 <span class="text-red-700">Not enough data to determine drop rate.</span>
@@ -40,7 +40,7 @@
                             <span v-else class="text-gray-400">
                                 <span class="text-green-500">{{ getLifetimeDropCalcs(item.id, item.level, item.rarity) }}</span> expected drops
                             </span>
-                        </span>-->
+                        </span>
 
                         <hr v-if="ledgerType == 'mission' && showExpectedDrops" class="mt-05rem mb-05rem w-full">
                         <span v-if="ledgerType == 'mission' && showExpectedDrops">
