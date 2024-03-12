@@ -401,7 +401,6 @@
         </div>
 
         <div v-show="activeTab === UITab.MissionData" class="flex-1 flex flex-col w-full mx-auto px-4 overflow-hidden bg-darker" >
-
           <search-over-selector
             :item-list="dropSelectList"
             ledger-type="drop" :is-lifetime="false"
@@ -416,75 +415,49 @@
             @input="val => targetSearchTerm = val"
           ></search-over-selector>
 
-          <div class="top-click-detect w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center overlay-mission">
+          <div class="top-click-detect mission-view-overlay overlay-mission">
             <div class="inner-click-detect max-h-80vw bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
-              <div v-if="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)" 
-                class="min-w-30vw max-w-35vw max-h-70vh text-gray-300 text-center overflow-auto">
-                <!-- Header information about the mission -->
-                <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">{{ viewMissionData.shipInfo.shipString }}</span><br />
-                <span class="text-star text-goldenstar" v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0">{{ "★".repeat(viewMissionData.shipInfo.level) }}</span>
-                <br v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0" />
-                <span>Launched: {{ viewMissionData.launchStr }}</span> <br />
-                <span>Returned: {{ viewMissionData.returnStr }}</span> <br />
-                <span>Duration: {{ viewMissionData.durationStr }}</span> <br />
-                <span class="flex flex-row items-center justify-center">
-                  <span :class="(viewMissionData.shipInfo.isDubCap ? 'mr-05rem' : '')">Capacity: {{ viewMissionData.shipInfo.capacity }} </span>
-                  <span v-if="viewMissionData.shipInfo.isDubCap" 
-                    class="max-w-28 flex py-1 double-cap-span items-center justify-center flex-1">
-                    <img alt="Artifact Crate" src="https://eggincassets.tcl.sh/64/egginc/icon_afx_chest_2.png" class="w-6 mr-05rem">
-                    <span class="tooltip-custom text-xs font-bold"> {{viewMissionData.capacityModifier}}x Capacity
-                        <span class="font-normal text-sm text-gray-400 tooltiptext-custom speech-bubble">This ship was launched during a<br />
-                          <span class="text-dubcap">
-                            {{viewMissionData.capacityModifier}}x Capacity Event
-                          </span>
-                          and returned with<br />
-                          more artifacts than normal.
-                        </span>
-                      </span>
-                    </span>
-                    <br />
-                  </span>
-                <div v-if="viewMissionData.shipInfo.target != '' && viewMissionData.shipInfo.target.toUpperCase() != 'UNKNOWN'">
-                  <div class="items-center justify-center flex">
-                    <span>Sensor Target: </span>
-                    <div class="ml-1 text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">
-                      {{ properCase(viewMissionData.shipInfo.target.replaceAll("_", " ")) }}
-                    </div>
+              <ship-display
+                :top-level-bool="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)"
+                :view-mission-data="viewMissionData" :is-multi="false"
+                :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
+                :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDropsPerShip"
+                @view="val => viewSpecificMission(val)"
+              ></ship-display>
+            </div>
+          </div>
+
+          <div class="top-click-detect mission-view-overlay overlay-multi-mission">
+            <div class="inner-click-detect max-h-80vw bg-dark rounded-lg relative p-1rem">
+              <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMultiMissionOverlay()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              <div class="flex justify-between mb-4">
+                  <div 
+                    v-for="(missionData, missionDataIndex) in multiViewMissionData"
+                    :class="'w-1/' + multiViewMissionData.length"
+                  >
+                    <ship-display
+                      :top-level-bool="missionData && missionData != {} && missionData.shipInfo != null"
+                      :view-mission-data="missionData" :is-multi="true"
+                      :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
+                      :menno-mission-data="missionData.mennoData" :show-expected-drops="showExpectedDropsPerShip"
+                    ></ship-display>
                   </div>
-                  <br/>
-                </div>
-                <!-- Previous mission -->
-                <button v-bind:disabled="viewMissionData.prevMission == null" v-on:click="viewSpecificMission(viewMissionData.prevMission)" title="Previous mission"
-                class="disabled:hover:cursor-not-allowed absolute left-0 top-1/2 transform -translate-y-1/2 pl-2 rounded-md text-gray-400 focus:outline-none z-10 disabled:text-gray-500 hover:text-gray-500">
-                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </button>
-                <!-- Next mission -->
-                <button v-bind:disabled="viewMissionData.nextMission == null" v-on:click="viewSpecificMission(viewMissionData.nextMission)" title="Next mission"
-                class="disabled:hover:cursor-not-allowed absolute right-0 top-1/2 transform -translate-y-1/2 pr-2 rounded-md text-gray-400 focus:outline-none z-10 disabled:text-gray-500 hover:text-gray-500">
-                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </button>
-
-                <drop-display-container
-                  :use-gifs-for-rarity="useGifsForRarity" ledger-type="mission"
-                  :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
-                  :data="viewMissionData" 
-                  :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDropsPerShip"
-                ></drop-display-container>
-
-                <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
-                <div class="mt-2 text-xs text-gray-300 text-center">
-                  Hover mouse over an item to show details.<br />
-                  Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="ledger-underline">
-                    artifact explorer
-                  </a> page.
-                </div>
-
-                <!-- End mission view-->
+              </div>
+              <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
+              <div class="mt-2 text-xs text-gray-300 text-center">
+                Hover mouse over an item to show details.<br />
+                Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="ledger-underline">
+                artifact explorer
+                </a> page.
               </div>
             </div>
           </div>
@@ -629,8 +602,12 @@
                 <input id="recolorDCCB" type="checkbox" v-model="recolorDC" class=" ext-opt-check"/>
               </span>
               <span class="mr-5">
-                <label for="useGifsForRarity" class="ext-opt-label">Particle GIFs for rarity</label>
-                <input id="useGifsForRarity" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
+                <label for="useGifsForRarityCB" class="ext-opt-label">Particle GIFs for rarity</label>
+                <input id="useGifsForRarityCB" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
+              </span>
+              <span class="mr-5">
+                <label for="allowMultiViewingCB" class="ext-opt-label">Enable multi-view</label>
+                <input id="allowMultiViewingCB" type="checkbox" v-model="allowMultiViewing" class="ext-opt-check"/>
               </span>
             </div>
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
@@ -698,31 +675,44 @@
                             {{(groupedDayArray[yearIndex][monthIndex][dayIndex].enabled ? 'Collapse' : 'Expand')}}
                           </button>
                           <div class="mt-1rem mission-grid">
-                            <div v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled)"
-                              class="text-sm mission-item"
-                              v-for="(mission, missionIndex) in dayVF" :key="missionIndex">
-                              <button 
-                                class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
-                                type="button" v-on:click="viewSpecificMission(mission.missionId)"
+                            <button 
+                              v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled) && allowMultiViewing"
+                              v-on:click="e => {triggerRowView(e)}"
+                              class="text-xs font-bold btn btn-outline-dark bg-transparent mission-row-view"
+                            >
+                              <span class="text-xs">
+                                View row
+                              </span>
+                            </button>
+                            <div :class="'mission-grid ' + (allowMultiViewing ? 'mission-items-view' : 'mission-items-full')">
+                              <div v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled)"
+                                v-for="(mission, missionIndex) in dayVF" :key="missionIndex"
+                                class="text-sm mission-item-3"
+                                :data-missionid="mission.missionId"  
                               >
-                                <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
-                                  {{
-                                    groupedYearArray[yearIndex].year + '-' + 
-                                    (groupedMonthArray[yearIndex][monthIndex].month < 10 ? '0' : '') + groupedMonthArray[yearIndex][monthIndex].month + '-' + 
-                                    (groupedDayArray[yearIndex][monthIndex][dayIndex].day < 10 ? '0' : '') + groupedDayArray[yearIndex][monthIndex][dayIndex].day
-                                  }}
-                                </span>
-                                <span v-show="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
-                                  {{' ' + mission.launchTime}}
-                                </span>
-                                <span class="text-gray-400 ml-05rem">
-                                  <span :class="durToTextClass(mission.durationType)">{{mission.shipString}}</span>
-                                  <span v-if="mission.level != null && mission.level > 0"> ({{mission.level}}<span class="text-goldenstar">★</span>)</span>
-                                  <img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
-                                </span>
-                              </button>
-                            </div>
-                          </div>                        
+                                <button 
+                                  class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
+                                  type="button" v-on:click="viewSpecificMission(mission.missionId)"
+                                >
+                                  <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
+                                    {{
+                                      groupedYearArray[yearIndex].year + '-' + 
+                                      (groupedMonthArray[yearIndex][monthIndex].month < 10 ? '0' : '') + groupedMonthArray[yearIndex][monthIndex].month + '-' + 
+                                      (groupedDayArray[yearIndex][monthIndex][dayIndex].day < 10 ? '0' : '') + groupedDayArray[yearIndex][monthIndex][dayIndex].day
+                                    }}
+                                  </span>
+                                  <span v-show="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
+                                    {{' ' + mission.launchTime}}
+                                  </span>
+                                  <span class="text-gray-400 ml-05rem">
+                                    <span :class="durToTextClass(mission.durationType)">{{mission.shipString}}</span>
+                                    <span v-if="mission.level != null && mission.level > 0"> ({{mission.level}}<span class="text-goldenstar">★</span>)</span>
+                                    <img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
+                                  </span>
+                                </button>
+                              </div>
+                            </div> 
+                          </div>                       
                         </div>
                       </div>
                     </div>
@@ -1094,6 +1084,7 @@
             'drop-display-container': Vue.defineAsyncComponent(() => loadModule('./templates/DropDisplayContainer.vue', options)),
             'full-filter': Vue.defineAsyncComponent(() => loadModule('./templates/FullFilter.vue', options)),
             'search-over-selector': Vue.defineAsyncComponent(() => loadModule('./templates/SearchOverSelector.vue', options)),
+            'ship-display': Vue.defineAsyncComponent(() => loadModule('./templates/ShipDisplay.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1697,6 +1688,8 @@
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
             const useGifsForRarity = Vue.ref(false);
+            const multiViewMissionData = Vue.ref([]);
+            const missionsBeingViewed = Vue.ref(null);
             const viewMissionData = Vue.ref({});
             const doesDataExist = Vue.ref(false);
             const existingData = Vue.ref([]); //Empty array of strings
@@ -1806,6 +1799,23 @@
               const rarity = afRarityText(drop, bypass ?? false);
               return (rarity == "" ? "" : "text-" + rarity.toLowerCase());
             };
+
+            const allowMultiViewing = Vue.ref(false);
+            const closeMultiMissionOverlay = () => {
+              const el = document.querySelector('.overlay-multi-mission');
+              el.style.display = 'none';
+              //Toggle the hidden class on the overlay
+              el.classList.add('hidden');
+              multiViewMissionData.value = [];
+              missionsBeingViewed.value = null;
+            };
+            const openMultiMissionOverlay = () => {
+              const el = document.querySelector('.overlay-multi-mission');
+              el.style.display = 'flex';
+              //Toggle the hidden class on the overlay
+              el.classList.remove('hidden');
+            };
+
             const boolMissionBeingViewed = Vue.ref(false);
             const closeMissionOverlay = () => {
               const el = document.querySelector('.overlay-mission');
@@ -2572,6 +2582,63 @@
               openMissionOverlay();
             };
 
+            function triggerRowView(event){
+              //Get target element from event
+              const element = event.target;
+
+              //Log the type of the element clicked
+              window.console.log(element.tagName.toLowerCase() + " clicked")
+
+              var missionIds = [];
+              const missionChildren = element.parentNode.parentNode.children[1].children;
+              for(const missionChild of missionChildren){
+                missionIds.push(missionChild.getAttribute('data-missionid'));
+              }
+              viewRowOfMissions(missionIds);
+            }
+
+            const viewRowOfMissions = async(missionIds) => {
+              //Do not allow viewing missions while data is being fetched - prevent collisions
+              if(isFetching.value) return false;
+              var index = 0;
+              missionsBeingViewed.value = [];
+              multiViewMissionData.value = [];
+              for(const missionId of missionIds){
+                const newMissionViewData = await getSpecificMissionData(loadedEid.value, missionId, true);
+                if(newMissionViewData == null) return false;
+                var useThisFunc;
+                switch(viewMissionSortMethod.value){
+                  case 'default':
+                    useThisFunc = sortGroupAlreadyCombed;
+                    break;
+                  case 'iv':
+                    useThisFunc = inventoryVisualizerSort;
+                    break;
+                }
+
+                var mennoTargetInt = newMissionViewData.shipInfo.targetInt;
+                if(mennoTargetInt == -1) mennoTargetInt = 1000; //Accounting for "Unknown" targets
+                const mennoShip = newMissionViewData.shipInfo.ship;
+                const mennoDuration = newMissionViewData.shipInfo.durationType;
+                const mennoLevel = newMissionViewData.shipInfo.level;
+                const rawMennoData = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt)
+                const totalDropsCount = rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0);
+                newMissionViewData.mennoData = {
+                  totalDropsCount: totalDropsCount,
+                  configs: rawMennoData.configurationItems
+                };
+
+                newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
+                newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
+                newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
+                newMissionViewData.ingredients = useThisFunc(newMissionViewData?.ingredients);
+                multiViewMissionData.value.push(newMissionViewData);
+                missionsBeingViewed.value.push(missionId);
+                index++;
+              }
+              openMultiMissionOverlay();
+            };
+
             Vue.onMounted(() => {
               document.querySelectorAll('.top-click-detect').forEach((topElement) => {
                 const innerEl = topElement.querySelector('.inner-click-detect');
@@ -2725,6 +2792,15 @@
               refreshExistingData,
               openMissionsViewAccountDropdown,
               closeMissionsViewAccountDropdown,
+
+              //View multiple missions
+              missionsBeingViewed,
+              multiViewMissionData,
+              allowMultiViewing,
+              viewRowOfMissions,
+              openMultiMissionOverlay,
+              closeMultiMissionOverlay,
+              triggerRowView,
 
               //View specific mission
               viewByDate,

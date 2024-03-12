@@ -6,7 +6,7 @@
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops"
+        :show-expected-total-drops="showExpectedTotalDrops" :lifetime-total-drops-count="getLifetimeTotalCount()"
     ></drop-display>
 
     <!-- Stones -->
@@ -15,7 +15,7 @@
         label-display-value="Eggfinity Stones" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops"
+        :show-expected-total-drops="showExpectedTotalDrops" :lifetime-total-drops-count="getLifetimeTotalCount()"
     ></drop-display>
 
     <!-- Ingredients -->
@@ -24,7 +24,7 @@
         label-display-value="Ingredients" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops"
+        :show-expected-total-drops="showExpectedTotalDrops" :lifetime-total-drops-count="getLifetimeTotalCount()"
     ></drop-display>
 
     <!-- Stone Fragments -->
@@ -33,7 +33,7 @@
         label-display-value="Stone Fragments" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops"
+        :show-expected-total-drops="showExpectedTotalDrops" :lifetime-total-drops-count="getLifetimeTotalCount()"
     ></drop-display>
 
 </template>
@@ -44,6 +44,11 @@
     export default {
         components: {
             DropDisplay,
+        },
+        methods: {
+            getLifetimeTotalCount(){
+                return this.data.artifactCount + this.data.stoneCount + this.data.ingredientCount + this.data.stoneFragmentCount;
+            },
         },
         props: {
             useGifsForRarity: Boolean,

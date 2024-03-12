@@ -3,14 +3,26 @@
   flex-wrap: wrap;
   gap: 10px;
 }
-  
-.mission-item {
+
+.mission-row-view {
+  flex: 0 0 calc(5% - 10px);
+}
+
+.mission-items-view {
+  flex: 0 0 calc(95% - 10px);
+}
+
+.mission-items-full {
+  flex: 0 0 100%;
+}
+
+.mission-item-3 {
   flex: 0 0 calc(33.33% - 10px);
   box-sizing: border-box;
 }
 
-.overlay-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update, .overlay-menno {
-  background: rgba(0, 0, 0, 0.5);
+.overlay-mission, .overlay-multi-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update, .overlay-menno {
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .bg-rare-animated {
