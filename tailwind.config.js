@@ -77,6 +77,7 @@ module.exports = {
         '500p': '500px',
         '35vw': '35vw',
         'half': '50%',
+        '80vw': '80vw',
       },
       lineHeight: {
         '1rem': '1rem'

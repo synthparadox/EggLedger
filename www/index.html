@@ -439,7 +439,13 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
-              <div class="flex justify-between mb-4">
+              <div v-if="rowViewBeingLoaded" class="text-center">
+                <div class="mt-05rem text-center text-xl text-gray-400">Multi-Mission View Loading...</div>
+                <hr class="mt-1rem mb-1rem w-full">
+                <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
+              </div>
+              <div v-else>
+                <div class="flex justify-between mb-4 max-w-80vw overflow-auto">
                   <div 
                     v-for="(missionData, missionDataIndex) in multiViewMissionData"
                     :class="'w-1/' + multiViewMissionData.length"
@@ -451,13 +457,13 @@
                       :menno-mission-data="missionData.mennoData" :show-expected-drops="showExpectedDropsPerShip"
                     ></ship-display>
                   </div>
-              </div>
-              <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
-              <div class="mt-2 text-xs text-gray-300 text-center">
-                Hover mouse over an item to show details.<br />
-                Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="ledger-underline">
-                artifact explorer
-                </a> page.
+                </div>
+                <div class="mt-2 text-xs text-gray-300 text-center">
+                  Hover mouse over an item to show details.<br />
+                  Click to open the relevant <a target="_blank" v-external-link href="https://wasmegg-carpet.netlify.app/artifact-explorer/" class="ledger-underline">
+                  artifact explorer
+                  </a> page.
+                </div>
               </div>
             </div>
           </div>
@@ -2582,7 +2588,9 @@
               openMissionOverlay();
             };
 
+            const rowViewBeingLoaded = Vue.ref(false);
             function triggerRowView(event){
+              rowViewBeingLoaded.value = true;
               //Get target element from event
               const element = event.target;
 
@@ -2599,7 +2607,11 @@
 
             const viewRowOfMissions = async(missionIds) => {
               //Do not allow viewing missions while data is being fetched - prevent collisions
-              if(isFetching.value) return false;
+              if(isFetching.value) {
+                rowViewBeingLoaded.value = false;
+                return false;
+              }
+              openMultiMissionOverlay();
               var index = 0;
               missionsBeingViewed.value = [];
               multiViewMissionData.value = [];
@@ -2636,7 +2648,7 @@
                 missionsBeingViewed.value.push(missionId);
                 index++;
               }
-              openMultiMissionOverlay();
+              rowViewBeingLoaded.value = false;
             };
 
             Vue.onMounted(() => {
@@ -2797,6 +2809,7 @@
               missionsBeingViewed,
               multiViewMissionData,
               allowMultiViewing,
+              rowViewBeingLoaded,
               viewRowOfMissions,
               openMultiMissionOverlay,
               closeMultiMissionOverlay,
