@@ -24,7 +24,7 @@
                 >
                     <img 
                         alt="Artifact Crate" 
-                        src="https://eggincassets.tcl.sh/64/egginc/icon_afx_chest_2.png" 
+                        src="/images/icon_afx_chest_2.png" 
                         class="w-6 mr-05rem"
                     >
                     <span class="tooltip-custom text-xs font-bold">
