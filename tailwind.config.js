@@ -47,9 +47,8 @@ module.exports = {
         '9': '2.25rem',
         '40': '10rem',
         '6/10': '60%',
-        '80vw': '80vw',
         '60vh': '60vh',
-        '70vh': '70vh',
+        '90vh': '90vh',
       },
       width: {
         'onedig': '1rem',
@@ -62,8 +61,10 @@ module.exports = {
       },
       minWidth: {
         '6': '1.5rem',
-        'selectpop': '15vw',
+        '15vw': '15vw',
         '30vw': '30vw',
+        '50vw': '50vw',
+        '70vw': '70vw',
       },
       maxWidth: {
         '6': '1.5rem',
@@ -73,11 +74,13 @@ module.exports = {
         '11xl': '112rem',
         '12xl': '120rem',
         '20vw': '20vw',
-        '70vw': '70vw',
-        '500p': '500px',
+        '28vw': '28vw',
+        '30vw': '30vw',
         '35vw': '35vw',
-        'half': '50%',
-        '80vw': '80vw',
+        '40vw': '40vw',
+        '50vw': '50vw',
+        '70vw': '70vw',
+        '90vw': '90vw',
       },
       lineHeight: {
         '1rem': '1rem'

@@ -161,3 +161,30 @@
 .italic {
   font-style: italic;
 }
+
+.mission-row-view-longer {
+  position: relative;
+}
+
+/* Right part of [ */
+.mission-row-view-longer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 10%;
+  width: 20px;
+  height: 100%;
+  border-right: 2px solid;
+}
+
+/* Top and bottom part of [ */
+.mission-row-view-longer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10%;
+  height: calc(100%);
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+}

@@ -416,7 +416,7 @@
           ></search-over-selector>
 
           <div class="top-click-detect mission-view-overlay overlay-mission">
-            <div class="inner-click-detect max-h-80vw bg-dark rounded-lg relative p-1rem">
+            <div class="inner-click-detect min-w-50vw max-w-70vw max-h-90vh bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -433,7 +433,7 @@
           </div>
 
           <div class="top-click-detect mission-view-overlay overlay-multi-mission">
-            <div class="inner-click-detect max-h-80vw bg-dark rounded-lg relative p-1rem">
+            <div class="inner-click-detect min-w-70vw max-w-90vw max-h-90vh bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMultiMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -445,7 +445,7 @@
                 <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
               </div>
               <div v-else>
-                <div class="flex justify-between mb-4 max-w-80vw overflow-auto">
+                <div class="flex justify-between max-w-90vw mb-4 overflow-auto">
                   <div 
                     v-for="(missionData, missionDataIndex) in multiViewMissionData"
                     :class="'w-1/' + multiViewMissionData.length"
@@ -455,6 +455,7 @@
                       :view-mission-data="missionData" :is-multi="true"
                       :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
                       :menno-mission-data="missionData.mennoData" :show-expected-drops="showExpectedDropsPerShip"
+                      :ship-count="multiViewMissionData.length"
                     ></ship-display>
                   </div>
                 </div>
@@ -542,7 +543,7 @@
               }"
             >
               <!-- Warning (if not already seen) -->
-              <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4 max-w-500p">
+              <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4 max-w-50vw">
                 <span class="font-bold ledger-underline mb-025rem">Warning:</span><br />
                 The filter feature is experimental, and may not work as expected (especially with complicated combinations). You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion. Please use it carefully, and report any issues you encounter.
                 <br /><br />
@@ -684,7 +685,7 @@
                             <button 
                               v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled) && allowMultiViewing"
                               v-on:click="e => {triggerRowView(e)}"
-                              class="text-xs font-bold btn btn-outline-dark bg-transparent mission-row-view"
+                              :class="'text-xs font-bold btn btn-outline-dark bg-transparent mission-row-view' + (dayVF.length > 3 ? ' mission-row-view-longer' : '')"
                             >
                               <span class="text-xs">
                                 View row
@@ -940,7 +941,7 @@
       </div>
 
       <div class="popup-selector-main overlay-menno h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
-        <div class="max-w-half bg-dark rounded-lg relative p-1rem">
+        <div class="max-w-50vw bg-dark rounded-lg relative p-1rem">
           <div class="text-gray-300 space-y-2 flex-auto flex-col text-center">
             <span class="text-lg text-gray-400 mb-1rem">Data Refresh in Progress</span><br/>
             <hr class="mt-1rem mb-1rem w-full">
@@ -957,7 +958,7 @@
       </div>
 
       <div class="top-click-detect popup-selector-main overlay-update w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
-        <div class="inner-click-detect max-w-half bg-dark rounded-lg relative p-1rem">
+        <div class="inner-click-detect max-w-50vw bg-dark rounded-lg relative p-1rem">
           <button class="detect-trigger close-button" v-on:click="closeUpdateModal()">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -2514,29 +2515,15 @@
               };
 
               if (extendedInfo) {
-                const launchDateTime = new Date(
-                  shipInfo.launchYear, shipInfo.launchMonth, shipInfo.launchDay,
-                  shipInfo.launchTime.split(':')[0], shipInfo.launchTime.split(':')[1], shipInfo.launchTime.split(':')[2]
-                );
-                const returnDateTime = new Date(
-                  shipInfo.returnYear, shipInfo.returnMonth, shipInfo.returnDay,
-                  shipInfo.returnTime.split(':')[0], shipInfo.returnTime.split(':')[1], shipInfo.returnTime.split(':')[2]
-                );
-                const duration = returnDateTime - launchDateTime;
-                const days = Math.floor(duration / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((duration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-                const durationString = (days > 0 ? days + "d" : "") + (hours > 0 ? hours + "h": "") + minutes + "m";
+                const durationString = shipInfo.durationString;
                 const launchStr = shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime;
                 const returnStr = shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime;
+                const capModifier = Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity);
 
                 // Find the loaded ship's index in the filteredMissions array, to get the missions directly before and after it
                 const shipIndex = filteredMissions.value.findIndex(mission => mission.missionId == missionId);
                 const prevMission = shipIndex > 0 ? filteredMissions.value[shipIndex - 1].missionId : null;
                 const nextMission = shipIndex < filteredMissions.value.length - 1 ? filteredMissions.value[shipIndex + 1].missionId : null;
-
-                const capModifier = Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity);
-
                 return {
                   ...commonProperties,
                   launchStr: launchStr,
@@ -2591,15 +2578,8 @@
             const rowViewBeingLoaded = Vue.ref(false);
             function triggerRowView(event){
               rowViewBeingLoaded.value = true;
-              //Get target element from event
-              const element = event.target;
-
-              //Log the type of the element clicked
-              window.console.log(element.tagName.toLowerCase() + " clicked")
-
               var missionIds = [];
-              const missionChildren = element.parentNode.parentNode.children[1].children;
-              for(const missionChild of missionChildren){
+              for(const missionChild of event.target.parentNode.parentNode.children[1].children){
                 missionIds.push(missionChild.getAttribute('data-missionid'));
               }
               viewRowOfMissions(missionIds);

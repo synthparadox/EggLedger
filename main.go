@@ -126,6 +126,7 @@ type LoadedMission struct {
 	Ship           *ei.MissionInfo_Spaceship    `json:"ship"`
 	ShipString     string                       `json:"shipString"`
 	DurationType   *ei.MissionInfo_DurationType `json:"durationType"`
+	DurationString string                       `json:"durationString"`
 	Level          int32                        `json:"level"`
 	Capacity       int32                        `json:"capacity"`
 	NominalCapcity int32                        `json:"nominalCapacity"`
@@ -190,20 +191,6 @@ type PossibleArtifact struct {
 
 type ReleaseInfo struct {
 	Body string `json:"body"`
-}
-
-var MissionInfo_Spaceship_name_fixed = map[int32]string{
-	0:  "Chicken One",
-	1:  "Chicken Nine",
-	2:  "Chicken Heavy",
-	3:  "BCR",
-	4:  "Quintillion Chicken",
-	5:  "Cornish-Hen Corvette",
-	6:  "Galeggtica",
-	7:  "Defihent",
-	8:  "Voyegger",
-	9:  "Henerprise",
-	10: "Atreggies Henliner",
 }
 
 func init() {
@@ -377,9 +364,11 @@ func viewMissionsOfId(eid string) (string, error) {
 			ReturnYear:  int32(returnTimeObject.Year()),
 			ReturnTime:  returnTime,
 
+			DurationString: info.GetDurationString(),
+
 			MissiondId:     info.GetIdentifier(),
 			Ship:           info.Ship,
-			ShipString:     MissionInfo_Spaceship_name_fixed[int32(info.GetShip())],
+			ShipString:     info.Ship.Name(),
 			DurationType:   info.DurationType,
 			Level:          int32(info.GetLevel()),
 			Capacity:       int32(info.GetCapacity()),
@@ -1311,9 +1300,11 @@ func main() {
 			ReturnYear:  int32(returnTimeObject.Year()),
 			ReturnTime:  returnTime,
 
+			DurationString: info.GetDurationString(),
+
 			MissiondId:     *info.Identifier,
 			Ship:           info.Ship,
-			ShipString:     MissionInfo_Spaceship_name_fixed[int32(*info.Ship)],
+			ShipString:     info.Ship.Name(),
 			DurationType:   info.DurationType,
 			Level:          int32(info.GetLevel()),
 			Capacity:       int32(info.GetCapacity()),

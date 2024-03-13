@@ -1,6 +1,9 @@
 package ei
 
-import "sort"
+import (
+	"fmt"
+	"sort"
+)
 
 func (s MissionInfo_Spaceship) Name() string {
 	switch s {
@@ -24,8 +27,26 @@ func (s MissionInfo_Spaceship) Name() string {
 		return "Voyegger"
 	case MissionInfo_HENERPRISE:
 		return "Henerprise"
+	case MissionInfo_ATREGGIES:
+		return "Atreggies Henliner"
 	}
 	return "Unknown"
+}
+
+func (d *MissionInfo) GetDurationString() string {
+	seconds := d.GetDurationSeconds()
+	switch {
+	case seconds == 0:
+		return "0m"
+	case seconds < 60:
+		return fmt.Sprintf("%ds", int(seconds))
+	case seconds < 3600:
+		return fmt.Sprintf("%dm", int(seconds/60))
+	case seconds < 86400:
+		return fmt.Sprintf("%dh%dm", int(seconds/3600), int(seconds/60)%60)
+	default:
+		return fmt.Sprintf("%dd%dh%dm", int(seconds/86400), int(seconds/3600)%24, int(seconds/60)%60)
+	}
 }
 
 func (d MissionInfo_DurationType) Display() string {

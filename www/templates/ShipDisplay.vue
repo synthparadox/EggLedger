@@ -1,7 +1,7 @@
 <template>
     <div 
         v-if="topLevelBool"
-        class="min-w-30vw max-w-35vw max-h-70vh text-gray-300 text-center overflow-auto"
+        :class="(isMulti ? 'max-h-90vh' : 'max-w-50vw overflow-auto' ) + ' text-gray-300 text-center' + ( shipCount > 3 ? ' min-w-30vw' : '') "
     >
         <!-- Header information about the mission -->
         <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">
@@ -117,6 +117,7 @@
             afRarityText: Function,
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
+            shipCount: Number,
         },
         methods: {
             durToTextClass(dur){
