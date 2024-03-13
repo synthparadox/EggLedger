@@ -2579,7 +2579,13 @@
             function triggerRowView(event){
               rowViewBeingLoaded.value = true;
               var missionIds = [];
-              for(const missionChild of event.target.parentNode.parentNode.children[1].children){
+              var children = event.target.parentNode.parentNode.children[1].children;
+              if(children == null || children.length == 0) children = event.target.parentNode.children[1].children;
+              if(children == null){
+                rowViewBeingLoaded.value = false;
+                return false;
+              }
+              for(const missionChild of children){
                 missionIds.push(missionChild.getAttribute('data-missionid'));
               }
               viewRowOfMissions(missionIds);
