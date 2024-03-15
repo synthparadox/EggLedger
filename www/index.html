@@ -416,7 +416,7 @@
           ></search-over-selector>
 
           <div class="top-click-detect mission-view-overlay overlay-mission">
-            <div class="inner-click-detect min-w-50vw max-w-70vw max-h-90vh bg-dark rounded-lg relative p-1rem">
+            <div class="inner-click-detect max-w-70vw max-h-90vh bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -433,7 +433,7 @@
           </div>
 
           <div class="top-click-detect mission-view-overlay overlay-multi-mission">
-            <div class="inner-click-detect min-w-70vw max-w-90vw max-h-90vh bg-dark rounded-lg relative p-1rem">
+            <div class="inner-click-detect max-w-90vw max-h-90vh bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMultiMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -444,13 +444,17 @@
                 <hr class="mt-1rem mb-1rem w-full">
                 <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
               </div>
-              <div v-else>
-                <div class="flex justify-between max-w-90vw mb-4 overflow-auto">
+              <div 
+                v-else
+                class="max-w-90vw max-h-80vh overflow-auto"
+              >
+                <div class="flex justify-between mb-4">
                   <div 
                     v-for="(missionData, missionDataIndex) in multiViewMissionData"
                     :class="'w-1/' + multiViewMissionData.length"
                   >
                     <ship-display
+                      :is-first="missionDataIndex == 0" :is-last="missionDataIndex == multiViewMissionData.length - 1"
                       :top-level-bool="missionData && missionData != {} && missionData.shipInfo != null"
                       :view-mission-data="missionData" :is-multi="true"
                       :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
@@ -490,6 +494,7 @@
 
               <input
                 ref="viewMissionAccountInputRef"
+                id="viewMissionAccountInput"
                 type="text"
                 class="drop-select border-gray-300"
                 placeholder="Select an account"
@@ -518,25 +523,19 @@
           </form>
 
           <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
-            <span class="h-20 font-bold text-gray-400" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">Filter: </span>
+            <span class="mr-05rem h-20 font-bold text-gray-400" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">Filter</span>
             <button
               v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)"
               id="toggleFilterButton"
               class="text-base toggle-link" 
               type="button" 
-              v-on:click="e => {
-                e.preventDefault();
-                hideFilter = !hideFilter;
-                e.target.innerHTML = hideFilter ? 'Show' : 'Hide';
-              }"
+              v-on:click="toggleFilter"
             >
-              Hide
+              {{ hideFilter ? 'Show' : 'Hide' }}
             </button>
             <form 
-              id="filterForm"
-              name="filterForm"
-              v-if="!hideFilter && groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)"
-              class="filter-form text-xs"
+              id="filterFormVM" name="filterFormVM" class="filter-form text-xs"
+              v-if="!hideFilter && groupedMissions && (Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length))"
               v-on:submit="event => {
                 event.preventDefault();
                 applyFilter();
@@ -564,7 +563,6 @@
 
               <button
                 v-if="idle"
-                ref="applyFilterToData"
                 id="filter-apply-button"
                 type="submit"
                 class="mt-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
@@ -595,60 +593,81 @@
 
           <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-              <span class="font-bold text-base text-gray-400">Options</span><br />
-              <span class="mr-5">
-                <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
-                <input id="viewByDateCB" type="checkbox" v-model="viewByDate" class="ext-opt-check"/>
-              </span>
-              <span class="mr-5">
-                <label for="viewMissionTimesCB" class="ext-opt-label">Show launch times</label>
-                <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes" class="ext-opt-check"/>
-              </span>
-              <span class="mr-5">
-                <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
-                <input id="recolorDCCB" type="checkbox" v-model="recolorDC" class=" ext-opt-check"/>
-              </span>
-              <span class="mr-5">
-                <label for="useGifsForRarityCB" class="ext-opt-label">Particle GIFs for rarity</label>
-                <input id="useGifsForRarityCB" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
-              </span>
-              <span class="mr-5">
-                <label for="allowMultiViewingCB" class="ext-opt-label">Enable multi-view</label>
-                <input id="allowMultiViewingCB" type="checkbox" v-model="allowMultiViewing" class="ext-opt-check"/>
-              </span>
-            </div>
-            <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-              <span class="font-bold text-base text-gray-400">Drops Sort Method</span><br />
-              <span class="mr-5">
-                <label for="viewMissionSortDefault" class="ext-opt-label">Default</label>
-                <input id="viewMissionSortDefault" type="radio" v-model="viewMissionSortMethod" value="default" class="ext-opt-check"/>
-              </span>
-              <span class="mr-5">
-                <label for="viewMissionSortIV" class="ext-opt-label">Inventory Visualizer</label>
-                <input id="viewMissionSortIV" type="radio" v-model="viewMissionSortMethod" value="iv" class="ext-opt-check"/>
-              </span>
+              <div>
+                <span class="mr-05rem font-bold text-base text-gray-400">Options</span>
+                <button
+                  id="toggleOptionsButtonVM"
+                  class="text-base toggle-link" 
+                  type="button" 
+                  v-on:click="toggleOptions"
+                >
+                  {{ hideOptions ? 'Show' : 'Hide' }}
+                </button>
+              </div>
+              <div v-if="!hideOptions">
+                <span class="mr-5">
+                  <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
+                  <input id="viewByDateCB" type="checkbox" v-model="viewByDate" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="viewMissionTimesCB" class="ext-opt-label">Show launch times</label>
+                  <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
+                  <input id="recolorDCCB" type="checkbox" v-model="recolorDC" class=" ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="useGifsForRarityCB" class="ext-opt-label">Particle GIFs for rarity</label>
+                  <input id="useGifsForRarityCB" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="allowMultiViewingCB" class="ext-opt-label">Enable multi-view</label>
+                  <input id="allowMultiViewingCB" type="checkbox" v-model="allowMultiViewing" class="ext-opt-check"/>
+                </span>
+                <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
+                  <span class="font-bold text-base text-gray-400">Drops Sort Method</span><br />
+                  <span class="mr-5">
+                    <label for="viewMissionSortDefault" class="ext-opt-label">Default</label>
+                    <input id="viewMissionSortDefault" type="radio" v-model="viewMissionSortMethod" value="default" class="ext-opt-check"/>
+                  </span>
+                  <span class="mr-5">
+                    <label for="viewMissionSortIV" class="ext-opt-label">Inventory Visualizer</label>
+                    <input id="viewMissionSortIV" type="radio" v-model="viewMissionSortMethod" value="iv" class="ext-opt-check"/>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-              <span class="font-bold text-base text-gray-400">Menno's Ship Data</span><br>
-              <span class="mr-5">
-                <label for="showExpectedDropsPerShip" class="ext-opt-label">Show "Expected Drops Per Ship"</label>
-                <input id="showExpectedDropsPerShip" type="checkbox" v-model="showExpectedDropsPerShip" class="ext-opt-check"/>
-              </span> <br/>
-              <hr class="mt-05rem mb-05rem w-full">
-              <span class="italic text-gray-400">Data last refreshed on <span class="text-green-500">{{ lastMennoUpdateString }}</span></span><br>
-              <button class="mt-05rem mb-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-               v-bind:disabled="secondsSinceLastMennoUpdate < 86400"
-               v-on:click="e => {
-                 e.preventDefault();
-                 asyncUpdateMennoData();
-               }"
-               >
-               Refresh Data Now
-              </button><br v-if="secondsSinceLastMennoUpdate < 86400" />
-              <span class="italic text-sm text-gray-500" v-if="secondsSinceLastMennoUpdate < 86400">To reduce the load on Menno's API, manual refreshes can be performed once every day</span>
+              <div>
+                <span class="mr-05rem font-bold text-base text-gray-400">Menno's Ship Data</span>
+                <button
+                  id="toggleMennoButtonVM"
+                  class="text-base toggle-link" 
+                  type="button" 
+                  v-on:click="toggleMenno"
+                >
+                  {{ hideMenno ? 'Show' : 'Hide' }}
+                </button>
+              </div>
+              <div v-if="!hideMenno">
+                <span class="mr-5">
+                  <label for="showExpectedDropsPerShip" class="ext-opt-label">Show "Expected Drops Per Ship"</label>
+                  <input id="showExpectedDropsPerShip" type="checkbox" v-model="showExpectedDropsPerShip" class="ext-opt-check"/>
+                </span> <br/>
+                <hr class="mt-05rem mb-05rem w-full">
+                <span class="italic text-gray-400">Data last refreshed on <span class="text-green-500">{{ lastMennoUpdateString }}</span></span><br>
+                <button class="mt-05rem mb-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  v-bind:disabled="secondsSinceLastMennoUpdate < 86400"
+                  v-on:click="asyncUpdateMennoData"
+                >
+                  Refresh Data Now
+                </button><br v-if="secondsSinceLastMennoUpdate < 86400"/>
+                <span class="italic text-sm text-gray-500" v-if="secondsSinceLastMennoUpdate < 86400">To reduce the load on Menno's API, manual refreshes can be performed once every day</span>
+              </div>
             </div>
           </div>
 
@@ -684,8 +703,8 @@
                           <div class="mt-1rem mission-grid">
                             <button 
                               v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled) && allowMultiViewing"
-                              v-on:click="e => {triggerRowView(e)}"
-                              :class="'text-xs font-bold btn btn-outline-dark bg-transparent mission-row-view' + (dayVF.length > 3 ? ' mission-row-view-longer' : '')"
+                              v-on:click="e => {triggerRowView(yearIndex, monthIndex, dayIndex)}"
+                              :class="'hover:text-gray-600 rounded-md hover:ledger-underline text-xs font-bold btn btn-outline-dark bg-transparent mission-row-view' + (dayVF.length > 3 ? ' mission-row-view-longer' : '')"
                             >
                               <span class="text-xs">
                                 View row
@@ -765,6 +784,7 @@
 
               <input
                 ref="lifetimeAccountInputRef"
+                id="lifetimeAccountInput"
                 type="text"
                 class="drop-select border-gray-300"
                 placeholder="Select an account"
@@ -843,8 +863,7 @@
               <hr class="mt-1rem w-full">
               <button
                 v-if="idle"
-                ref="applyFilterToData"
-                id="filter-apply-button"
+                id="lifetime-filter-apply-button"
                 type="submit"
                 class="mt-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-bind:disabled="(lifetimeDataFilter === [] || lifetimeDataBeingFiltered || !lifetimeFilterHasChanged)"
@@ -943,16 +962,20 @@
       <div class="popup-selector-main overlay-menno h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
         <div class="max-w-50vw bg-dark rounded-lg relative p-1rem">
           <div class="text-gray-300 space-y-2 flex-auto flex-col text-center">
-            <span class="text-lg text-gray-400 mb-1rem">Data Refresh in Progress</span><br/>
+            <span class="text-xl text-gray-400 mb-1rem">Data Refresh in Progress</span><br/>
             <hr class="mt-1rem mb-1rem w-full">
-            <span class="mt-05rem">
+            <span class="mt-05rem p-05rem text-lg">
               <a v-external-link target="_blank" class="url-link" href="https://github.com/menno-egginc/eggincdatacollection-docs/blob/main/DataEndpoints.md">Menno's Ship Data</a>
-              is currently being loaded or refreshed. This data is used to provide further insights to the drops of your ships, and how "lucky" you've been.
-              {{ mennoDataAutoRefresh ? 'This task runs on Ledger Startup once every 7 days.' : '' }}
-            </span> <br/><br/>
-            <span>Depending on your internet speed, this may take a while. This window will automatically close when the task has completed.</span>
+              is currently being loaded or refreshed.<br>
+              This data is used to provide further insights to the drops of your ships,<br>
+              and how "lucky" you've been.
+              <span v-if=mennoDataAutoRefresh><b>This task runs on EggLedger start-up once every 7 days.</b></span>
+              <br/><br/>
+              Depending on your internet speed, this may take a while.<br>
+              This window will automatically close when the task has completed.
+            </span> 
             <hr class="mt-1rem mb-1rem w-full">
-            <img src="images/loading.gif" alt="Loading..." class="large-ico" />
+            <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
           </div>
         </div>
       </div>
@@ -2011,9 +2034,23 @@
               }, { deep: true }
             );
 
+            const hideOptions = Vue.ref(false);
+            const toggleOptions = (event) => {
+              event.preventDefault();
+              hideOptions.value = !hideOptions.value;
+            };
+            const hideMenno = Vue.ref(false);
+            const toggleMenno = (event) => {
+              event.preventDefault();
+              hideMenno.value = !hideMenno.value;
+            };
+            const hideFilter = Vue.ref(false);
+            const toggleFilter = (event) => {
+              event.preventDefault();
+              hideFilter.value = !hideFilter.value;
+            };
             const dataFilter = Vue.ref([]);
             const orDataFilter = Vue.ref([[]]);
-            const hideFilter = Vue.ref(false);
             const filterHasChanged = Vue.ref(false);
             const dataBeingFiltered = Vue.ref(false);
             Vue.watch((dataFilter, orDataFilter), async () => {
@@ -2063,7 +2100,8 @@
               if(!mennoSuccess) window.alert("Failed to load Menno data. Please report this!");
             });
 
-            const asyncUpdateMennoData = async () => {
+            const asyncUpdateMennoData = async (event) => {
+              event.preventDefault();
               openMennoModal();
               await window.updateMennoData();
               closeMennoModal();
@@ -2560,12 +2598,12 @@
               const mennoDuration = newMissionViewData.shipInfo.durationType;
               const mennoLevel = newMissionViewData.shipInfo.level;
               const rawMennoData = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt)
-              const totalDropsCount = rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0);
-              mennoMissionData.value = {
-                totalDropsCount: totalDropsCount,
-                configs: rawMennoData.configurationItems
-              };
-
+              if(rawMennoData?.configurationItems != null){
+                mennoMissionData.value = {
+                  totalDropsCount: rawMennoData?.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
+                  configs: rawMennoData.configurationItems
+                };
+              }
               newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
               newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
               newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
@@ -2576,13 +2614,14 @@
             };
 
             const rowViewBeingLoaded = Vue.ref(false);
-            function triggerRowView(event){
+            function triggerRowView(yearIndex, monthIndex, dayIndex){
               rowViewBeingLoaded.value = true;
-              var missionIds = [];
-              for(const missionChild of event.target.parentNode.parentNode.children[1].children){
-                missionIds.push(missionChild.getAttribute('data-missionid'));
-              }
-              viewRowOfMissions(missionIds);
+              const ids = groupedMissions.value[yearIndex][monthIndex][dayIndex].map(mission => mission.missionId);
+              if(ids == null || ids.length == 0) {
+                rowViewBeingLoaded.value = false;
+                return false;
+              } else if(ids.length == 1) viewSpecificMission(ids[0]);
+              viewRowOfMissions(ids);
             }
 
             const viewRowOfMissions = async(missionIds) => {
@@ -2614,11 +2653,12 @@
                 const mennoDuration = newMissionViewData.shipInfo.durationType;
                 const mennoLevel = newMissionViewData.shipInfo.level;
                 const rawMennoData = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt)
-                const totalDropsCount = rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0);
-                newMissionViewData.mennoData = {
-                  totalDropsCount: totalDropsCount,
-                  configs: rawMennoData.configurationItems
-                };
+                if(rawMennoData?.configurationItems != null){
+                  newMissionViewData.mennoData = {
+                    totalDropsCount: rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
+                    configs: rawMennoData.configurationItems
+                  };
+                }
 
                 newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
                 newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
@@ -2776,6 +2816,10 @@
               viewMissionAccountDropdownOpen,
               viewMissionAccountSubmitRef,
               missionBeingViewed,
+              hideOptions,
+              hideMenno,
+              toggleOptions,
+              toggleMenno,
               viewMissionsOfEid,
               toggleElements,
               viewSpecificMission,
@@ -2847,6 +2891,7 @@
               targetFilterSelectedOrIndex,
               targetFilterMenuOpen,
               targetSearchTerm,
+              toggleFilter,
               openTargetFilterMenu,
               closeTargetFilterMenu,
               selectTargetFilter,

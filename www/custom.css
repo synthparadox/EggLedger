@@ -171,7 +171,7 @@
   content: '';
   position: absolute;
   top: 0;
-  right: 10%;
+  right: 7%;
   width: 20px;
   height: 100%;
   border-right: 2px solid;
@@ -182,8 +182,8 @@
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
-  width: 10%;
+  right: -3%;
+  width: 12%;
   height: calc(100%);
   border-top: 2px solid;
   border-bottom: 2px solid;

@@ -48,6 +48,7 @@ module.exports = {
         '40': '10rem',
         '6/10': '60%',
         '60vh': '60vh',
+        '80vh': '80vh',
         '90vh': '90vh',
       },
       width: {
@@ -93,12 +94,14 @@ module.exports = {
         '1rem': '1rem',
         '2rem': '2rem',
         '3rem': '3rem',
+        '7rem': '7rem',
       },
       margin: {
         '0': '0rem !important',
         '025rem': '0.25rem !important',
         '075rem': '0.75rem',
         '05rem': '0.5rem',
+        '2rem': '2rem',
       },
       padding: {
         '0': '0rem',
@@ -106,6 +109,7 @@ module.exports = {
         '1rem:' : '1rem',
         '2rem': '2rem',
         'select': '2.5rem',
+        '7rem': '7rem',
       },
       fontSize: {
         'star': '1.4rem',
