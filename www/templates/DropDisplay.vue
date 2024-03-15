@@ -136,15 +136,17 @@
               return (!match ? ["?", "?", "?"] : [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)]);
             },
             getDropCalcs (dropId, dropLevel, dropRarity) {
-              const mennoItem = this.mennoMissionData.configs.find(item => 
-                item.artifactConfiguration.artifactType.id == dropId &&
-                item.artifactConfiguration.artifactLevel == dropLevel &&
-                item.artifactConfiguration.artifactRarity.id == dropRarity
-              );
-              if(mennoItem == null) return null;
-              return [mennoItem.totalDrops, this.mennoMissionData.totalDropsCount]
+                if(this.mennoMissionData?.configs == null) return null;
+                const mennoItem = this.mennoMissionData.configs.find(item => 
+                    item.artifactConfiguration.artifactType.id == dropId &&
+                    item.artifactConfiguration.artifactLevel == dropLevel &&
+                    item.artifactConfiguration.artifactRarity.id == dropRarity
+                );
+                if(mennoItem == null) return null;
+                return [mennoItem.totalDrops, this.mennoMissionData.totalDropsCount]
             },
             getLifetimeDropCalcs(dropId, dropLevel, dropRarity){
+                if(this.mennoMissionData?.configs == null) return null;
                 const mennoItem = this.mennoMissionData.configs.find(item => 
                 item.artifactConfiguration.artifactType.id == dropId &&
                 item.artifactConfiguration.artifactLevel == dropLevel &&

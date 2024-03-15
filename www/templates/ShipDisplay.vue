@@ -1,7 +1,7 @@
 <template>
     <div 
         v-if="topLevelBool"
-        :class="(isMulti ? 'max-h-90vh' : 'max-w-50vw overflow-auto' ) + ' text-gray-300 text-center' + ( shipCount > 3 ? ' min-w-30vw' : '') "
+        :class="(isMulti ? ((isFirst ? ' pl-7rem' : ' pl-3rem') + (isLast ? ' pr-7rem' : ' pr-3rem')) : 'overflow-auto pl-7rem pr-7rem' ) + ' text-gray-300 text-center' + ( shipCount > 3 ? ' min-w-30vw' : '') "
     >
         <!-- Header information about the mission -->
         <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">
@@ -118,6 +118,8 @@
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
             shipCount: Number,
+            isFirst: Boolean,
+            isLast: Boolean,
         },
         methods: {
             durToTextClass(dur){
