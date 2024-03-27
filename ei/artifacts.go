@@ -29,7 +29,7 @@ func (a ArtifactSpec_Name) CasedName() string {
 func (a *ArtifactSpec) GenericBenefitString() string {
 	switch *a.Name {
 	case ArtifactSpec_LUNAR_TOTEM:
-		return "[+^b] away earnings"
+		return "[^b] away earnings"
 	case ArtifactSpec_NEODYMIUM_MEDALLION:
 		return "[+^b] drone frequency"
 	case ArtifactSpec_BEAK_OF_MIDAS:
@@ -102,11 +102,11 @@ func (a *ArtifactSpec) DropEffectString() string {
 	case ArtifactSpec_LUNAR_TOTEM:
 		switch *a.Level {
 		case ArtifactSpec_INFERIOR:
-			replString = "100%"
+			replString = "+100%"
 		case ArtifactSpec_LESSER:
 			switch *a.Rarity {
 			case ArtifactSpec_COMMON:
-				replString = "300%"
+				replString = "+300%"
 			case ArtifactSpec_RARE:
 				replString = "8x"
 			}

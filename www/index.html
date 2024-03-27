@@ -416,7 +416,7 @@
           ></search-over-selector>
 
           <div class="top-click-detect mission-view-overlay overlay-mission">
-            <div class="inner-click-detect max-w-70vw max-h-90vh bg-dark rounded-lg relative p-1rem">
+            <div class="inner-click-detect max-w-70vw max-h-90vh overflow-auto bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -621,10 +621,21 @@
                   <label for="useGifsForRarityCB" class="ext-opt-label">Particle GIFs for rarity</label>
                   <input id="useGifsForRarityCB" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
                 </span>
-                <span class="mr-5">
-                  <label for="allowMultiViewingCB" class="ext-opt-label">Enable multi-view</label>
-                  <input id="allowMultiViewingCB" type="checkbox" v-model="allowMultiViewing" class="ext-opt-check"/>
-                </span>
+                <div>
+                  <span class="font-bold text-base text-gray-400">Multi-View Method</span><br />
+                  <span class="mr-5">
+                    <label for="multiViewOffCB" class="ext-opt-label">Off</label>
+                    <input id="multiViewOffCB" type="radio" v-model="multiViewMode" value="off" class="ext-opt-check"></input>
+                  </span>
+                  <span class="mr-5">
+                    <label for="multiViewRowCB" class="ext-opt-label">Row/Date Select</label>
+                    <input id="multiViewRowCB" type="radio" v-model="multiViewMode" value="row" class="ext-opt-check"></input>
+                  </span>
+                  <span class="mr-5">
+                    <label for="multiViewFreeCB" class="ext-opt-label">Free Select</label>
+                    <input id="multiViewFreeCB" type="radio" v-model="multiViewMode" value="free" class="ext-opt-check"></input>
+                  </span>
+                </div>
                 <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
                   <span class="font-bold text-base text-gray-400">Drops Sort Method</span><br />
                   <span class="mr-5">
@@ -676,33 +687,38 @@
               <div class="filter-form text-lg" v-if="filteredMissions.length == 0">
                 <span class="mt-05rem ml-1rem">No missions to display.</span>
               </div>
-              <div v-else id="missionListDiv" class="mt-05rem overflow-y-auto px-2 py-1 shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
-                <span class="text-xl">
-                  Missions
-                  <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-xl toggle-link" type="button" v-on:click="toggleElements($event)">{{(allVisible ? 'Collapse All' : 'Expand All')}}</button>
-                </span>
-                <hr class="mt-05rem mb-05rem w-full">
-                <template v-for="(yearVF, yearIndex) in groupedMissions" :key="yearIndex">
-                  <span :class="'text-lg font-bold mr-05rem ledger-underline'">{{ groupedYearArray[yearIndex].year }}</span>
-                  <button class="tb-c text-lg toggle-link" type="button" v-on:click="toggleElements($event, groupedYearArray[yearIndex])">
-                    {{(groupedYearArray[yearIndex].enabled ? 'Collapse' : 'Expand')}}
+              <div v-else id="missionListDiv" class="mt-05rem px-2 py-1 overflow-y-auto shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+                <div class="bg-darkest w-full">
+                  <span class="text-xl">
+                    Missions
+                    <button v-if="filteredMissions.length != 0" id="toggleResultsButton" class="text-xl toggle-link" type="button" v-on:click="toggleElements($event)">{{(allVisible ? 'Collapse All' : 'Expand All')}}</button>
+                    <button v-if="multiViewMode == 'free' && multiViewFreeSelectIds.length > 0" class="text-xl view-multi-link" type="button" v-on:click="triggerRowView()">
+                      View Selected Missions <span class="text-gray-500">(</span>{{multiViewFreeSelectIds.length}}<span class="text-gray-500">)</span>
+                    </button>
+                  </span>
+                  <hr class="mb-05rem w-full">
+                </div>
+                <template class="mt-3rem" v-for="(yearVF, yearIndex) in groupedMissions" :key="yearIndex">
+                  <span :class="'text-lg font-bold mr-05rem ledger-underline'">{{ groupedArrays.year[yearIndex].year }}</span>
+                  <button class="tb-c text-lg toggle-link" type="button" v-on:click="toggleElements($event, groupedArrays.year[yearIndex])">
+                    {{(groupedArrays.year[yearIndex].enabled ? 'Collapse' : 'Expand')}}
                   </button>
-                  <div v-if="groupedYearArray[yearIndex].enabled" v-for="(monthVF, monthIndex) in yearVF" :key="monthIndex">
+                  <div v-if="groupedArrays.year[yearIndex].enabled" v-for="(monthVF, monthIndex) in yearVF" :key="monthIndex">
                     <div class="mt-1rem ml-2rem">
-                      <span class="text-base font-bold mr-05rem ledger-underline">{{ groupedYearArray[yearIndex].year }}-{{ groupedMonthArray[yearIndex][monthIndex].month }}</span>
-                      <button class="tb-c text-base toggle-link" type="button" v-on:click="toggleElements($event, groupedYearArray[yearIndex], groupedMonthArray[yearIndex][monthIndex])">
-                       {{(groupedMonthArray[yearIndex][monthIndex].enabled ? 'Collapse' : 'Expand')}}
+                      <span class="text-base font-bold mr-05rem ledger-underline">{{ groupedArrays.year[yearIndex].year }}-{{ groupedArrays.month[yearIndex][monthIndex].month }}</span>
+                      <button class="tb-c text-base toggle-link" type="button" v-on:click="toggleElements($event, groupedArrays.year[yearIndex], groupedArrays.month[yearIndex][monthIndex])">
+                       {{(groupedArrays.month[yearIndex][monthIndex].enabled ? 'Collapse' : 'Expand')}}
                       </button>
-                      <div v-if="groupedMonthArray[yearIndex][monthIndex].enabled" v-for="(dayVF, dayIndex) in monthVF" :key="dayIndex">
+                      <div v-if="groupedArrays.month[yearIndex][monthIndex].enabled" v-for="(dayVF, dayIndex) in monthVF" :key="dayIndex">
                         <div class="mt-1rem ml-2rem">
                           <span v-if="viewByDate" class="text-sm font-bold ledger-underline">
-                            {{ groupedYearArray[yearIndex].year }}-{{ groupedMonthArray[yearIndex][monthIndex].month }}-{{ groupedDayArray[yearIndex][monthIndex][dayIndex].day }}
-                          </span> <button v-if="viewByDate" class="tb-c text-sm mr-05rem toggle-link" type="button" v-on:click="toggleElements($event, groupedYearArray[yearIndex], groupedMonthArray[yearIndex][monthIndex], groupedDayArray[yearIndex][monthIndex][dayIndex])">
-                            {{(groupedDayArray[yearIndex][monthIndex][dayIndex].enabled ? 'Collapse' : 'Expand')}}
+                            {{ groupedArrays.year[yearIndex].year }}-{{ groupedArrays.month[yearIndex][monthIndex].month }}-{{ groupedArrays.day[yearIndex][monthIndex][dayIndex].day }}
+                          </span> <button v-if="viewByDate" class="tb-c text-sm mr-05rem toggle-link" type="button" v-on:click="toggleElements($event, groupedArrays.year[yearIndex], groupedArrays.month[yearIndex][monthIndex], groupedArrays.day[yearIndex][monthIndex][dayIndex])">
+                            {{(groupedArrays.day[yearIndex][monthIndex][dayIndex].enabled ? 'Collapse' : 'Expand')}}
                           </button>
                           <div class="mt-1rem mission-grid">
                             <button 
-                              v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled) && allowMultiViewing"
+                              v-if="(viewByDate && groupedArrays.day[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedArrays.month[yearIndex][monthIndex].enabled) && multiViewMode == 'row'"
                               v-on:click="e => {triggerRowView(yearIndex, monthIndex, dayIndex)}"
                               :class="'hover:text-gray-600 rounded-md hover:ledger-underline text-xs font-bold btn btn-outline-dark bg-transparent mission-row-view' + (dayVF.length > 3 ? ' mission-row-view-longer' : '')"
                             >
@@ -710,21 +726,27 @@
                                 View row
                               </span>
                             </button>
-                            <div :class="'mission-grid ' + (allowMultiViewing ? 'mission-items-view' : 'mission-items-full')">
-                              <div v-if="(viewByDate && groupedDayArray[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedMonthArray[yearIndex][monthIndex].enabled)"
+                            <div :class="'mission-grid ' + (multiViewMode == 'row' ? 'mission-items-view' : 'mission-items-full')">
+                              <div v-if="(viewByDate && groupedArrays.day[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedArrays.month[yearIndex][monthIndex].enabled)"
                                 v-for="(mission, missionIndex) in dayVF" :key="missionIndex"
                                 class="text-sm mission-item-3"
                                 :data-missionid="mission.missionId"  
                               >
+                                <!-- Checkbox for selecting a mission -->
+                                <input v-if="multiViewMode == 'free'"
+                                  type="checkbox" class="ext-opt-check mr-05rem" :value="mission" :id="'multiViewMissionCb_' + mission.missionId"
+                                  v-on:change="e => {e.preventDefault(); handleMultiViewSelection(e, mission.missionId);}"
+                                  :checked="multiViewFreeSelectIds.includes(mission.missionId)"
+                                ></input>
                                 <button 
                                   class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                   type="button" v-on:click="viewSpecificMission(mission.missionId)"
                                 >
                                   <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
                                     {{
-                                      groupedYearArray[yearIndex].year + '-' + 
-                                      (groupedMonthArray[yearIndex][monthIndex].month < 10 ? '0' : '') + groupedMonthArray[yearIndex][monthIndex].month + '-' + 
-                                      (groupedDayArray[yearIndex][monthIndex][dayIndex].day < 10 ? '0' : '') + groupedDayArray[yearIndex][monthIndex][dayIndex].day
+                                      groupedArrays.year[yearIndex].year + '-' + 
+                                      (groupedArrays.month[yearIndex][monthIndex].month < 10 ? '0' : '') + groupedArrays.month[yearIndex][monthIndex].month + '-' + 
+                                      (groupedArrays.day[yearIndex][monthIndex][dayIndex].day < 10 ? '0' : '') + groupedArrays.day[yearIndex][monthIndex][dayIndex].day
                                     }}
                                   </span>
                                   <span v-show="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
@@ -744,7 +766,7 @@
                     </div>
                   </div>
                   <br/>
-                  <hr v-if="groupedYearArray[yearIndex].enabled && yearIndex != groupedYearArray.length - 1" class="pt-3rem pb-3rem invisible mt-1">
+                  <hr v-if="groupedArrays.year[yearIndex].enabled && yearIndex != groupedArrays.year.length - 1" class="pt-3rem pb-3rem invisible mt-1">
                 </template>
               </div>
             </div>
@@ -1073,7 +1095,7 @@
 
         function normalizePlayerId(id) {
           id = id.trim();
-          if (id.match(/^EI[0-9]{16}$/i)) {
+          if (id.match(/^EI\d{16}$/i)) {
             return id.toUpperCase();
           }
           return id;
@@ -1123,14 +1145,14 @@
             // ===== Player ID input and dropdown =====
             const knownAccounts = Vue.ref(previouslyKnownAccounts);
             const playerId = Vue.ref(previouslyKnownAccounts[0]?.id ?? '');
-            const isPlayerIdValid = Vue.computed(() => { return /(^$)|(^EI[0-9]{16}$)/.test(normalizePlayerId(playerId.value)); });
+            const isPlayerIdValid = Vue.computed(() => { return /(^$)|(^EI\d{16}$)/.test(normalizePlayerId(playerId.value)); });
             const nicknameForSelectedPlayerId = Vue.computed(() => { return knownAccounts.value.find(acc => acc.id === normalizePlayerId(playerId.value))?.nickname ?? '';});
 
             const selectedMissionAccount = Vue.ref(null);
-            Vue.watch(selectedMissionAccount, async () => { if(!/^EI[0-9]{16}$/.test(selectedMissionAccount?.value ?? "")) selectedMissionAccount.value = ""; });
+            Vue.watch(selectedMissionAccount, async () => { if(!/^EI\d{16}$/.test(selectedMissionAccount?.value ?? "")) selectedMissionAccount.value = ""; });
 
             const selectedLifetimeAccount = Vue.ref(null);
-            Vue.watch(selectedLifetimeAccount, async () => { if(!/^EI[0-9]{16}$/.test(selectedLifetimeAccount?.value ?? "")) selectedLifetimeAccount.value = ""; });
+            Vue.watch(selectedLifetimeAccount, async () => { if(!/^EI\d{16}$/.test(selectedLifetimeAccount?.value ?? "")) selectedLifetimeAccount.value = ""; });
 
             // I spent three fucking hours trying to figure out why I couldn't type into a fucking input. 
             // It was this. Fucking. Kill. Me.
@@ -1500,12 +1522,12 @@
               lifetimeDrops.value.stoneFragmentCount = lifetimeDrops.value.stoneFragments.map(fragment => fragment.count).reduce((acc, cur) => acc + cur, 0);
               lifetimeDrops.value.ingredientCount = lifetimeDrops.value.ingredients.map(ingredient => ingredient.count).reduce((acc, cur) => acc + cur, 0);
 
-              const lifetimeShipUnique = (lifetimeHasExactlyOneShip.value || firstMatches[0] != -1);
-              const lifetimeDurationUnique = (lifetimeHasExactlyOneDuration.value || firstMatches[1] != -1);
-              const lifetimeLevelUnique = (lifetimeHasExactlyOneLevel.value || firstMatches[2] != -1);
-              const lifetimeTargetUnique = (lifetimeHasExactlyOneTarget.value || firstMatches[3] != -1);
-
-              if(lifetimeShipUnique && lifetimeDurationUnique && lifetimeLevelUnique && lifetimeTargetUnique){
+              if(
+                (lifetimeHasExactlyOneShip.value || firstMatches[0] != -1) &&
+                (lifetimeHasExactlyOneDuration.value || firstMatches[1] != -1) &&
+                (lifetimeHasExactlyOneLevel.value || firstMatches[2] != -1) &&
+                (lifetimeHasExactlyOneTarget.value || firstMatches[3] != -1)
+              ){
 
                 var targetUniqueValue = lifetimeOneTargetInt.value;
                 if(targetUniqueValue == null) targetUniqueValue = firstMatches[3];
@@ -1571,7 +1593,7 @@
             const getEidProblem = id => {
               const normalizedId = normalizePlayerId(id).toUpperCase();
               if (normalizedId.substring(0, 2) != 'EI') return 'should start with "EI"';
-              if (!/^EI[0-9]*$/.test(normalizedId) || normalizedId.length == 2) return 'should be EI + 16 digits';
+              if (!/^EI\d*$/.test(normalizedId) || normalizedId.length == 2) return 'should be EI + 16 digits';
               if (normalizedId.length != 18) return 'expected 16 digits, found ' + (normalizedId.length - 2);
               return '';
             }
@@ -1830,7 +1852,7 @@
               return (rarity == "" ? "" : "text-" + rarity.toLowerCase());
             };
 
-            const allowMultiViewing = Vue.ref(false);
+            const multiViewMode = Vue.ref('off');
             const closeMultiMissionOverlay = () => {
               const el = document.querySelector('.overlay-multi-mission');
               el.style.display = 'none';
@@ -1908,23 +1930,27 @@
             const loadedEid = Vue.ref(null);
             const allLoadedMissions = Vue.ref(null);
             const filteredMissions = Vue.ref(null);
-            const groupedYearArray = Vue.ref(null);
-            const groupedMonthArray = Vue.ref(null);
-            const groupedDayArray = Vue.ref(null);
+            const groupedArrays = Vue.ref({
+              year: [],
+              month: [],
+              day: [],
+            });
+            /*
+            const groupedArrays.day = Vue.ref(null);*/
             const groupedMissions = Vue.computed(() => {
               if (filteredMissions.value == null || filteredMissions.value.length === 0) return {};
 
               // Generate a list of all the years that have missions
               const uniqueYears = [...new Set(filteredMissions.value.map(mission => mission.launchYear))].reverse();
               //Make a copy of the uniqueYears array, and add an enabled property to each year
-              groupedYearArray.value = uniqueYears.map(year => { return { year: year, enabled: true}; });
+              groupedArrays.value.year = uniqueYears.map(year => { return { year: year, enabled: true}; });
 
               // Create a 2D array storing months used in each year
               const uniqueMonthsArr = uniqueYears.map(year =>
                 [...new Set(filteredMissions.value.filter(mission => mission.launchYear === year).map(mission => mission.launchMonth))].reverse()
               );
               //Make a copy of the uniqueMonthsArr array, and add an enabled property to each month
-              groupedMonthArray.value = uniqueMonthsArr.map(year => year.map(month => { return { month: month, enabled: true}; }));
+              groupedArrays.value.month = uniqueMonthsArr.map(year => year.map(month => { return { month: month, enabled: true}; }));
 
               // Create a 3D array storing days used in each month
               const uniqueDaysArr = uniqueYears.map((year, yearIndex) =>
@@ -1937,7 +1963,7 @@
                 )
               );
               //Make a copy of the uniqueDaysArr array, and add an enabled property to each day
-              groupedDayArray.value = uniqueDaysArr.map((year, yearIndex) => year.map((month, monthIndex) => month.map(day => { return { day: day, enabled: true}; })));
+              groupedArrays.value.day = uniqueDaysArr.map((year, yearIndex) => year.map((month, monthIndex) => month.map(day => { return { day: day, enabled: true}; })));
 
               // Create a 4D array storing all missions in each day
               return uniqueYears.map((year, yearIndex) =>
@@ -1953,22 +1979,25 @@
 
             const allVisible = Vue.ref(true);
             function toggleElements(event, passedYear, passedMonth, passedDay) {
+              const yA = groupedArrays.value.year;
+              const mA = groupedArrays.value.month;
+              const dA = groupedArrays.value.day;
               if(passedYear){
-                const year = groupedYearArray.value[groupedYearArray.value.indexOf(passedYear)];
+                const year = yA[yA.indexOf(passedYear)];
                 if(passedMonth){
-                  const month = groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)][groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)].indexOf(passedMonth)];
+                  const month = mA[yA.indexOf(passedYear)][mA[yA.indexOf(passedYear)].indexOf(passedMonth)];
                   if(passedDay){
-                    const day = groupedDayArray.value[groupedYearArray.value.indexOf(passedYear)][groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)].indexOf(passedMonth)][groupedDayArray.value[groupedYearArray.value.indexOf(passedYear)][groupedMonthArray.value[groupedYearArray.value.indexOf(passedYear)].indexOf(passedMonth)].indexOf(passedDay)];
+                    const day = dA[yA.indexOf(passedYear)][mA[yA.indexOf(passedYear)].indexOf(passedMonth)][dA[yA.indexOf(passedYear)][mA[yA.indexOf(passedYear)].indexOf(passedMonth)].indexOf(passedDay)];
                     day.enabled = !day.enabled;
                   } else month.enabled = !month.enabled;
                 } else year.enabled = !year.enabled;
               } else { //Toggle all
                 allVisible.value = !allVisible.value;
-                for (const year of groupedYearArray.value) {
+                for (const year of yA) {
                   year.enabled = allVisible.value;
-                  for (const month of groupedMonthArray.value[groupedYearArray.value.indexOf(year)]) {
+                  for (const month of mA[yA.indexOf(year)]) {
                     month.enabled = allVisible.value;
-                    for (const day of groupedDayArray.value[groupedYearArray.value.indexOf(year)][groupedMonthArray.value[groupedYearArray.value.indexOf(year)].indexOf(month)]) {
+                    for (const day of dA[yA.indexOf(year)][mA[yA.indexOf(year)].indexOf(month)]) {
                       day.enabled = allVisible.value;
                     }
                   }
@@ -1978,6 +2007,7 @@
 
             const viewMissionsOfEid = async () => {
               filterApplyTime.value = ""; //Reset the filter apply time
+              multiViewFreeSelectIds.value = []; //Reset the multiViewFreeSelectIds
               eidMissionsBeingLoaded.value = true;
               const missionsLoadValue = await window.viewMissionsOfEid(selectedMissionAccount.value.toString());
               if (missionsLoadValue !== "") {
@@ -2492,6 +2522,7 @@
 
             const applyFilter = async () => {
               const startTime = performance.now();
+              multiViewFreeSelectIds.value = []; //Reset the multiViewFreeSelectIds
               dataBeingFiltered.value = true;
               filterHasChanged.value = false;
               const newFilteredMissions = [];
@@ -2616,13 +2647,26 @@
             const rowViewBeingLoaded = Vue.ref(false);
             function triggerRowView(yearIndex, monthIndex, dayIndex){
               rowViewBeingLoaded.value = true;
-              const ids = groupedMissions.value[yearIndex][monthIndex][dayIndex].map(mission => mission.missionId);
-              if(ids == null || ids.length == 0) {
-                rowViewBeingLoaded.value = false;
-                return false;
-              } else if(ids.length == 1) viewSpecificMission(ids[0]);
-              viewRowOfMissions(ids);
+              if(yearIndex == null && monthIndex == null && dayIndex == null && 
+                multiViewMode.value == 'free' && multiViewFreeSelectIds.value.length > 0){
+                viewRowOfMissions(multiViewFreeSelectIds.value);
+              } else{
+                const ids = groupedMissions.value[yearIndex][monthIndex][dayIndex].map(mission => mission.missionId);
+                if(ids == null || ids.length == 0) {
+                  rowViewBeingLoaded.value = false;
+                  return false;
+                } else if(ids.length == 1) viewSpecificMission(ids[0]);
+                viewRowOfMissions(ids);
+              }
             }
+
+            const multiViewFreeSelectIds = Vue.ref([]);
+            const handleMultiViewSelection = (event, missionId) => {
+              const targetEl = event.target ?? document.getElementById(event);
+              //Determine if checkbox is checked or not
+              if(targetEl.checked) multiViewFreeSelectIds.value.push(missionId);
+              else multiViewFreeSelectIds.value = multiViewFreeSelectIds.value.filter(id => id != missionId);
+            };
 
             const viewRowOfMissions = async(missionIds) => {
               //Do not allow viewing missions while data is being fetched - prevent collisions
@@ -2832,12 +2876,14 @@
               //View multiple missions
               missionsBeingViewed,
               multiViewMissionData,
-              allowMultiViewing,
+              multiViewFreeSelectIds,
+              multiViewMode,
               rowViewBeingLoaded,
               viewRowOfMissions,
               openMultiMissionOverlay,
               closeMultiMissionOverlay,
               triggerRowView,
+              handleMultiViewSelection,
 
               //View specific mission
               viewByDate,
@@ -2853,9 +2899,7 @@
               durationConfigs,
               artifactConfigs,
               viewMissionData,
-              groupedYearArray,
-              groupedMonthArray,
-              groupedDayArray,
+              groupedArrays,
               allVisible,
               viewMissionSortMethod,
               afRarityClass,

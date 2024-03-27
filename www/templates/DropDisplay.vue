@@ -80,7 +80,7 @@
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
             showExpectedTotalDrops: Boolean,
-            lifetimeTotalDropsCount: Number,
+            totalDropsCount: Number,
         },
         methods: {
             getRepeatClass(){
@@ -155,13 +155,10 @@
               if(mennoItem == null) return null;
               return ((mennoItem.totalDrops / this.mennoMissionData.totalDropsCount) * this.lifetimeTotalDropsCount).toFixed(3);
             },
-            getTotalCount(){
-                return this.itemArray.reduce((acc, item) => acc + item.count, 0);
-            },
             getExpectedPerShip(dropId, dropLevel, dropRarity){
                 const ratios = this.getDropCalcs(dropId, dropLevel, dropRarity);
                 if(ratios == null) return null;
-                return ((ratios[0] / ratios[1]) * this.getTotalCount()).toFixed(3);
+                return ((ratios[0] / ratios[1]) * this.totalDropsCount).toFixed(3);
             }
         }
     }
