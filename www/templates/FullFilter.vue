@@ -204,9 +204,9 @@
                     ];
                     case 'launchDT':
                     case 'returnDT': return [
-                        { text: 'on', value: 'on' },
-                        { text: 'before', value: 'before' },
-                        { text: 'after', value: 'after' }
+                        { text: 'on', value: 'd=' },
+                        { text: 'before', value: '<' },
+                        { text: 'after', value: '>' }
                     ];
                     case 'dubcap': return [
                         { text: 'is', value: '=' },
@@ -239,7 +239,7 @@
                     }));
                     case 'drops': {
                         const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
-                            text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + ((artifact.displayName.toLowerCase().indexOf('stone') > -1 && artifact.displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ')')),
+                            text: this.artifactDisplayText(artifact),
                             value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
                             styleClass: (this.afRarityClass(artifact, true) != "" ? this.afRarityClass(artifact, true) : 'text-gray-400'),
                             imagePath: this.dropPath(artifact),
@@ -253,6 +253,13 @@
                     case 'dubcap': return [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }];
                     default: return [];
                 }
+            },
+            artifactDisplayText(artifact){
+              const displayName = artifact.displayName;
+              const level = artifact.level;
+              let displayText = displayName;
+              if(level != '%') displayText += " (T" + (level + ((displayName.toLowerCase().indexOf('stone') > -1 && displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ")";
+              return displayText;
             },
             filterLevelIf(index, orIndex, level, vtype) {
                 const isOr = orIndex != null;

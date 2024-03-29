@@ -591,7 +591,7 @@
             </form>
           </div>
 
-          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div>
                 <span class="mr-05rem font-bold text-base text-gray-400">Options</span>
@@ -651,7 +651,7 @@
             </div>
           </div>
 
-          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div>
                 <span class="mr-05rem font-bold text-base text-gray-400">Menno's Ship Data</span>
@@ -926,12 +926,12 @@
                   <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
                 </span>
                 <span class="mr-5">
-                  <label for="lifetimeSortRarity" class="ext-opt-label">Total Count</label>
-                  <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="count" class="ext-opt-check"/>
+                  <label for="lifetimeSortTotalCount" class="ext-opt-label">Total Count</label>
+                  <input id="lifetimeSortTotalCount" type="radio" v-model="lifetimeSortMethod" value="count" class="ext-opt-check"/>
                 </span>
                 <span class="mr-5">
-                  <label for="lifetimeSortRarity" class="ext-opt-label">Random</label>
-                  <input id="lifetimeSortRarity" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
+                  <label for="lifetimeSortRandom" class="ext-opt-label">Random</label>
+                  <input id="lifetimeSortRandom" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
                 </span>
               </div>
               <drop-display-container
@@ -1901,6 +1901,13 @@
               else window.removeEventListener('keydown', handleKeyDown);
             });
 
+            function artifactDisplayText(artifact){
+              const displayName = artifact.displayName;
+              const level = artifact.level;
+              var displayText = displayName;
+              if(level != '%') displayText += " (T" + (level + ((displayName.toLowerCase().indexOf('stone') > -1 && displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ")";
+              return displayText;
+            }
             const dropPath = (drop) => {
               const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
               const fixedName = drop.protoName.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
@@ -2164,7 +2171,7 @@
                   }));
                 case 'drops': {
                   const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
-                    text: artifact.displayName + ((artifact.level == '%') ? '' : (' (T' + (artifact.level + ((artifact.displayName.toLowerCase().indexOf('stone') > -1 && artifact.displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ')')),
+                    text: artifactDisplayText(artifact),
                     value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
                     styleClass: (afRarityClass(artifact, true) != "" ? afRarityClass(artifact, true) : 'text-gray-400'),
                     imagePath: dropPath(artifact),
@@ -2387,77 +2394,31 @@
               hasChangedRef().value = true;
             }
 
+            function commonFilterLogic(value, filterValue, operator, currentState) {
+              switch (operator) {
+                case 'd=': if(value.toDateString() != filterValue.toDateString()) return false; break;
+                case '=': if(value != filterValue) return false; break;
+                case '!=': if(value == filterValue) return false; break;
+                case '>': if(value <= filterValue) return false; break;
+                case '<': if(value >= filterValue) return false; break;
+                case 'true': if(!value) return false; break;
+                case 'false': if(value) return false; break;
+                default: return currentState;
+              }
+              return currentState;
+            }
+
             const testMissionAgainstFilter = async(mission, filter) => {
               var filterPassed = true;
               if(filter.topLevel != null && filter.op != null && filter.val != null){
                 switch(filter.topLevel){
-                  case 'dubcap': {
-                    switch(filter.val){
-                      case 'true': if(!mission.isDubCap) filterPassed = false; break;
-                      case 'false': if(mission.isDubCap) filterPassed = false; break;
-                    }
-                    break;
-                  }
-                  case 'ship': {
-                    switch(filter.op){
-                      case '=': if(mission.ship != filter.val) filterPassed = false; break;
-                      case '!=': if(mission.ship == filter.val) filterPassed = false; break;
-                      case '>': if(mission.ship <= filter.val) filterPassed = false; break;
-                      case '<': if(mission.ship >= filter.val) filterPassed = false; break;
-                    }
-                    break;
-                  }
-                  case 'duration': {
-                    switch(filter.op){
-                      case '=': if(mission.durationType != filter.val) filterPassed = false; break;
-                      case '!=': if(mission.durationType == filter.val) filterPassed = false; break;
-                      case '>': if(mission.durationType <= filter.val) filterPassed = false; break;
-                      case '<': if(mission.durationType >= filter.val) filterPassed = false; break;
-                    }
-                    break;
-                  }
-                  case 'level': {
-                    switch(filter.op){
-                      case '=': if(mission.level != filter.val) filterPassed = false; break;
-                      case '!=': if(mission.level == filter.val) filterPassed = false; break;
-                      case '>': if(mission.level <= filter.val) filterPassed = false; break;
-                      case '<': if(mission.level >= filter.val) filterPassed = false; break;
-                    }
-                    break;
-                  }
-                  case 'target': {
-                    switch(filter.op){
-                      case '=': if(mission.targetInt != filter.val) filterPassed = false; break;
-                      case '!=': if(mission.targetInt == filter.val) filterPassed = false; break;
-                    }
-                    break;
-                  }
-                  case 'launchDT': {
-                    const launchDay = mission.launchDay.toString().padStart(2, '0');
-                    const launchMonth = mission.launchMonth.toString().padStart(2, '0');
-                    const launchYear = mission.launchYear.toString().padStart(4, '0');
-                    const launchDT = new Date(launchYear + "-" + launchMonth + "-" + launchDay);
-                    const filterDT = new Date(filter.val);
-                    switch(filter.op){
-                      case 'on': if(launchDT.toDateString() != filterDT.toDateString()) filterPassed = false; break;
-                      case 'before': if(launchDT >= filterDT) filterPassed = false; break;
-                      case 'after': if(launchDT <= filterDT) filterPassed = false; break;
-                    }
-                    break;
-                  }
-                  case 'returnDT': {
-                    const returnDay = mission.returnDay.toString().padStart(2, '0');
-                    const returnMonth = mission.returnMonth.toString().padStart(2, '0');
-                    const returnYear = mission.returnYear.toString().padStart(4, '0');
-                    const returnDT = new Date(returnYear + "-" + returnMonth + "-" + returnDay);
-                    const filterDT = new Date(filter.val);
-                    switch(filter.op){
-                      case 'on': if(returnDT.toDateString() != filterDT.toDateString()) filterPassed = false; break;
-                      case 'before': if(returnDT >= filterDT) filterPassed = false; break;
-                      case 'after': if(returnDT <= filterDT) filterPassed = false; break;
-                    }
-                    break;
-                  }
+                  case 'dubcap': filterPassed = commonFilterLogic(mission.isDubCap, null, filter.val, filterPassed); break; //Operator is value in this case, always 'is'
+                  case 'ship': filterPassed = commonFilterLogic(mission.ship, filter.val, filter.op, filterPassed); break;
+                  case 'duration': filterPassed = commonFilterLogic(mission.durationType, filter.val, filter.op, filterPassed); break;
+                  case 'level': filterPassed = commonFilterLogic(mission.level, filter.val, filter.op, filterPassed); break;
+                  case 'target': filterPassed = commonFilterLogic(mission.targetInt, filter.val, filter.op, filterPassed); break;
+                  case 'launchDT': filterPassed = commonFilterLogic(new Date(mission.launchYear, mission.launchMonth - 1, mission.launchDay - 1), new Date(filter.val), filter.op, filterPassed); break;
+                  case 'returnDT': filterPassed = commonFilterLogic(new Date(mission.returnYear, mission.returnMonth - 1, mission.returnDay - 1), new Date(filter.val), filter.op, filterPassed); break;
                   case 'drops': {
                     const durConfig = durationConfigs.value[mission.ship].durations[mission.durationType];
                     const maxQuality = durConfig.maxQuality + (durConfig.levelQualityBump * mission.level);
@@ -2467,26 +2428,28 @@
                     const filterName = filter.val.split("_")[0]; const nameBypass = (filterName == '%');
                     const loadValue = await window.getShipDrops(loadedEid.value, mission.missionId);
                     if(loadValue == "") filterPassed = false;
-                    const allDrops = JSON.parse(loadValue);
-                    switch(filter.op){
-                      case 'c':{ //Contains
-                        var foundDrop = false;
-                        if(!qualityBypass && maxQuality < filterQuality || !qualityBypass && durConfig.minQuality > filterQuality) filterPassed = false;
-                        for(const drop of allDrops){
-                          if(!nameBypass && parseInt(filterName) != drop.id ) continue;
-                          if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
-                          if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
-                          foundDrop = true;
+                    else{
+                      const allDrops = JSON.parse(loadValue);
+                      switch(filter.op){
+                        case 'c':{ //Contains
+                          var foundDrop = false;
+                          if(!qualityBypass && maxQuality < filterQuality || !qualityBypass && durConfig.minQuality > filterQuality) filterPassed = false;
+                          for(const drop of allDrops){
+                            if(!nameBypass && parseInt(filterName) != drop.id ) continue;
+                            if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
+                            if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
+                            foundDrop = true;
+                          }
+                          if(!foundDrop) filterPassed = false;
+                          break;
                         }
-                        if(!foundDrop) filterPassed = false;
-                        break;
-                      }
-                      case 'dnc': { //Does not contain
-                        for(const drop of allDrops){
-                          if(!nameBypass && parseInt(filterName) != drop.id ) continue;
-                          if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
-                          if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
-                          filterPassed = false;
+                        case 'dnc': { //Does not contain
+                          for(const drop of allDrops){
+                            if(!nameBypass && parseInt(filterName) != drop.id ) continue;
+                            if(!levelBypass && parseInt(filterLevel) != drop.level) continue;
+                            if(!rarityBypass && parseInt(filterRarity) != drop.rarity) continue;
+                            filterPassed = false;
+                          }
                         }
                       }
                     }
