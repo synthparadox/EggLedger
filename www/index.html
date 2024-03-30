@@ -1419,8 +1419,8 @@
                   return "Fetching mission IDs...";
                 case LifetimeLoadState.FilteringIds:
                   return "Filtering mission IDs... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
-                case LifetimeLoadState.LoadingMissionData:
-                  return "Loading missions... ";
+                  case LifetimeLoadState.LoadingMissionData:
+                  return "Loading missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
                 case LifetimeLoadState.Success:
                   return "Succeeded" + (lifetimeSuccessTime.value != null ? ` in ${lifetimeSuccessTime.value}` : "");
                 case LifetimeLoadState.Failed:
@@ -1478,9 +1478,9 @@
               resetLifetimeDropsLoadedProgress(null, null, ids.length);
               var firstMatches = null;
               var nonMatch = false;
-              const missions = await Promise.all(ids.map(id => getSpecificMissionData(selectedLifetimeAccount.value, id, false)));
-              missions.forEach((mission, index) => {
-                if(mission == null) return;
+              for(const id of ids){
+                const mission = await getSpecificMissionData(selectedLifetimeAccount.value, id, false);
+                if(mission == null) continue;
                 const missionShipInfo = mission.shipInfo;
                 firstMatches = firstMatches ?? [missionShipInfo.ship, missionShipInfo.durationType, missionShipInfo.level, missionShipInfo.targetArtifact];
                 if (!nonMatch) {
@@ -1494,9 +1494,9 @@
                 mission.stones.forEach(stone => {mergeItems(lifetimeDrops.value.stones, stone); lifetimeDrops.value.stoneCount += stone.count;});
                 mission.stoneFragments.forEach(stoneFragment => {mergeItems(lifetimeDrops.value.stoneFragments, stoneFragment); lifetimeDrops.value.stoneFragmentCount += stoneFragment.count;});
                 mission.ingredients.forEach(ingredient => {mergeItems(lifetimeDrops.value.ingredients, ingredient); lifetimeDrops.value.ingredientCount += ingredient.count;});
-              });
-              lifetimeDropsLoadedProgress.value.percentageDone = '100%';
-              lifetimeDropsLoadedProgress.value.loadedCount = ids.length;
+                lifetimeDropsLoadedProgress.value.percentageDone = `${((ids.indexOf(id) + 1) / ids.length) * 100}%`;
+                lifetimeDropsLoadedProgress.value.loadedCount++;
+              }
               reSortLifetime();
 
               lifetimeMennoMissionData.value = null;
@@ -2461,11 +2461,11 @@
               dataBeingFiltered.value = true;
               filterHasChanged.value = false;
               const newFilteredMissions = [];
-              _ = await Promise.all(allLoadedMissions.value.map(async (loadedMission) => {
+              for(const loadedMission of allLoadedMissions.value){
                 if(await missionMatchesFilter(loadedMission, dataFilter.value, orDataFilter.value)){
                   newFilteredMissions.push(loadedMission);
                 }
-              }));
+              }
               const endTime = performance.now();
               filterApplyTime.value = Math.floor((endTime - startTime) / 1000) + "." + Math.floor((endTime - startTime) % 1000) + "s";
               filteredMissions.value = newFilteredMissions;
