@@ -17,11 +17,78 @@
         <div class="h-11 flex-shrink-0 bg-dark">
           <div class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.MissionData, UITab.LifetimeDrops, UITab.About]"
+              v-for="tab in [UITab.Ledger, UITab.MissionData, UITab.LifetimeDrops, UITab.Settings, UITab.About]"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
               v-on:click="activeTab = tab" v-bind:key="tab">
               {{ tab }}
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-show="activeTab === UITab.Settings"
+          class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-y-scroll bg-darker"
+        >
+          <div class="flex-1 px-3 py-2 overflow-auto shadow-sm block text-sm font-mono text-gray-400 bg-darkest rounded-md">
+            <div>
+              <span class="text-base">
+                Preferred browser for Ledger (<span class="text-gray-300 text-sm">effective on restart</span>)
+              </span> <br>
+              <div ref="preferredBrowserSelectRef" class="text-sm relative w-full flex-grow focus-within:z-10">
+                <div v-if="preferredBrowser" class="ledger-input-overlay">
+                  <span>{{ preferredBrowser }}</span> ( <span class="text-gray-300"> {{ getBrowserDisplayName(preferredBrowser) }}</span> )</span>
+                </div>
+                <input
+                  ref="preferredBrowserInputRef"
+                  id="preferredBrowserInput"
+                  type="text"
+                  class="drop-select-full text-xs bg-darker"
+                  placeholder="-- Not Set (Default) --"
+                  v-bind:value="preferredBrowser"
+                  v-on:focus="openPrefBrowserDropdown"
+                  v-on:input="e => {e.preventDefault();}"
+                />
+                <ul
+                  v-if="prefBrowserDropdownOpen && allBrowsers.length > 0"
+                  class="ledger-list focus:outline-none text-sm"
+                  tabindex="-1"
+                >
+                  <li
+                    v-for="browser in allBrowsers"
+                    v-bind:key="browser" class="drop-opt bg-darker"
+                    v-on:click="closePrefBrowserDropdown(browser)"
+                  >
+                    {{ browser }} ( <span class="text-gray-300"> {{ getBrowserDisplayName(browser) }}</span> )
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <hr class="mt-1rem mb-1rem w-full">
+            <div>
+              <span class="text-base text-gray-300">Global Options</span>
+              <div>
+                <span class="text-sm">
+                  Automatically refresh Menno data once weekly
+                </span>
+                <input
+                  id="autoRefreshMennoCheckbox"
+                  type="checkbox"
+                  class="ext-opt-check"
+                  v-model="autoRefreshMennoPreference"
+                >
+              </div>
+              <div>
+                <span class="text-sm">
+                  Use GIFs for rarity indicators
+                </span>
+                <input
+                  id="useGifsForRarityCheckbox"
+                  type="checkbox"
+                  class="ext-opt-check"
+                  v-model="useGifsForRarity"
+                >
+              </div>
             </div>
           </div>
         </div>
@@ -617,10 +684,6 @@
                   <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
                   <input id="recolorDCCB" type="checkbox" v-model="recolorDC" class=" ext-opt-check"/>
                 </span>
-                <span class="mr-5">
-                  <label for="useGifsForRarityCB" class="ext-opt-label">Particle GIFs for rarity</label>
-                  <input id="useGifsForRarityCB" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
-                </span>
                 <div>
                   <span class="font-bold text-base text-gray-400">Multi-View Method</span><br />
                   <span class="mr-5">
@@ -718,7 +781,7 @@
                           </button>
                           <div class="mt-1rem mission-grid">
                             <button 
-                              v-if="(viewByDate && groupedArrays.day[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedArrays.month[yearIndex][monthIndex].enabled) && multiViewMode == 'row'"
+                              v-if="((viewByDate && groupedArrays.day[yearIndex][monthIndex][dayIndex].enabled) || (!viewByDate && groupedArrays.month[yearIndex][monthIndex].enabled)) && multiViewMode == 'row'"
                               v-on:click="e => {triggerRowView(yearIndex, monthIndex, dayIndex)}"
                               :class="'hover:text-gray-600 rounded-md hover:ledger-underline text-xs font-bold btn btn-outline-dark bg-transparent mission-row-view' + (dayVF.length > 3 ? ' mission-row-view-longer' : '')"
                             >
@@ -904,10 +967,6 @@
                 <span>Options</span>
                 <br/>
                 <span class="mr-5">
-                  <label for="useGifsForRarity" class="ext-opt-label">Particle GIFs for rarity</label>
-                  <input id="useGifsForRarity" type="checkbox" v-model="useGifsForRarity" class="ext-opt-check"/>
-                </span>
-                <span class="mr-5">
                   <label for="lifetimeDropsPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
                   <input id="lifetimeDropsPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
                 </span>
@@ -1074,6 +1133,7 @@
           MissionData: 'Mission Data',
           LifetimeDrops: 'Lifetime Drops',
           About: 'About',
+          Settings: 'Settings',
         };
 
         const AppState = {
@@ -1164,13 +1224,15 @@
               if (!playerIdSelectRef?.value?.contains(active)) closePlayerIdDropdown();
               if (!viewMissionAccountSelectRef?.value?.contains(active)) closeMissionsViewAccountDropdown();
               if (!lifetimeAccountSelectRef?.value?.contains(active)) closeLifetimeAccountDropdown();
+              if (!preferredBrowserSelectRef?.value?.contains(active)) closePrefBrowserDropdown();
             };
 
             const handleMousedown = event => {
               const target = event.target;
               if (!playerIdSelectRef.value?.contains(target)) closePlayerIdDropdown();
               if (!viewMissionAccountSelectRef?.value?.contains(target)) closeMissionsViewAccountDropdown();
-              if(!lifetimeAccountSelectRef?.value?.contains(target)) closeLifetimeAccountDropdown();
+              if (!lifetimeAccountSelectRef?.value?.contains(target)) closeLifetimeAccountDropdown();
+              if (!preferredBrowserSelectRef?.value?.contains(target)) closePrefBrowserDropdown();
             };
 
             Vue.onMounted(() => {
@@ -1709,6 +1771,12 @@
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
             const useGifsForRarity = Vue.ref(false);
+            Vue.onMounted(async () => {
+              useGifsForRarity.value = await window.getUseGifsForRarity();
+            });
+            Vue.watch(useGifsForRarity, async () => {
+              await window.setUseGifsForRarity(useGifsForRarity.value);
+            });
             const multiViewMissionData = Vue.ref([]);
             const missionsBeingViewed = Vue.ref(null);
             const viewMissionData = Vue.ref({});
@@ -2671,6 +2739,62 @@
               });
             });
 
+            // ==============================================
+            // Custom settings functions
+            // ==============================================
+
+            const autoRefreshMennoPreference = Vue.ref(false);
+            Vue.onMounted(async () => {
+              autoRefreshMennoPreference.value = await window.getAutoRefreshMennoPreference();
+            });
+            Vue.watch(autoRefreshMennoPreference, async (newValue) => {
+              await window.setAutoRefreshMennoPreference(newValue);
+            });
+
+            const setPreferredBrowser = async (browser) => {
+              if(await window.setPreferredBrowser(browser)){
+                preferredBrowser.value = browser;
+              }
+            };
+            const getPreferredBrowser = async () => {
+              return await window.getPreferredBrowser();
+            };
+            const allBrowsers = Vue.ref([]);
+            const preferredBrowser = Vue.ref(null);
+            const browserDisplayName = Vue.computed(() => {
+              return getBrowserDisplayName(preferredBrowser.value);
+            });
+            const getBrowserDisplayName = (browser) => {
+              if(browser == null) return "Unknown";
+              //Match "chrome"
+              if(browser.match(/chrome/i)) return "Google Chrome";
+              //Match "brave"
+              if(browser.match(/brave/i)) return "Brave";
+              //Match "opera"
+              if(browser.match(/opera/i)) return "Opera";
+              //Match "edge"
+              if(browser.match(/edge/i)) return "Microsoft Edge";
+              //Match "vivaldi"
+              if(browser.match(/vivaldi/i)) return "Vivaldi";
+              else return "Unknown";
+            };
+            Vue.onMounted(async () => {
+              preferredBrowser.value = await getPreferredBrowser();
+              allBrowsers.value = await window.getDetectedBrowsers();
+            });
+            //Watch activeTab for change to Settings, to update allBrowsers
+            Vue.watch(activeTab, async (newTab) => {
+              if(newTab == UITab.Settings) allBrowsers.value = await window.getDetectedBrowsers();
+            }, { deep: true });
+
+            const preferredBrowserSelectRef = Vue.ref(null);
+            const prefBrowserDropdownOpen = Vue.ref(false);
+            const openPrefBrowserDropdown = () => { prefBrowserDropdownOpen.value = true;}
+            const closePrefBrowserDropdown = (pref) => {
+              if(pref != null && pref != '') setPreferredBrowser(pref);
+              prefBrowserDropdownOpen.value = false;
+            };
+
             const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeDrops);
             const filterTopSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-top' : 'filter-top');
             const filterValSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-value-' : 'filter-value-');
@@ -2746,6 +2870,18 @@
               hhmmss,
 
               appHasUpdate,
+
+              //Browser prefs
+              allBrowsers,
+              preferredBrowser,
+              browserDisplayName,
+              prefBrowserDropdownOpen,
+              preferredBrowserSelectRef,
+              getBrowserDisplayName,
+              getPreferredBrowser,
+              setPreferredBrowser,
+              openPrefBrowserDropdown,
+              closePrefBrowserDropdown,
 
               //Lifetime data
               LifetimeLoadState,

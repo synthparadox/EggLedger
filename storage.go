@@ -20,6 +20,9 @@ type AppStorage struct {
 	KnownLatestReleaseNotes string    `json:"known_latest_release_notes"`
 	KnownLatestVersion      string    `json:"known_latest_version"`
 	FilterWarningRead       bool      `json:"filter_warning_read"`
+	PreferredChromiumPath   string    `json:"preferred_chromium_path"`
+	AutoRefreshMennoPref    bool      `json:"auto_refresh_menno_pref"`
+	UseGifsForRarity        bool      `json:"use_gifs_for_rarity"`
 }
 
 type Account struct {
@@ -101,6 +104,27 @@ func (s *AppStorage) SetFilterWarningRead(flag bool) {
 func (s *AppStorage) SetLastMennoDataRefreshAt(t time.Time) {
 	s.Lock()
 	s.LastMennoDataRefreshAt = t
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) SetPreferredChromiumPath(path string) {
+	s.Lock()
+	s.PreferredChromiumPath = path
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) SetAutoRefreshMennoPref(flag bool) {
+	s.Lock()
+	s.AutoRefreshMennoPref = flag
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) SetUseGifsForRarity(flag bool) {
+	s.Lock()
+	s.UseGifsForRarity = flag
 	s.Unlock()
 	go s.Persist()
 }

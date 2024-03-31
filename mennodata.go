@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type MennoData struct {
@@ -78,17 +76,16 @@ func loadLatestMennoData() (data MennoData, err error) {
 }
 
 func checkIfRefreshMennoDataIsNeeded() bool {
+	if !_storage.AutoRefreshMennoPref {
+		return false
+	}
+
 	// Update every 5 days.
 	_storage.Lock()
 	lastMennoRefesh := _storage.LastMennoDataRefreshAt
 	_storage.Unlock()
 
-	if time.Since(lastMennoRefesh) > time.Hour*24*5 {
-		return true
-	} else {
-		log.Infof("Last Menno data refresh was %s ago, skipping", time.Since(lastMennoRefesh))
-		return false
-	}
+	return (time.Since(lastMennoRefesh) > time.Hour*24*5)
 }
 
 func refreshMennoData() (err error) {

@@ -408,7 +408,11 @@ func main() {
 		log.Info("starting app in dev mode")
 	}
 
-	chrome := lorca.LocateChrome()
+	prefChromePath := _storage.PreferredChromiumPath
+	chrome := lorca.LocateChrome(prefChromePath)
+	if prefChromePath != chrome {
+		_storage.SetPreferredChromiumPath("")
+	}
 	if chrome == "" {
 		lorca.PromptDownload()
 		log.Fatal("unable to locate Chrome")
@@ -417,11 +421,12 @@ func main() {
 
 	args := []string{}
 	args = append(args, "--disable-features=TranslateUI,BlinkGenPropertyTrees")
-	args = append(args, "--remote-allow-origins=*")
+	//Fuck Edge
+	args = append(args, "--disable-sync")
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
-	u, err := lorca.New("", "", 650, 650, args...)
+	u, err := lorca.New("", "", chrome, 650, 650, args...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -472,6 +477,42 @@ func main() {
 		log.Error(args...)
 		emitMessage(fmt.Sprint(args...), true)
 	}
+
+	ui.MustBind("setPreferredBrowser", func(path string) bool {
+		if path == "" {
+			return false
+		}
+		if _storage.PreferredChromiumPath == path {
+			return false
+		}
+		_storage.SetPreferredChromiumPath(path)
+		return true
+	})
+
+	ui.MustBind("getDetectedBrowsers", func() []string {
+		lorca.RefreshFoundPaths()
+		return lorca.FoundPaths()
+	})
+
+	ui.MustBind("getPreferredBrowser", func() string {
+		return _storage.PreferredChromiumPath
+	})
+
+	ui.MustBind("setAutoRefreshMennoPreference", func(flag bool) {
+		_storage.SetAutoRefreshMennoPref(flag)
+	})
+
+	ui.MustBind("getAutoRefreshMennoPreference", func() bool {
+		return _storage.AutoRefreshMennoPref
+	})
+
+	ui.MustBind("setUseGifsForRarity", func(flag bool) {
+		_storage.SetUseGifsForRarity(flag)
+	})
+
+	ui.MustBind("getUseGifsForRarity", func() bool {
+		return _storage.UseGifsForRarity
+	})
 
 	ui.MustBind("appVersion", func() string {
 		return _appVersion
@@ -1355,6 +1396,8 @@ func main() {
 		}
 		if newVersion == "" {
 			log.Infof("no new version found")
+			return []string{"", ""}
+		} else if newVersion == "skip" {
 			return []string{"", ""}
 		} else {
 			log.Infof("new version found: %s", newVersion)

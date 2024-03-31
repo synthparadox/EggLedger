@@ -46,7 +46,7 @@ func checkForUpdates() (newVersion string, newReleaseNotes string, err error) {
 
 	if time.Since(lastUpdateCheckAt) < _updateCheckInterval {
 		log.Infof("%s since last update check, skipping", time.Since(lastUpdateCheckAt))
-		return "", "", nil
+		return "skip", "", nil
 	}
 
 	latestTag, latestReleaseNotes, err := getLatestTag()
