@@ -25,11 +25,9 @@ hr {
       @apply bg-dark_tab_hover;
     }
   
-    /* Disabled state */
     &:disabled {
       @apply opacity-50;
   
-      /* Disabled hover state */
       &:hover {
         @apply bg-darker_tab_hover cursor-not-allowed;
       }
@@ -53,55 +51,123 @@ hr {
 }
 
 .fetch-button {
-  @apply -ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
+  @apply -ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 bg-darkerer;
+
+  &:focus{
+    @apply outline-none ring-1 ring-blue-500 border-blue-500;
+  }
+
+  &:disabled{
+    @apply opacity-50;
+
+    &:hover{
+      @apply bg-darker_tab_hover cursor-not-allowed;
+    }
+  }
+
+  &:hover{
+    @apply bg-dark_tab_hover;
+  }
 }
 
 .filter-container {
-  @apply relative flex flex-row items-center flex-grow
+  @apply relative flex flex-row items-center flex-grow;
 }
 
 .filter-select-option {
-  @apply bg-darkest text-gray-400 hover:bg-darkest
+  @apply bg-darkest text-gray-400;
+
+  &:hover{
+    @apply bg-darkest;
+  }
 }
 
 .filter-select {
-  @apply focus:ring-blue-500 focus:border-blue-500 block rounded-md text-sm bg-darkest hover:bg-darker tabular-nums appearance-none mr-1rem mt-05rem pl-05rem pt-05rem pb-05rem pr-select
+  @apply block rounded-md text-sm bg-darkest tabular-nums appearance-none mr-1rem mt-05rem pl-05rem pt-05rem pb-05rem pr-select;
+
+  &:focus{
+    @apply ring-blue-500 border-blue-500;
+  }
+
+  &:hover{
+    @apply bg-darker;
+  }
 }
 
 .ext-opt-label {
   @apply text-gray-400 mr-05rem
 }
 
+.opt-span {
+  @apply inline-block mr-5
+}
+
 .ext-opt-check {
-  @apply rounded-md bg-darkest focus:ring-blue-500 focus:border-blue-500
+  @apply rounded-md bg-darkest;
+
+  &:focus{
+    @apply ring-blue-500 border-blue-500;
+  }
+
+  &:disabled{
+    @apply opacity-50;
+
+    &:hover{
+      @apply cursor-not-allowed;
+    }
+  }
 }
 
 .drop-opt {
-  @apply text-sm text-gray-400 hover:text-gray-300 hover:bg-blue-500 cursor-pointer select-none relative py-1 pl-3 tabular-nums
+  @apply text-sm text-gray-400 cursor-pointer select-none relative py-1 pl-3 tabular-nums;
+
+  &:hover{
+    @apply text-gray-300 bg-blue-500;
+  }
 }
 
 .drop-select {
-  @apply focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-none rounded-l-md text-sm bg-transparent tabular-nums
+  @apply text-gray-400 block w-full rounded-none rounded-l-md text-sm bg-transparent tabular-nums;
+
+  &:focus{
+    @apply ring-blue-500 border-blue-500;
+  }
 }
 
 .drop-select-full {
-  @apply focus:ring-blue-500 text-gray-400 focus:border-blue-500 block w-full rounded-md tabular-nums
+  @apply text-gray-400 block w-full rounded-md tabular-nums;
+
+  &:focus{
+    @apply ring-blue-500 border-blue-500;
+  }
 }
 
 .input-search {
-  @apply focus:ring-blue-500 text-gray-400 focus:border-blue-500 block rounded-md bg-transparent tabular-nums w-9/10
+  @apply text-gray-400 block rounded-md bg-transparent tabular-nums w-9/10;
+
+  &:focus{
+    @apply ring-blue-500 border-blue-500;
+  }
 }
 
 .select-form {
- @apply flex rounded-md shadow-sm mt-0
+  @apply flex rounded-md shadow-sm mt-0
 }
 
 .url-link {
-  @apply text-blue-500 hover:text-blue-600 underline
+  @apply text-blue-500 underline;
+
+  &:hover{
+    @apply text-blue-600;
+  }
 }
 
 .file-link {
-  @apply text-green-500 hover:text-green-600 underline
+  @apply text-green-500 underline;
+
+  &:hover{
+    @apply text-green-600;
+  }
 }
 
 .game-btn-ico {
@@ -149,32 +215,52 @@ hr {
 }
 
 .toggle-link {
-  @apply text-short hover:text-shortdarker mr-5 font-bold bg-transparent
+  @apply text-short mr-5 font-bold bg-transparent;
+
+  &:hover {
+    @apply text-shortdarker
+  }
 }
 
 .view-multi-link {
-  @apply text-green-500 hover:text-green-600 mr-5 font-bold bg-transparent
+  @apply text-green-500 mr-5 font-bold bg-transparent;
+
+  &:hover {
+    @apply text-green-600;
+  }
 }
 
 .popup-selector-main {
-  @apply h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center
+  @apply h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center;
 }
 
 .popup-selector-inner {
-  @apply min-w-15vw bg-dark rounded-lg relative focus-within:z-10 p-1rem pr-0i
+  @apply min-w-15vw bg-dark rounded-lg relative p-1rem pr-0i;
+
+  &:focus-within {
+    @apply z-10;
+  }
 }
 
 .close-button {
-  @apply absolute top-2 right-2 text-gray-300 hover:text-gray-500
+  @apply absolute top-2 right-2 text-gray-300;
+
+  &:hover{
+    @apply text-gray-500;
+  }
 }
 
 .popup-opt-container {
-  @apply h-half-vh mt-2 text-gray-300 text-center overflow-auto
+  @apply h-half-vh mt-2 text-gray-300 text-center overflow-auto;
 }
 
 .popup-opt {
-  @apply drop-opt hover:bg-darker flex relative text-center items-center rounded-md mr-05rem;
+  @apply text-sm text-gray-400 cursor-pointer select-none py-1 pl-3 tabular-nums flex relative text-center items-center rounded-md mr-05rem;
   outline: none;
+
+  &:hover{
+    @apply text-gray-300 bg-darker
+  }
 }
 
 .selected-popup-opt:focus {
@@ -188,4 +274,187 @@ hr {
 
 .mission-view-overlay {
   @apply w-full h-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center
+}
+
+.mission-grid {
+  @apply flex flex-wrap;
+  gap: 10px;
+}
+
+.mission-row-view {
+  flex: 0 0 calc(5% - 10px);
+}
+
+.mission-items-view {
+  flex: 0 0 calc(95% - 10px);
+}
+
+.mission-items-full {
+  flex: 0 0 100%;
+}
+
+.mission-item-3 {
+  flex: 0 0 calc(33.33% - 10px);
+  box-sizing: border-box;
+}
+
+.overlay-mission, .overlay-multi-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update, .overlay-menno {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.bg-rare-animated {
+  background: url('images/rare.gif') center center no-repeat;
+  background-size: 38px 38px;
+}
+
+.bg-epic-animated {
+  background: url('images/epic.gif') center center no-repeat;
+  background-size: 36px 36px;
+}
+
+.bg-legendary-animated {
+  background: url('images/legendary.gif') center center no-repeat;
+  background-size: 36px 36px;
+}
+
+.tooltip-custom {
+  @apply relative inline-block;
+}
+
+  .tooltip-custom:hover .tooltiptext-custom {
+    @apply inline-block z-3 absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+.tooltiptext-custom {
+  @apply hidden whitespace-nowrap text-center absolute;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: rgba(33, 37, 41, 0.95);
+}
+
+.speech-bubble {
+  @apply relative;
+  padding: 10px;
+  margin: 10px auto;
+  border-radius: 5px;
+  background-color: rgba(33, 37, 41, 0.95);
+}
+
+.double-cap-span {
+  @apply text-center;
+  background-image: radial-gradient(rgb(139, 14, 158), rgb(128, 13, 126), rgb(92, 9, 91));
+  border-radius: 10px;
+}
+
+.about-list-1 {
+  @apply list-disc pl-6;
+}
+
+.about-list-2 {
+  @apply pl-6;
+  list-style-type: circle;
+}
+
+::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-corner {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-button {
+  @apply hidden;
+}
+
+.gh-markdown-content a {
+  color: #006bff;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+.gh-markdown-content a:hover {
+  color: #003cff;
+}
+
+.gh-markdown-content h1 {
+  border-bottom: 2.5px solid #ccc;
+  font-size: 2em;
+  margin: 0.25em 0;
+}
+
+.gh-markdown-content h2 {
+  border-bottom: 2.25px solid #ccc;
+  font-size: 1.5em;
+  margin: 0.45em 0;
+}
+
+.gh-markdown-content h3 {
+  border-bottom: 2px solid #ccc;
+  font-size: 1.25em;
+  margin: 0.65em 0;
+}
+
+.gh-markdown-content ul {
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.gh-markdown-content img {
+  max-width: 99%;
+  margin: 20px;
+}
+
+.gh-markdown-content code {
+  background-color: #393b40;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.mission-row-view-longer {
+  @apply relative;
+}
+
+/* Right part of [ */
+.mission-row-view-longer::after {
+  @apply absolute;
+  content: '';
+  top: 0;
+  right: 7%;
+  width: 20px;
+  height: 100%;
+  border-right: 2px solid;
+}
+
+/* Top and bottom part of [ */
+.mission-row-view-longer::before {
+  @apply absolute;
+  content: '';
+  top: 0;
+  right: -3%;
+  width: 12%;
+  height: calc(100%);
+  border-top: 2px solid;
+  border-bottom: 2px solid;
 }

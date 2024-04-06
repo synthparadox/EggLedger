@@ -29,7 +29,8 @@ module.exports = {
         selectedmissiondarker: 'rgb(7, 120, 56)',
       },
       zIndex: {
-        eidoverlay: '-20',
+        '3': '3',
+        'eidoverlay': '-20',
       },
       height: {
         'stretch': 'stretch',
@@ -46,6 +47,7 @@ module.exports = {
         '6': '1.5rem',
         '9': '2.25rem',
         '40': '10rem',
+        '50': '12.5rem',
         '6/10': '60%',
         '60vh': '60vh',
         '80vh': '80vh',
@@ -82,6 +84,7 @@ module.exports = {
         '50vw': '50vw',
         '70vw': '70vw',
         '90vw': '90vw',
+        '90pc': '90%',
       },
       lineHeight: {
         '1rem': '1rem'
@@ -110,6 +113,7 @@ module.exports = {
         '2rem': '2rem',
         'select': '2.5rem',
         '7rem': '7rem',
+        '6': '24px',
       },
       fontSize: {
         'star': '1.4rem',

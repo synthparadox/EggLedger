@@ -1423,7 +1423,7 @@ func main() {
 		lastRefresh := _storage.LastMennoDataRefreshAt
 		_storage.Unlock()
 		if lastRefresh.IsZero() {
-			return 0
+			return math.MaxInt32
 		} else {
 			return int(time.Since(lastRefresh).Seconds())
 		}
@@ -1432,13 +1432,24 @@ func main() {
 	ui.MustBind("loadMennoData", func() bool {
 		_latestMennoData, err = loadLatestMennoData()
 		if err != nil {
-			log.Error(err)
+			if !strings.Contains(err.Error(), "no menno data available") {
+				log.Error(err)
+			}
 			return false
 		}
 		return true
 	})
 
 	ui.MustBind("getMennoData", func(ship int, shipDuration int, shipLevel int, targetArtifact int) (data MennoData) {
+		// If the data is not loaded, return an empty MennoData
+		if len(_latestMennoData.ConfigurationItems) == 0 {
+			_latestMennoData, err = loadLatestMennoData()
+			if err != nil || len(_latestMennoData.ConfigurationItems) == 0 {
+				log.Error(err)
+				return MennoData{}
+			}
+		}
+
 		filteredMennoData := MennoData{}
 		for _, configurationItem := range _latestMennoData.ConfigurationItems {
 			sc := configurationItem.ShipConfiguration

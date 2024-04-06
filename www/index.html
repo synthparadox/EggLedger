@@ -4,7 +4,6 @@
     <title>EggLedger</title>
     <link rel="icon" href="images/icon-64.png" />
     <link rel="stylesheet" href="index.css" />
-    <link rel="stylesheet" href="custom.css" />
     <script src="vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
     <script src="shortcuts.js"></script>
@@ -59,36 +58,42 @@
                     v-bind:key="browser" class="drop-opt bg-darker"
                     v-on:click="closePrefBrowserDropdown(browser)"
                   >
-                    {{ browser }} ( <span class="text-gray-300"> {{ getBrowserDisplayName(browser) }}</span> )
+                    {{ browser }} <span class="inline-block max-w-90pc">( <span class="text-gray-300"> {{ getBrowserDisplayName(browser) }}</span> )</span>
                   </li>
                 </ul>
               </div>
             </div>
             <hr class="mt-1rem mb-1rem w-full">
-            <div>
-              <span class="text-base text-gray-300">Global Options</span>
-              <div>
-                <span class="text-sm">
-                  Automatically refresh Menno data once weekly
-                </span>
+            <div class="px-2 py-2 text-sm text-gray-400 bg-darker rounded-md tabular-nums overflow-auto">
+              <span class="mr-05rem font-bold text-lg text-gray-400 ledger-underline">Menno's Ship Data</span><br />
+              <span class="italic text-gray-400">Data last refreshed on <span :class="secondsSinceLastMennoUpdate == 2147483647 ? 'text-red-700' : 'text-green-500' ">{{ lastMennoUpdateString }}</span></span><br>
+              <button class="mt-05rem mb-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                v-bind:disabled="secondsSinceLastMennoUpdate < 86400"
+                v-on:click="asyncUpdateMennoData"
+              >
+                Refresh Data Now
+              </button><br/>
+              <span class="italic text-sm text-gray-500" v-if="secondsSinceLastMennoUpdate < 86400">To reduce the load on Menno's API, manual refreshes can be performed once every day</span>
+              <div class="mt-05rem">
                 <input
-                  id="autoRefreshMennoCheckbox"
-                  type="checkbox"
-                  class="ext-opt-check"
-                  v-model="autoRefreshMennoPreference"
-                >
+                id="autoRefreshMennoCheckbox"
+                type="checkbox"
+                class="ext-opt-check mr-05rem"
+                v-model="autoRefreshMennoPreference"
+              >
+              <label for="autoRefreshMennoCheckbox" class="ext-opt-label">Automatically refresh Menno data once weekly</label>
               </div>
-              <div>
-                <span class="text-sm">
-                  Use GIFs for rarity indicators
-                </span>
-                <input
-                  id="useGifsForRarityCheckbox"
-                  type="checkbox"
-                  class="ext-opt-check"
-                  v-model="useGifsForRarity"
-                >
-              </div>
+            </div>
+            <hr class="mt-1rem mb-1rem w-full">
+            <div class="px-2 py-2 text-sm text-gray-400 bg-darker rounded-md tabular-nums overflow-auto">
+              <span class="mr-05rem font-bold text-lg text-gray-400 ledger-underline">Other Globals</span><br />
+              <input
+                id="useGifsForRarityCheckbox"
+                type="checkbox"
+                class="ext-opt-check mr-05rem"
+                v-model="useGifsForRarity"
+              >
+              <label for="useGifsForRarityCheckbox" class="ext-opt-label">Use GIFs for rarity icons</label>
             </div>
           </div>
         </div>
@@ -658,7 +663,7 @@
             </form>
           </div>
 
-          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 max-h-50 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div>
                 <span class="mr-05rem font-bold text-base text-gray-400">Options</span>
@@ -672,75 +677,48 @@
                 </button>
               </div>
               <div v-if="!hideOptions">
-                <span class="mr-5">
+                <span class="opt-span">
                   <label for="viewByDateCB" class="ext-opt-label">Separate missions by day</label>
                   <input id="viewByDateCB" type="checkbox" v-model="viewByDate" class="ext-opt-check"/>
                 </span>
-                <span class="mr-5">
+                <span class="opt-span">
                   <label for="viewMissionTimesCB" class="ext-opt-label">Show launch times</label>
                   <input id="viewMissionTimesCB" type="checkbox" v-model="viewMissionTimes" class="ext-opt-check"/>
                 </span>
-                <span class="mr-5">
+                <span class="opt-span">
                   <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
                   <input id="recolorDCCB" type="checkbox" v-model="recolorDC" class=" ext-opt-check"/>
                 </span>
+                <span class="opt-span">
+                  <label for="showExpectedDropsPerShip" class="ext-opt-label">Show "Expected Drops Per Ship"</label>
+                  <input id="showExpectedDropsPerShip" type="checkbox" v-bind:disabled="!canUseMennoData" v-model="showExpectedDropsPerShip" class="ext-opt-check"/>
+                </span>
                 <div>
                   <span class="font-bold text-base text-gray-400">Multi-View Method</span><br />
-                  <span class="mr-5">
+                  <span class="opt-span">
                     <label for="multiViewOffCB" class="ext-opt-label">Off</label>
                     <input id="multiViewOffCB" type="radio" v-model="multiViewMode" value="off" class="ext-opt-check"></input>
                   </span>
-                  <span class="mr-5">
+                  <span class="opt-span">
                     <label for="multiViewRowCB" class="ext-opt-label">Row/Date Select</label>
                     <input id="multiViewRowCB" type="radio" v-model="multiViewMode" value="row" class="ext-opt-check"></input>
                   </span>
-                  <span class="mr-5">
+                  <span class="opt-span">
                     <label for="multiViewFreeCB" class="ext-opt-label">Free Select</label>
                     <input id="multiViewFreeCB" type="radio" v-model="multiViewMode" value="free" class="ext-opt-check"></input>
                   </span>
                 </div>
                 <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
                   <span class="font-bold text-base text-gray-400">Drops Sort Method</span><br />
-                  <span class="mr-5">
+                  <span class="opt-span">
                     <label for="viewMissionSortDefault" class="ext-opt-label">Default</label>
                     <input id="viewMissionSortDefault" type="radio" v-model="viewMissionSortMethod" value="default" class="ext-opt-check"/>
                   </span>
-                  <span class="mr-5">
+                  <span class="opt-span">
                     <label for="viewMissionSortIV" class="ext-opt-label">Inventory Visualizer</label>
                     <input id="viewMissionSortIV" type="radio" v-model="viewMissionSortMethod" value="iv" class="ext-opt-check"/>
                   </span>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="doesDataExist" class="min-h-7 max-h-40 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
-            <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
-              <div>
-                <span class="mr-05rem font-bold text-base text-gray-400">Menno's Ship Data</span>
-                <button
-                  id="toggleMennoButtonVM"
-                  class="text-base toggle-link" 
-                  type="button" 
-                  v-on:click="toggleMenno"
-                >
-                  {{ hideMenno ? 'Show' : 'Hide' }}
-                </button>
-              </div>
-              <div v-if="!hideMenno">
-                <span class="mr-5">
-                  <label for="showExpectedDropsPerShip" class="ext-opt-label">Show "Expected Drops Per Ship"</label>
-                  <input id="showExpectedDropsPerShip" type="checkbox" v-model="showExpectedDropsPerShip" class="ext-opt-check"/>
-                </span> <br/>
-                <hr class="mt-05rem mb-05rem w-full">
-                <span class="italic text-gray-400">Data last refreshed on <span class="text-green-500">{{ lastMennoUpdateString }}</span></span><br>
-                <button class="mt-05rem mb-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  v-bind:disabled="secondsSinceLastMennoUpdate < 86400"
-                  v-on:click="asyncUpdateMennoData"
-                >
-                  Refresh Data Now
-                </button><br v-if="secondsSinceLastMennoUpdate < 86400"/>
-                <span class="italic text-sm text-gray-500" v-if="secondsSinceLastMennoUpdate < 86400">To reduce the load on Menno's API, manual refreshes can be performed once every day</span>
               </div>
             </div>
           </div>
@@ -972,7 +950,7 @@
                 </span>
                 <span v-if="lifetimeAllowExpectedTotals">
                   <label for="lifetimeSortDefault" class="ext-opt-label">Show 'Expected Total Drops'</label>
-                  <input id="lifetimeExpectedTotals" type="checkbox" v-model="lifetimeShowExpectedTotalsPref" class="ext-opt-check"/>
+                  <input id="lifetimeExpectedTotals" type="checkbox" v-bind:disabled="!canUseMennoData" v-model="lifetimeShowExpectedTotalsPref" class="ext-opt-check"/>
                 </span>
               </div>
               <div class="mb-05rem">
@@ -1587,7 +1565,8 @@
               return (lifetimeHasExactlyOneShip.value || firstMatches[0] != -1) &&
                 (lifetimeHasExactlyOneDuration.value || firstMatches[1] != -1) &&
                 (lifetimeHasExactlyOneLevel.value || firstMatches[2] != -1) &&
-                (lifetimeHasExactlyOneTarget.value || firstMatches[3] != -1);
+                (lifetimeHasExactlyOneTarget.value || firstMatches[3] != -1) &&
+                canUseMennoData.value;
             }
             const mergeItems = (targetArray, item) => {
               const existingItem = targetArray[`${item.id}_${item.level}_${item.rarity}`];
@@ -2113,11 +2092,6 @@
               event.preventDefault();
               hideOptions.value = !hideOptions.value;
             };
-            const hideMenno = Vue.ref(false);
-            const toggleMenno = (event) => {
-              event.preventDefault();
-              hideMenno.value = !hideMenno.value;
-            };
             const hideFilter = Vue.ref(false);
             const toggleFilter = (event) => {
               event.preventDefault();
@@ -2139,11 +2113,15 @@
             const mennoProgress = Vue.ref("");
             const secondsSinceLastMennoUpdate = Vue.ref(null);
             const lastMennoUpdateString = Vue.ref("");
+            const canUseMennoData = Vue.ref(null);
             const showExpectedDropsPerShip = Vue.ref(true);
+            Vue.watch(canUseMennoData, () => {
+              if(!canUseMennoData.value) showExpectedDropsPerShip.value = false;
+            })
             Vue.watch(secondsSinceLastMennoUpdate, () => {
-              lastMennoUpdateString.value = new Date(Date.now() - (secondsSinceLastMennoUpdate.value * 1000)).toLocaleString();
+              if(secondsSinceLastMennoUpdate.value == 2147483647) lastMennoUpdateString.value = "(never)";
+              else lastMennoUpdateString.value = new Date(Date.now() - (secondsSinceLastMennoUpdate.value * 1000)).toLocaleString();
             });
-
             const mennoModalOpen = Vue.ref(false);
             const openMennoModal = () => {
               mennoModalOpen.value = true;
@@ -2173,14 +2151,15 @@
                 mennoDataAutoRefresh.value = false;
               }
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
-              var mennoSuccess = await window.loadMennoData();
-              if(!mennoSuccess) window.alert("Failed to load Menno data. Please report this!");
+              //Make sure data can be loaded
+              canUseMennoData.value = await window.loadMennoData();
+              console.log("canUseMennoData: " + canUseMennoData.value);
             });
 
             const asyncUpdateMennoData = async (event) => {
               event.preventDefault();
               openMennoModal();
-              await window.updateMennoData();
+              canUseMennoData.value = await window.updateMennoData();
               closeMennoModal();
               secondsSinceLastMennoUpdate.value = 0;
             };
@@ -2941,10 +2920,9 @@
               viewMissionAccountSubmitRef,
               missionBeingViewed,
               hideOptions,
-              hideMenno,
               mennoModalOpen,
+              canUseMennoData,
               toggleOptions,
-              toggleMenno,
               viewMissionsOfEid,
               toggleElements,
               viewSpecificMission,

@@ -46,6 +46,11 @@ func loadLatestMennoData() (data MennoData, err error) {
 	latestRefresh := _storage.LastMennoDataRefreshAt
 	_storage.Unlock()
 
+	//If the latest refresh is zero, return an empty data set, with an error.
+	if latestRefresh.IsZero() {
+		return MennoData{}, fmt.Errorf("no menno data available")
+	}
+
 	// Get the file name for the latest data.
 	filename := fmt.Sprintf(_mennoFileFormat, latestRefresh.Format(_mennoDateFormat))
 	filePath := filepath.Join(_internalDir, filename)
@@ -135,13 +140,15 @@ func refreshMennoData() (err error) {
 	// Update the last refresh time.
 	_storage.SetLastMennoDataRefreshAt(newTime)
 
-	//Remove old file
-	oldFileName := fmt.Sprintf(_mennoFileFormat, oldDataTime.Format(_mennoDateFormat))
-	oldFilePath := filepath.Join(_internalDir, oldFileName)
-	err = os.Remove(oldFilePath)
-	if err != nil {
-		// Log the error, but don't return it.
-		fmt.Println(err)
+	//Remove old file - as long as it's not the default time (0001-01-01-00-00-00)
+	if !oldDataTime.IsZero() {
+		oldFileName := fmt.Sprintf(_mennoFileFormat, oldDataTime.Format(_mennoDateFormat))
+		oldFilePath := filepath.Join(_internalDir, oldFileName)
+		err = os.Remove(oldFilePath)
+		if err != nil {
+			// Log the error, but don't return it.
+			fmt.Println(err)
+		}
 	}
 
 	// Return nil if everything went well.
