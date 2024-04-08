@@ -36,7 +36,7 @@
               </span> <br>
               <div ref="preferredBrowserSelectRef" class="text-sm relative w-full flex-grow focus-within:z-10">
                 <div v-if="preferredBrowser" class="ledger-input-overlay">
-                  <span>{{ preferredBrowser }}</span> ( <span class="text-gray-300"> {{ getBrowserDisplayName(preferredBrowser) }}</span> )</span>
+                  <span>{{preferredBrowser}}</span> (<span class="text-gray-300">{{getBrowserDisplayName(preferredBrowser)}}</span>)</span>
                 </div>
                 <input
                   ref="preferredBrowserInputRef"
@@ -58,7 +58,7 @@
                     v-bind:key="browser" class="drop-opt bg-darker"
                     v-on:click="closePrefBrowserDropdown(browser)"
                   >
-                    {{ browser }} <span class="inline-block max-w-90pc">( <span class="text-gray-300"> {{ getBrowserDisplayName(browser) }}</span> )</span>
+                    {{browser}} <span class="inline-block max-w-90pc">(<span class="text-gray-300">{{getBrowserDisplayName(browser)}}</span>)</span>
                   </li>
                 </ul>
               </div>
@@ -87,13 +87,26 @@
             <hr class="mt-1rem mb-1rem w-full">
             <div class="px-2 py-2 text-sm text-gray-400 bg-darker rounded-md tabular-nums overflow-auto">
               <span class="mr-05rem font-bold text-lg text-gray-400 ledger-underline">Other Globals</span><br />
-              <input
+              <div>
+                <input
                 id="useGifsForRarityCheckbox"
                 type="checkbox"
                 class="ext-opt-check mr-05rem"
                 v-model="useGifsForRarity"
               >
               <label for="useGifsForRarityCheckbox" class="ext-opt-label">Use GIFs for rarity icons</label>
+              </div>
+              <div>
+                <span class="font-bold text-base text-gray-400">Default Drop-Sort Method</span><br />
+                <span class="opt-span">
+                  <label for="dvmDefault" class="ext-opt-label">Default</label>
+                  <input id="dvmDefault" type="radio" v-model="defaultViewMode" value="default" class="ext-opt-check"></input>
+                </span>
+                <span class="opt-span">
+                  <label for="dvmIv" class="ext-opt-label">Inventory Visualizer</label>
+                  <input id="dvmIv" type="radio" v-model="defaultViewMode" value="iv" class="ext-opt-check"></input>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -1426,7 +1439,10 @@
               lifetimeTargetSelectList.value = getFilterValueOptions('target').filter(target => target.text.toLowerCase().includes(lifetimeTargetSearchTerm.value.toLowerCase()));
             });
 
-            const lifetimeSortMethod = Vue.ref("default");
+            const lifetimeSortMethod = Vue.ref('default');
+            Vue.onMounted(() => {
+              lifetimeSortMethod.value = window.getDefaultViewMode();
+            });
             Vue.watch(lifetimeSortMethod, () => reSortLifetime());
             const reSortLifetime = () => {
               if(lifetimeDrops.value != null && lifetimeDrops.value.artifacts != null && lifetimeDrops.value.stones != null && lifetimeDrops.value.stoneFragments != null && lifetimeDrops.value.ingredients != null){
@@ -2153,7 +2169,6 @@
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
               //Make sure data can be loaded
               canUseMennoData.value = await window.loadMennoData();
-              console.log("canUseMennoData: " + canUseMennoData.value);
             });
 
             const asyncUpdateMennoData = async (event) => {
@@ -2589,7 +2604,16 @@
 
             const mennoMissionData = Vue.ref(null);
             const missionBeingViewed = Vue.ref(null);
+            const defaultViewMode = Vue.ref('default');
             const viewMissionSortMethod = Vue.ref('default');
+            Vue.onMounted(async () => {
+              viewMissionSortMethod.value = await window.getDefaultViewMode();
+              defaultViewMode.value = viewMissionSortMethod.value;
+            });
+            Vue.watch(defaultViewMode, async () => {
+              await window.setDefaultViewMode(defaultViewMode.value);
+            });
+
             const viewSpecificMission = async (missionId) => {
               //Do not allow viewing a mission while data is being fetched - prevent collisions
               if(isFetching.value) return false; 
@@ -2850,7 +2874,8 @@
 
               appHasUpdate,
 
-              //Browser prefs
+              //Pprefs
+              defaultViewMode,
               allBrowsers,
               preferredBrowser,
               browserDisplayName,

@@ -23,6 +23,7 @@ type AppStorage struct {
 	PreferredChromiumPath   string    `json:"preferred_chromium_path"`
 	AutoRefreshMennoPref    bool      `json:"auto_refresh_menno_pref"`
 	UseGifsForRarity        bool      `json:"use_gifs_for_rarity"`
+	DefaultViewMode         string    `json:"default_view_mode"`
 }
 
 type Account struct {
@@ -125,6 +126,13 @@ func (s *AppStorage) SetAutoRefreshMennoPref(flag bool) {
 func (s *AppStorage) SetUseGifsForRarity(flag bool) {
 	s.Lock()
 	s.UseGifsForRarity = flag
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) SetDefaultViewMode(mode string) {
+	s.Lock()
+	s.DefaultViewMode = mode
 	s.Unlock()
 	go s.Persist()
 }

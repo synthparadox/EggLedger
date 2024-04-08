@@ -1429,6 +1429,20 @@ func main() {
 		}
 	})
 
+	ui.MustBind("getDefaultViewMode", func() string {
+		_storage.Lock()
+		viewMode := _storage.DefaultViewMode
+		_storage.Unlock()
+		if len(viewMode) == 0 {
+			viewMode = "default"
+		}
+		return viewMode
+	})
+
+	ui.MustBind("setDefaultViewMode", func(viewMode string) {
+		_storage.SetDefaultViewMode(viewMode)
+	})
+
 	ui.MustBind("loadMennoData", func() bool {
 		_latestMennoData, err = loadLatestMennoData()
 		if err != nil {
