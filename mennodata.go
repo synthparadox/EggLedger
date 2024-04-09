@@ -60,6 +60,7 @@ func loadLatestMennoData() (data MennoData, err error) {
 	// Read the file from disk.
 	file, err := os.ReadFile(filePath)
 	if err != nil {
+		_storage.SetLastMennoDataRefreshAt(time.Time{}) // Reset time to allow for a new refresh.
 		fmt.Println(err)
 		return MennoData{
 			ConfigurationItems: returnData,
@@ -69,6 +70,7 @@ func loadLatestMennoData() (data MennoData, err error) {
 	// Unmarshal the JSON data.
 	err = json.Unmarshal(file, &returnData)
 	if err != nil {
+		_storage.SetLastMennoDataRefreshAt(time.Time{}) // Reset time to allow for a new refresh.
 		fmt.Println(err)
 		return MennoData{
 			ConfigurationItems: returnData,
@@ -98,7 +100,7 @@ func refreshMennoData() (err error) {
 	// Fetch the data from the Menno server.
 	resp, err := http.Get("https://eggincdatacollection.azurewebsites.net/api/GetAllData")
 	if err != nil {
-		// Log the error, but don't return it.
+		_storage.SetLastMennoDataRefreshAt(time.Time{}) // Reset time to allow for a new refresh.
 		fmt.Println(err)
 		return err
 	}
@@ -107,7 +109,7 @@ func refreshMennoData() (err error) {
 	// Read the data from the response body.
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		// Log the error, but don't return it.
+		_storage.SetLastMennoDataRefreshAt(time.Time{}) // Reset time to allow for a new refresh.
 		fmt.Println(err)
 		return err
 	}
@@ -116,7 +118,7 @@ func refreshMennoData() (err error) {
 	var result interface{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		// Log the error, but don't return it.
+		_storage.SetLastMennoDataRefreshAt(time.Time{}) // Reset time to allow for a new refresh.
 		fmt.Println(err)
 		return err
 	}
@@ -132,7 +134,7 @@ func refreshMennoData() (err error) {
 
 	err = os.WriteFile(filePath, body, 0644)
 	if err != nil {
-		// Log the error, but don't return it.
+		_storage.SetLastMennoDataRefreshAt(time.Time{}) // Reset time to allow for a new refresh.
 		fmt.Println(err)
 		return err
 	}
@@ -146,7 +148,6 @@ func refreshMennoData() (err error) {
 		oldFilePath := filepath.Join(_internalDir, oldFileName)
 		err = os.Remove(oldFilePath)
 		if err != nil {
-			// Log the error, but don't return it.
 			fmt.Println(err)
 		}
 	}

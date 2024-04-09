@@ -1440,9 +1440,6 @@
             });
 
             const lifetimeSortMethod = Vue.ref('default');
-            Vue.onMounted(() => {
-              lifetimeSortMethod.value = window.getDefaultViewMode();
-            });
             Vue.watch(lifetimeSortMethod, () => reSortLifetime());
             const reSortLifetime = () => {
               if(lifetimeDrops.value != null && lifetimeDrops.value.artifacts != null && lifetimeDrops.value.stones != null && lifetimeDrops.value.stoneFragments != null && lifetimeDrops.value.ingredients != null){
@@ -1564,6 +1561,7 @@
                   parseInt(lifetimeOneLevelInt.value != null ? lifetimeOneLevelInt.value : firstMatches[2]),
                   parseInt(lifetimeOneTargetInt.value ?? firstMatches[3]) != -1 ? parseInt(lifetimeOneTargetInt.value ?? firstMatches[3]) : 1000
                 );
+                secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
                 lifetimeMennoMissionData.value = {
                   totalDropsCount: mennoConfigurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
                   configs: mennoConfigurationItems
@@ -1712,11 +1710,6 @@
             // ===== Check for updates =====
             const appHasUpdate = Vue.ref("");
             const appReleaseNotes = Vue.ref("");
-            Vue.onMounted(async () => {
-              const arrResponse = await window.checkForUpdates();
-              appHasUpdate.value = arrResponse[0];
-              appReleaseNotes.value = arrResponse[1];
-            });
             const markedParser = Vue.ref(window.marked.parse);
             const openUpdateModal = () => {
               document.querySelectorAll('.gh-markdown-content a').forEach(link => {
@@ -1766,9 +1759,6 @@
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
             const useGifsForRarity = Vue.ref(false);
-            Vue.onMounted(async () => {
-              useGifsForRarity.value = await window.getUseGifsForRarity();
-            });
             Vue.watch(useGifsForRarity, async () => {
               await window.setUseGifsForRarity(useGifsForRarity.value);
             });
@@ -1959,10 +1949,7 @@
               if(doesDataExist.value) existingData.value = await window.getExistingData();
             };
             Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts, currentState), async () => {
-              refreshExistingData();
-            });
-            Vue.onMounted(async () => {
-              refreshExistingData();
+              await refreshExistingData();
             });
 
             const eidMissionsBeingLoaded = Vue.ref(false);
@@ -2139,7 +2126,8 @@
               else lastMennoUpdateString.value = new Date(Date.now() - (secondsSinceLastMennoUpdate.value * 1000)).toLocaleString();
             });
             const mennoModalOpen = Vue.ref(false);
-            const openMennoModal = () => {
+            const openMennoModal = (isAuto = false) => {
+              mennoDataAutoRefresh.value = isAuto;
               mennoModalOpen.value = true;
               const el = document.querySelector('.overlay-menno');
               el.style.display = 'flex';
@@ -2150,26 +2138,8 @@
               el.style.display = 'none';
               el.classList.add('hidden');
               mennoModalOpen.value = false;
+              mennoDataAutoRefresh.value = false;
             };
-
-            Vue.onMounted(async () => {
-              artifactConfigs.value = JSON.parse(await window.getAfxConfigs());
-              maxQuality.value = JSON.parse(await window.getMaxQuality());
-              durationConfigs.value = JSON.parse(await window.getDurationConfigs());
-              possibleTargets.value = JSON.parse(await window.getPossibleTargets());
-
-              //Load Menno data
-              if (await window.isMennoRefreshNeeded()) {
-                mennoDataAutoRefresh.value = true;
-                openMennoModal();
-                await window.updateMennoData();
-                closeMennoModal();
-                mennoDataAutoRefresh.value = false;
-              }
-              secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
-              //Make sure data can be loaded
-              canUseMennoData.value = await window.loadMennoData();
-            });
 
             const asyncUpdateMennoData = async (event) => {
               event.preventDefault();
@@ -2581,23 +2551,16 @@
               };
 
               if (extendedInfo) {
-                const durationString = shipInfo.durationString;
-                const launchStr = shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime;
-                const returnStr = shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime;
-                const capModifier = Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity);
-
                 // Find the loaded ship's index in the filteredMissions array, to get the missions directly before and after it
                 const shipIndex = filteredMissions.value.findIndex(mission => mission.missionId == missionId);
-                const prevMission = shipIndex > 0 ? filteredMissions.value[shipIndex - 1].missionId : null;
-                const nextMission = shipIndex < filteredMissions.value.length - 1 ? filteredMissions.value[shipIndex + 1].missionId : null;
                 return {
                   ...commonProperties,
-                  launchStr: launchStr,
-                  returnStr: returnStr,
-                  durationStr: durationString,
-                  prevMission: prevMission,
-                  nextMission: nextMission,
-                  capacityModifier: capModifier,
+                  launchStr: shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime,
+                  returnStr: shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime,
+                  durationStr: shipInfo.durationString,
+                  prevMission: shipIndex > 0 ? filteredMissions.value[shipIndex - 1].missionId : null,
+                  nextMission: shipIndex < filteredMissions.value.length - 1 ? filteredMissions.value[shipIndex + 1].missionId : null,
+                  capacityModifier: Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity),
                 };
               } else return commonProperties;
             };
@@ -2606,10 +2569,6 @@
             const missionBeingViewed = Vue.ref(null);
             const defaultViewMode = Vue.ref('default');
             const viewMissionSortMethod = Vue.ref('default');
-            Vue.onMounted(async () => {
-              viewMissionSortMethod.value = await window.getDefaultViewMode();
-              defaultViewMode.value = viewMissionSortMethod.value;
-            });
             Vue.watch(defaultViewMode, async () => {
               await window.setDefaultViewMode(defaultViewMode.value);
             });
@@ -2621,12 +2580,8 @@
               if(newMissionViewData == null) return false;
               var useThisFunc;
               switch(viewMissionSortMethod.value){
-                case 'default':
-                  useThisFunc = sortGroupAlreadyCombed;
-                  break;
-                case 'iv':
-                  useThisFunc = inventoryVisualizerSort;
-                  break;
+                case 'default': useThisFunc = sortGroupAlreadyCombed; break;
+                case 'iv': useThisFunc = inventoryVisualizerSort; break;
               }
 
               var mennoTargetInt = newMissionViewData.shipInfo.targetInt;
@@ -2641,6 +2596,7 @@
                   configs: rawMennoData.configurationItems
                 };
               }
+              secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
               newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
               newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
               newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
@@ -2668,9 +2624,8 @@
 
             const multiViewFreeSelectIds = Vue.ref([]);
             const handleMultiViewSelection = (event, missionId) => {
-              const targetEl = event.target ?? document.getElementById(event);
               //Determine if checkbox is checked or not
-              if(targetEl.checked) multiViewFreeSelectIds.value.push(missionId);
+              if(event.target ?? document.getElementById(event).checked) multiViewFreeSelectIds.value.push(missionId);
               else multiViewFreeSelectIds.value = multiViewFreeSelectIds.value.filter(id => id != missionId);
             };
 
@@ -2709,7 +2664,7 @@
                     configs: rawMennoData.configurationItems
                   };
                 }
-
+                secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
                 newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
                 newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
                 newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
@@ -2733,12 +2688,10 @@
               });
               //Listen for the ESC key to close the overlays
               document.addEventListener('keydown', function(event){
-                if(event.key == 'Escape'){
-                  if(mennoModalOpen.value) return; //Don't close the Menno modal
-                  document.querySelectorAll('.inner-click-detect').forEach(innerClickDetect => {
-                    if(!innerClickDetect.classList.contains('hidden')) innerClickDetect.querySelector('.detect-trigger').click();
-                  });
-                }
+                if(event.key != 'Escape' || mennoModalOpen.value) return; //Don't close the Menno modal 
+                document.querySelectorAll('.inner-click-detect').forEach(innerClickDetect => {
+                  if(!innerClickDetect.classList.contains('hidden')) innerClickDetect.querySelector('.detect-trigger').click();
+                });
               });
             });
 
@@ -2747,9 +2700,6 @@
             // ==============================================
 
             const autoRefreshMennoPreference = Vue.ref(false);
-            Vue.onMounted(async () => {
-              autoRefreshMennoPreference.value = await window.getAutoRefreshMennoPreference();
-            });
             Vue.watch(autoRefreshMennoPreference, async (newValue) => {
               await window.setAutoRefreshMennoPreference(newValue);
             });
@@ -2769,22 +2719,13 @@
             });
             const getBrowserDisplayName = (browser) => {
               if(browser == null) return "Unknown";
-              //Match "chrome"
-              if(browser.match(/chrome/i)) return "Google Chrome";
-              //Match "brave"
-              if(browser.match(/brave/i)) return "Brave";
-              //Match "opera"
-              if(browser.match(/opera/i)) return "Opera";
-              //Match "edge"
-              if(browser.match(/edge/i)) return "Microsoft Edge";
-              //Match "vivaldi"
-              if(browser.match(/vivaldi/i)) return "Vivaldi";
+              else if(browser.match(/chrome/i)) return "Google Chrome";
+              else if(browser.match(/brave/i)) return "Brave";
+              else if(browser.match(/opera/i)) return "Opera";
+              else if(browser.match(/edge/i)) return "Microsoft Edge";
+              else if(browser.match(/vivaldi/i)) return "Vivaldi";
               else return "Unknown";
             };
-            Vue.onMounted(async () => {
-              preferredBrowser.value = await getPreferredBrowser();
-              allBrowsers.value = await window.getDetectedBrowsers();
-            });
             //Watch activeTab for change to Settings, to update allBrowsers
             Vue.watch(activeTab, async (newTab) => {
               if(newTab == UITab.Settings) allBrowsers.value = await window.getDetectedBrowsers();
@@ -2797,6 +2738,42 @@
               if(pref != null && pref != '') setPreferredBrowser(pref);
               prefBrowserDropdownOpen.value = false;
             };
+
+            Vue.onMounted(async () => {
+              //Check for updates
+              const arrResponse = await window.checkForUpdates();
+              appHasUpdate.value = arrResponse[0];
+              appReleaseNotes.value = arrResponse[1];
+
+              //Browser preference
+              preferredBrowser.value = await getPreferredBrowser();
+              allBrowsers.value = await window.getDetectedBrowsers();
+
+              //Load configs
+              artifactConfigs.value = JSON.parse(await window.getAfxConfigs());
+              maxQuality.value = JSON.parse(await window.getMaxQuality());
+              durationConfigs.value = JSON.parse(await window.getDurationConfigs());
+              possibleTargets.value = JSON.parse(await window.getPossibleTargets());
+
+              //Load Menno data
+              if (await window.isMennoRefreshNeeded()) {
+                openMennoModal(true);
+                await window.updateMennoData();
+                closeMennoModal();
+              }
+              canUseMennoData.value = await window.loadMennoData();
+              secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
+
+              //Settings loads
+              autoRefreshMennoPreference.value = await window.getAutoRefreshMennoPreference();
+              useGifsForRarity.value = await window.getUseGifsForRarity();
+              viewMissionSortMethod.value = await window.getDefaultViewMode();
+              lifetimeSortMethod.value = await window.getDefaultViewMode();
+              defaultViewMode.value = viewMissionSortMethod.value;
+
+              //Reload the data
+              await refreshExistingData();
+            });
 
             const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeDrops);
             const filterTopSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-top' : 'filter-top');
