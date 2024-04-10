@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img width="256" src="assets/icon-512.png" alt="EggLedger">
+  <img width="384" src="assets/icon-1024.png" alt="EggLedger">
 </h1>
 
 <p align="center">
@@ -16,19 +16,21 @@
 **Windows Defender is blocking the download. What do I do?**
 
 Windows has declared war on EggLedger, and more generally [GO-based executables](https://www.reddit.com/r/golang/comments/s1bh01/goexecutables_and_windows_defender/).
-I cannot fix Microsoft false-flagging my app as malware, or solve this issue at all without paying thousands of dollars a year. I do my best to use non-obfuscated code, however heuristic detection will hate GO until Microsoft does something about it.
-If your Microsoft Defender is hating the file on, mark your `Ledger` folder as excluded from scans in `Virus & threat protection settings` -> `Manage settings` -> `Exclusions` -> `Add or remove exclusions`. You can then specify your browser to download to that location, and you should be all set.
+
+I cannot fix Microsoft false-flagging my app as malware, or solve this issue at all without paying thousands of dollars a year for a signing key. I do my best to use non-obfuscated code, and follow best-practices, however Windows' heuristic detection will be biased towards golang until Microsoft decides to do something about it.
+
+If your Microsoft Defender is removing the file post-download, mark your `Ledger` folder (wherever you run `EggLedger.exe` from) as excluded from scans. `Windows Security` → `Virus & threat protection settings` → `Manage settings` → `Exclusions` → `Add or remove exclusions`. You can then specify your browser to download to that location (right click the link > `Save link as...`), over-write the old `.exe` file, and the new file should not be touched by Defender.
 
 **Why is EggLedger asking me to install Chrome?**
 
-EggLedger was originally built by MK2 on top of a `lorca`, an open-source solution to building Go apps with a web UI. `lorca` uses Chrome as its browser engine.
-I have since forked [my own version](https://github.com/DavidArthurCole/lorca) of `lorca`, and have added support for the following browsers on Windows:
+EggLedger was originally built by MK2 on top of a `lorca`, an open-source solution to building Go apps with a web UI. `lorca` uses the Chromium API as its browser engine, and the default behavior when no chromium browser is detected, is to prompt you to install Google Chrome, as this is by far the most popular choice. I have since forked [my own version](https://github.com/DavidArthurCole/lorca) of `lorca`, and have added support for the following browsers, which will be detected and used, before you are prompted to install Chrome:
   - Brave
   - Opera
   - Vivaldi
   - Edge
 
-For other operating systems, or in the lack of any of the above browsers, the app will rely on a Chrome or Chromium installation.
+If you use a **Chromium-based** browser that is not on the above list, please reach out, and I'll see what I can do about adding support (the benefit of having my own fork of lorca, now).
+If EggLedger is launching in the incorrect browser, or you would prefer it launch in another browser, go to `Settings` in-app, and you can choose from a list of detected browsers.
 
 **Can I run EggLedger on Mobile?**
 

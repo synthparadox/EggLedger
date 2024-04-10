@@ -30,5 +30,5 @@ require (
 	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.14.0
 )
