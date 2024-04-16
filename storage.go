@@ -24,14 +24,14 @@ type AppStorage struct {
 	AutoRefreshMennoPref    bool      `json:"auto_refresh_menno_pref"`
 	UseGifsForRarity        bool      `json:"use_gifs_for_rarity"`
 	DefaultViewMode         string    `json:"default_view_mode"`
+	ScreenshotsEnabled      bool      `json:"screenshots_enabled"`
 }
 
 type Account struct {
-	Id            string  `json:"id"`
-	Nickname      string  `json:"nickname"`
-	EarningsBonus float64 `json:"earningsBonus"`
-	EBString      string  `json:"ebString"`
-	AccountColor  string  `json:"accountColor"`
+	Id           string `json:"id"`
+	Nickname     string `json:"nickname"`
+	EBString     string `json:"ebString"`
+	AccountColor string `json:"accountColor"`
 }
 
 var (
@@ -61,11 +61,14 @@ func (s *AppStorage) Load() {
 func (s *AppStorage) Persist() {
 	s.Lock()
 	defer s.Unlock()
-	encoded, err := json.Marshal(s)
+
+	// Indent with prefix and indentation string
+	encoded, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		log.Errorf("error serializing app storage: %s", err)
 		return
 	}
+
 	if err := os.WriteFile(_storageFile, encoded, 0644); err != nil {
 		log.Errorf("error writing app storage: %s", err)
 	}
@@ -133,6 +136,13 @@ func (s *AppStorage) SetUseGifsForRarity(flag bool) {
 func (s *AppStorage) SetDefaultViewMode(mode string) {
 	s.Lock()
 	s.DefaultViewMode = mode
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) SetScreenshotsEnabled(flag bool) {
+	s.Lock()
+	s.ScreenshotsEnabled = flag
 	s.Unlock()
 	go s.Persist()
 }

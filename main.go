@@ -328,7 +328,7 @@ func isDubCap(mission *ei.CompleteMissionResponse) bool {
 	}
 }
 
-func viewMissionsOfId(eid string) (string, error) {
+func viewMissionsOfId(eid string) ([]LoadedMission, error) {
 
 	if len(_nominalShipCapacities) == 0 {
 		initNominalShipCapacities()
@@ -338,7 +338,7 @@ func viewMissionsOfId(eid string) (string, error) {
 	completeMissions, err := db.RetrievePlayerCompleteMissions(eid)
 	if err != nil {
 		log.Error(err)
-		return "", err
+		return nil, err
 	}
 	//Array of LoadedMission
 	missionArr := []LoadedMission{}
@@ -384,15 +384,7 @@ func viewMissionsOfId(eid string) (string, error) {
 		missionArr = append(missionArr, missionInst)
 	}
 
-	// Convert the array of LoadedMissionYear to a JSON string
-	jsonData, err := json.Marshal(missionArr)
-	if err != nil {
-		log.Error(err)
-		return "", err
-	}
-
-	// Return the JSON string
-	return string(jsonData), nil
+	return missionArr, nil
 }
 
 func properTargetName(name *ei.ArtifactSpec_Name) string {
@@ -598,239 +590,8 @@ func main() {
 				}
 			}
 			eb := float64(game.GetSoulEggsD() * soulEggBonus * math.Pow(float64(prophecyEggBonus), float64(game.GetEggsOfProphecy())))
-
-			divByTReps := 0
-			ebCopy := eb
-			roleColor := ""
-			roleString := ""
-			for ebCopy > 1000 && divByTReps < 17 {
-				ebCopy /= 1000
-				divByTReps++
-			}
-			ebAddendum := ""
-			switch divByTReps {
-			case 0:
-				ebAddendum = ""
-				roleColor = "d43500"
-				roleString = "Farmer"
-			case 1:
-				ebAddendum = "K"
-				if ebCopy < 10.0 {
-					roleColor = "d14400"
-					roleString = "Farmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "cd5500"
-					roleString = "Farmer III"
-				} else {
-					roleColor = "ca6800"
-					roleString = "Kilofarmer I"
-				}
-			case 2:
-				ebAddendum = "M"
-				if ebCopy < 10.0 {
-					roleColor = "c77a00"
-					roleString = "Kilofarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "c58a00"
-					roleString = "Kilofarmer III"
-				} else {
-					roleColor = "c49400"
-					roleString = "Megafarmer I"
-				}
-			case 3:
-				ebAddendum = "B"
-				if ebCopy < 10.0 {
-					roleColor = "c39f00"
-					roleString = "Megafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "c3a900"
-					roleString = "Megafarmer III"
-				} else {
-					roleColor = "c2b100"
-					roleString = "Gigafarmer I"
-				}
-			case 4:
-				ebAddendum = "T"
-				if ebCopy < 10.0 {
-					roleColor = "c2ba00"
-					roleString = "Gigafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "c2c200"
-					roleString = "Gigafarmer III"
-				} else {
-					roleColor = "aec300"
-					roleString = "Terafarmer I"
-				}
-			case 5:
-				ebAddendum = "q"
-				if ebCopy < 10.0 {
-					roleColor = "99c400"
-					roleString = "Terafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "85c600"
-					roleString = "Terafarmer III"
-				} else {
-					roleColor = "51ce00"
-					roleString = "Petafarmer I"
-				}
-			case 6:
-				ebAddendum = "Q"
-				if ebCopy < 10.0 {
-					roleColor = "16dc00"
-					roleString = "Petafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "00ec2e"
-					roleString = "Petafarmer III"
-				} else {
-					roleColor = "00fa68"
-					roleString = "Exafarmer I"
-				}
-			case 7:
-				ebAddendum = "s"
-				if ebCopy < 10.0 {
-					roleColor = "0afc9c"
-					roleString = "Exafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "1cf7ca"
-					roleString = "Exafarmer III"
-				} else {
-					roleColor = "2af3eb"
-					roleString = "Zettafarmer I"
-				}
-			case 8:
-				ebAddendum = "S"
-				if ebCopy < 10.0 {
-					roleColor = "35d9f0"
-					roleString = "Zettafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "40bced"
-					roleString = "Zettafarmer III"
-				} else {
-					roleColor = "46a8eb"
-					roleString = "Yottafarmer I"
-				}
-			case 9:
-				ebAddendum = "o"
-				if ebCopy < 10.0 {
-					roleColor = "4a9aea"
-					roleString = "Yottafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "4e8dea"
-					roleString = "Yottafarmer III"
-				} else {
-					roleColor = "527ce9"
-					roleString = "Xennafarmer I"
-				}
-			case 10:
-				ebAddendum = "N"
-				if ebCopy < 10.0 {
-					roleColor = "5463e8"
-					roleString = "Xennafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "6155e8"
-					roleString = "Xennafarmer III"
-				} else {
-					roleColor = "7952e9"
-					roleString = "Weccafarmer I"
-				}
-			case 11:
-				ebAddendum = "d"
-				if ebCopy < 10.0 {
-					roleColor = "8b4fe9"
-					roleString = "Weccafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "9d4aeb"
-					roleString = "Weccafarmer III"
-				} else {
-					roleColor = "b343ec"
-					roleString = "Vendafarmer I"
-				}
-			case 12:
-				ebAddendum = "U"
-				if ebCopy < 10.0 {
-					roleColor = "d636ef"
-					roleString = "Vendafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "f327e5"
-					roleString = "Vendafarmer III"
-				} else {
-					roleColor = "f915ba"
-					roleString = "Uadafarmer I"
-				}
-			case 13:
-				ebAddendum = "D"
-				if ebCopy < 10.0 {
-					roleColor = "fc0a9c"
-					roleString = "Uadafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "ff007d"
-					roleString = "Uadafarmer III"
-				} else {
-					roleColor = "f7005d"
-					roleString = "Treidafarmer I"
-				}
-			case 14:
-				ebAddendum = "Td"
-				if ebCopy < 10.0 {
-					roleColor = "f61fd2"
-					roleString = "Treidafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "9c4aea"
-					roleString = "Treidafarmer III"
-				} else {
-					roleColor = "5559e8"
-					roleString = "Quadafarmer I"
-				}
-			case 15:
-				ebAddendum = "qd"
-				if ebCopy < 10.0 {
-					roleColor = "4a9deb"
-					roleString = "Quadafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "2df0f2"
-					roleString = "Quadafarmer III"
-				} else {
-					roleColor = "00f759"
-					roleString = "Pendafarmer I"
-				}
-			case 16:
-				ebAddendum = "Qd"
-				if ebCopy < 10.0 {
-					roleColor = "7ec700"
-					roleString = "Pendafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "c2bf00"
-					roleString = "Pendafarmer III"
-				} else {
-					roleColor = "c3a000"
-					roleString = "ExedaFarmer I"
-				}
-			default:
-				ebAddendum = "sd"
-				if ebCopy < 10.0 {
-					roleColor = "c87200"
-					roleString = "Exedafarmer II"
-				} else if ebCopy < 100.0 {
-					roleColor = "d43500"
-					roleString = "Exedafarmer III"
-				} else {
-					roleColor = "546e7a"
-					roleString = "Infinifarmer"
-				}
-			}
-
-			//Print the EB with a maximum of 3 total numbers - i.e. 1.23K, 12.3K, 123K, etc.
-			var precision int
-			switch {
-			case ebCopy < 10.0:
-				precision = 2
-			case ebCopy < 100.0:
-				precision = 1
-			default:
-				precision = 0
-			}
-
-			ebString := fmt.Sprintf(fmt.Sprintf("%%.%df", precision), ebCopy) + ebAddendum
+			roleColor, roleString, ebAddendum, eb, precision := RoleFromEB(eb)
+			ebString := fmt.Sprintf(fmt.Sprintf("%%.%df", precision), eb) + ebAddendum
 
 			msg := fmt.Sprintf("successfully fetched backup for &7a7a7a<%s>", playerId)
 			if nickname != "" {
@@ -853,7 +614,7 @@ func main() {
 			} else {
 				perror("backup is from unknown time")
 			}
-			_storage.AddKnownAccount(Account{Id: playerId, Nickname: nickname, EarningsBonus: eb, EBString: ebString, AccountColor: roleColor})
+			_storage.AddKnownAccount(Account{Id: playerId, Nickname: nickname, EBString: ebString, AccountColor: roleColor})
 			_storage.Lock()
 			updateKnownAccounts(_storage.KnownAccounts)
 			_storage.Unlock()
@@ -1055,18 +816,6 @@ func main() {
 		}
 	})
 
-	ui.MustBind("doesDataExist", func() bool {
-		for _, knownAccount := range _storage.KnownAccounts {
-			ids, err := db.RetrievePlayerCompleteMissionIds(knownAccount.Id)
-			if err != nil {
-				log.Error(err)
-			} else if len(ids) > 0 {
-				return true
-			}
-		}
-		return false
-	})
-
 	ui.MustBind("getExistingData", func() []ExportAccount {
 		knownAccounts := []ExportAccount{}
 		for _, knownAccount := range _storage.KnownAccounts {
@@ -1080,25 +829,19 @@ func main() {
 		return knownAccounts
 	})
 
-	ui.MustBind("getMissionIds", func(playerId string) string {
+	ui.MustBind("getMissionIds", func(playerId string) []string {
 		ids, err := db.RetrievePlayerCompleteMissionIds(playerId)
 		if err != nil {
 			log.Error(err)
-			return "{}"
+			return nil
 		}
-		//Return a JSON string of the mission IDs
-		jsonData, err := json.Marshal(ids)
-		if err != nil {
-			log.Error(err)
-			return "{}"
-		}
-		return string(jsonData)
+		return ids
 	})
 
-	ui.MustBind("viewMissionsOfEid", func(eid string) string {
+	ui.MustBind("viewMissionsOfEid", func(eid string) []LoadedMission {
 		if loadedMissions, err := viewMissionsOfId(eid); err != nil {
 			log.Error(err)
-			return ""
+			return nil
 		} else {
 			return loadedMissions
 		}
@@ -1117,8 +860,7 @@ func main() {
 		return maxQuality
 	})
 
-	ui.MustBind("getDurationConfigs", func() string {
-		//Array of PossibleMission
+	ui.MustBind("getDurationConfigs", func() []PossibleMission {
 		possibleMissions := []PossibleMission{}
 
 		for _, mission := range _eiAfxConfigMissions {
@@ -1141,19 +883,10 @@ func main() {
 			possibleMissions = append(possibleMissions, possibleMission)
 		}
 
-		// Convert the array of PossibleMission to a JSON string
-		jsonData, err := json.Marshal(possibleMissions)
-		if err != nil {
-			log.Error(err)
-			return ""
-		}
-
-		// Return the JSON string
-		return string(jsonData)
+		return possibleMissions
 	})
 
-	ui.MustBind("getAfxConfigs", func() string {
-		//Array of PossibleArtifact
+	ui.MustBind("getAfxConfigs", func() []PossibleArtifact {
 		possibleArtifacts := []PossibleArtifact{}
 
 		for _, artifact := range _eiAfxConfigArtis {
@@ -1168,21 +901,10 @@ func main() {
 			possibleArtifacts = append(possibleArtifacts, possibleArtifact)
 		}
 
-		// Convert the array of PossibleArtifact to a JSON string
-		jsonData, err := json.Marshal(possibleArtifacts)
-		if err != nil {
-			log.Error(err)
-			return ""
-		}
-
-		// Return the JSON string
-		return string(jsonData)
+		return possibleArtifacts
 	})
 
-	/*
-		Return a JSON array of the possible targets
-	*/
-	ui.MustBind("getPossibleTargets", func() string {
+	ui.MustBind("getPossibleTargets", func() []PossibleTarget {
 		PossibleTargetsRaw := []RawPossibleTarget{
 			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted", ImageString: "none.png"},
 			{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan", ImageString: "bob_target.png"},
@@ -1243,26 +965,15 @@ func main() {
 			possibleTargets = append(possibleTargets, possibleTarget)
 		}
 
-		// Convert the array of PossibleTarget to a JSON string
-		jsonData, err := json.Marshal(possibleTargets)
-		if err != nil {
-			log.Error(err)
-			return ""
-		}
-
-		// Return the JSON string
-		return string(jsonData)
+		return possibleTargets
 	})
 
-	/*
-		Return a JSON array of the drops from a given mission
-	*/
-	ui.MustBind("getShipDrops", func(playerId string, shipId string) string {
+	ui.MustBind("getShipDrops", func(playerId string, shipId string) []MissionDrop {
 		//Get the mission from the database
 		completeMission, err := db.RetrieveCompleteMission(playerId, shipId)
 		if err != nil {
 			log.Error(err)
-			return ""
+			return nil
 		}
 
 		shipDrops := []MissionDrop{} //Array of drops
@@ -1304,23 +1015,15 @@ func main() {
 			shipDrops = append(shipDrops, missionDrop)
 		}
 
-		//Convert to JSON
-		jsonData, err := json.Marshal(shipDrops)
-		if err != nil {
-			log.Error(err)
-			return ""
-		}
-
-		//Return the JSON
-		return string(jsonData)
+		return shipDrops
 	})
 
-	ui.MustBind("getShipInfo", func(playerId string, shipId string) string {
+	ui.MustBind("getShipInfo", func(playerId string, shipId string) LoadedMission {
 		//Get the mission from the database
 		completeMission, err := db.RetrieveCompleteMission(playerId, shipId)
 		if err != nil {
 			log.Error(err)
-			return ""
+			return LoadedMission{}
 		}
 
 		info := completeMission.Info
@@ -1356,15 +1059,7 @@ func main() {
 			TargetInt:      int32(info.GetTargetArtifact()),
 		}
 
-		// Convert the single mission to a JSON string
-		jsonData, err := json.Marshal(missionInst)
-		if err != nil {
-			log.Error(err)
-			return ""
-		}
-
-		// Return the JSON string
-		return string(jsonData)
+		return missionInst
 	})
 
 	ui.MustBind("openFile", func(file string) {
@@ -1429,6 +1124,44 @@ func main() {
 		}
 	})
 
+	type ScreenshotData struct {
+		Schema   string `json:"schema"`
+		DTString string `json:"dtString"`
+		B64Data  string `json:"b64Data"`
+	}
+
+	ui.MustBind("saveScreenshot", func(ssData ScreenshotData) error {
+		// Store the screenshot in exports/screenshots
+		ssDir := filepath.Join(_rootDir, "exports", "screenshots")
+
+		// Create the screenshots directory if it doesn't exist
+		err = os.MkdirAll(ssDir, 0755)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+
+		fullPath := filepath.Join(ssDir, ssData.Schema+ssData.DTString+".png")
+
+		err = exportB64ImageToFile(ssData.B64Data, fullPath)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		return nil
+	})
+
+	ui.MustBind("getScreenshotsEnabled", func() bool {
+		_storage.Lock()
+		ssEnabled := _storage.ScreenshotsEnabled
+		_storage.Unlock()
+		return ssEnabled
+	})
+
+	ui.MustBind("setScreenshotsEnabled", func(flag bool) {
+		_storage.SetScreenshotsEnabled(flag)
+	})
+
 	ui.MustBind("getDefaultViewMode", func() string {
 		_storage.Lock()
 		viewMode := _storage.DefaultViewMode
@@ -1454,13 +1187,13 @@ func main() {
 		return true
 	})
 
-	ui.MustBind("getMennoData", func(ship int, shipDuration int, shipLevel int, targetArtifact int) (data MennoData) {
+	ui.MustBind("getMennoData", func(ship int, shipDuration int, shipLevel int, targetArtifact int) []ConfigurationItem {
 		// If the data is not loaded, return an empty MennoData
 		if len(_latestMennoData.ConfigurationItems) == 0 {
 			_latestMennoData, err = loadLatestMennoData()
 			if err != nil || len(_latestMennoData.ConfigurationItems) == 0 {
 				log.Error(err)
-				return MennoData{}
+				return nil
 			}
 		}
 
@@ -1471,7 +1204,7 @@ func main() {
 				filteredMennoData.ConfigurationItems = append(filteredMennoData.ConfigurationItems, configurationItem)
 			}
 		}
-		return filteredMennoData
+		return filteredMennoData.ConfigurationItems
 	})
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")

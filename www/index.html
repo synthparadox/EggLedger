@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
     <script src="shortcuts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
   </head>
   <body>
     <div id="app" class="h-stretch">
@@ -29,7 +30,8 @@
           v-show="activeTab === UITab.Settings"
           class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-y-scroll bg-darker"
         >
-          <div class="flex-1 px-3 py-2 overflow-auto shadow-sm block text-sm font-mono text-gray-400 bg-darkest rounded-md">
+          <div id="test-id" class="flex-1 px-3 py-2 overflow-auto shadow-sm block text-sm font-mono text-gray-400 bg-darkest rounded-md">
+            <!--<screenshot-button v-if="screenshotsEnabled" element-id="test-id" schema-name="test-schema" @take="takeScreenshot"></screenshot-button>-->
             <div>
               <span class="text-base">
                 Preferred browser for Ledger (<span class="text-gray-300 text-sm">effective on restart</span>)
@@ -89,13 +91,22 @@
               <span class="mr-05rem font-bold text-lg text-gray-400 ledger-underline">Other Globals</span><br />
               <div>
                 <input
-                id="useGifsForRarityCheckbox"
-                type="checkbox"
-                class="ext-opt-check mr-05rem"
-                v-model="useGifsForRarity"
-              >
-              <label for="useGifsForRarityCheckbox" class="ext-opt-label">Use GIFs for rarity icons</label>
+                  id="useGifsForRarityCheckbox"
+                  type="checkbox"
+                  class="ext-opt-check mr-05rem"
+                  v-model="useGifsForRarity"
+                >
+                <label for="useGifsForRarityCheckbox" class="ext-opt-label">Use GIFs for rarity icons</label>
               </div>
+              <!--<div>
+                <input
+                  id="enableScreenshotsCheckbox"
+                  type="checkbox"
+                  class="ext-opt-check mr-05rem"
+                  v-model="screenshotsEnabled"
+                >
+                <label for="enableScreenshotsCheckbox" class="ext-opt-label">Enable screenshots (BETA)</label>
+              </div>-->
               <div>
                 <span class="font-bold text-base text-gray-400">Default Drop-Sort Method</span><br />
                 <span class="opt-span">
@@ -191,13 +202,13 @@
                 </ul>
               </div>
               <button
-                v-if="idle" ref="playerIdSubmitRef" type="submit" class="fetch-button disabled:hover:darker_tab_hover"
+                v-if="idle" type="submit" class="fetch-button disabled:hover:darker_tab_hover"
                 v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid || lifetimeDropsBeingLoaded || eidMissionsBeingLoaded"
               >
                 Fetch
               </button>
               <button
-                v-else ref="stopFetchSubmitRef" type="button" class="fetch-button disabled:hover:darker_tab_hover"
+                v-else type="button" class="fetch-button disabled:hover:darker_tab_hover"
                 v-on:click="stopFetchingPlayerData(); refreshExistingData();"
               >
                 Stop
@@ -501,7 +512,8 @@
           ></search-over-selector>
 
           <div class="top-click-detect mission-view-overlay overlay-mission">
-            <div class="inner-click-detect max-w-70vw max-h-90vh overflow-auto bg-dark rounded-lg relative p-1rem">
+            <div id="ship-display-inner" class="inner-click-detect max-w-70vw max-h-90vh overflow-auto bg-dark rounded-lg relative p-1rem">
+              <!--<screenshot-button v-if="screenshotsEnabled" element-id="ship-display-inner" schema-name="ship-display" @take="takeScreenshot"></screenshot-button>-->
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -525,7 +537,7 @@
                 </svg>
               </button>
               <div v-if="rowViewBeingLoaded" class="text-center">
-                <div class="mt-05rem text-center text-xl text-gray-400">Multi-Mission View Loading...</div>
+                <div class="mt-05rem text-center text-xl text-gray-400">Multi-Mission View Loading</div>
                 <hr class="mt-1rem mb-1rem w-full">
                 <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
               </div>
@@ -602,7 +614,7 @@
               </ul>
             </div>
             <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-            v-if="idle" ref="viewMissionAccountSubmitRef" type="submit" v-bind:disabled="!idle || (selectedMissionAccount === null || selectedMissionAccount == '' || objectedExistingData.find(a => a.id == selectedMissionAccount) == null || eidMissionsBeingLoaded)">
+            v-if="idle" type="submit" v-bind:disabled="!idle || (selectedMissionAccount === null || selectedMissionAccount == '' || objectedExistingData.find(a => a.id == selectedMissionAccount) == null || eidMissionsBeingLoaded)">
               View
             </button>
           </form>
@@ -846,6 +858,7 @@
             id="lifetimeAccountForm" name="lifetimeAccountForm" class="select-form"
             v-on:submit="event => {
               event.preventDefault();
+              clearLifetimeFilter();
               viewLifetimeDropsOfEid();
           }">
             <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
@@ -883,7 +896,7 @@
               </ul>
             </div>
             <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-            v-if="idle" ref="viewLifetimeAccountSubmitRef" type="submit" v-bind:disabled="!idle || (selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || lifetimeDropsBeingLoaded)">
+            v-if="idle" type="submit" v-bind:disabled="!idle || (selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || lifetimeDropsBeingLoaded)">
               View
             </button>
           </form>
@@ -939,8 +952,7 @@
               <hr class="mt-1rem w-full">
               <button
                 v-if="idle"
-                id="lifetime-filter-apply-button"
-                type="submit"
+                id="lifetime-filter-apply-button" type="submit"
                 class="mt-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-bind:disabled="(lifetimeDataFilter === [] || lifetimeDataBeingFiltered || !lifetimeFilterHasChanged)"
               >
@@ -950,7 +962,8 @@
           </div>
 
           <div v-if="doesDataExist" class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
-            <div class="mt-4" v-if="(doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">
+            <div id="lifetime-ss" class="mt-4" v-if="(doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">
+              <!--<screenshot-button v-if="screenshotsEnabled" element-id="lifetime-ss" schema-name="lifetime" @take="takeScreenshot"></screenshot-button>-->
               <span v-if="!lifetimeDataBeingFiltered && lifetimeDrops != null" class="ledger-underline text-base text-gray-400">
                 Data Coalesced from {{ lifetimeDrops.missionCount }} Missions <span v-if="lifetimeDropsExcludedCount != 0">({{lifetimeDropsExcludedCount}} Filtered Out)</span>
               </span>
@@ -991,7 +1004,7 @@
                 :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
                 :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
                 :data="lifetimeDrops" :menno-mission-data="lifetimeMennoMissionData"
-                :show-expected-total-drops="lifetimeShowExpectedTotals"
+                :show-expected-drops="lifetimeShowExpectedTotals"
               ></drop-display-container>
             </div>
           </div>
@@ -1031,6 +1044,21 @@
             >)</span
           >
         </footer>
+      </div>
+
+      <div class="popup-selector-main overlay-ss h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
+        <div class="max-w-50vw bg-dark rounded-lg relative p-1rem">
+          <div class="text-gray-300 space-y-2 flex-auto flex-col text-center">
+            <span class="text-xl text-gray-400 mb-1rem">Screenshot in Progress</span><br/>
+            <hr class="mt-1rem mb-1rem w-full">
+            <span class="mt-05rem p-05rem text-lg">
+              A screenshot of the current view is being taken.<br>
+              This may take a while, depending on the number of elements displayed.<br>
+            </span> 
+            <hr class="mt-1rem mb-1rem w-full">
+            <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
+          </div>
+        </div>
       </div>
 
       <div class="popup-selector-main overlay-menno h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
@@ -1095,17 +1123,17 @@
       // - getExistingData(): []ExportAccount
       // - filterWarningRead(): bool
       // - setFilterWarningRead(flag bool)
-      // - getMissionIds(playerId string): string{json}
-      // - viewMissionsOfEid(playerId string): string{json}
+      // - getMissionIds(playerId string): string[]
+      // - viewMissionsOfEid(playerId string): LoadedMission[]
       // - getMaxQuality(): float32
-      // - getDurationConfigs(): string{json}
-      // - getAfxConfigs(): string{json}
-      // - getPossibleTargets(): string{json}
-      // - getShipDrops(playerId string, shipId string): string{json}
-      // - getShipInfo(playerId string, shipId string): string{json}
+      // - getDurationConfigs(): PossibleMission[]
+      // - getAfxConfigs(): PossibleArtifact[]
+      // - getPossibleTargets(): PossibleTarget[]
+      // - getShipDrops(playerId string, shipId string): MissionDrop[]
+      // - getShipInfo(playerId string, shipId string): LoadedMission
       // - isMennoRefreshNeeded(): bool
       // - refreshMennoData(): void
-      // - getMennoData(ship int, shipDuration int, shipLevel int, targetArtifact int): string{json}
+      // - getMennoData(ship int, shipDuration int, shipLevel int, targetArtifact int): ConfigurationItem[]
 
       // Interrupt worker if the page is reloaded or closed.
       window.addEventListener('beforeunload', async () => {
@@ -1190,6 +1218,7 @@
             'full-filter': Vue.defineAsyncComponent(() => loadModule('./templates/FullFilter.vue', options)),
             'search-over-selector': Vue.defineAsyncComponent(() => loadModule('./templates/SearchOverSelector.vue', options)),
             'ship-display': Vue.defineAsyncComponent(() => loadModule('./templates/ShipDisplay.vue', options)),
+            'screenshot-button': Vue.defineAsyncComponent(() => loadModule('./templates/ScreenshotButton.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1334,25 +1363,22 @@
             const lifetimeShowDropsPerShip = Vue.ref(false);
             const lifetimeAccountSelectRef = Vue.ref(null);
             const lifetimeAccountInputRef = Vue.ref(null);
-            const lifetimeAccountSubmitRef = Vue.ref(null);
             const lifetimeAccountDropdownOpen = Vue.ref(false);
             const openLifetimeAccountDropdown = () => { lifetimeAccountDropdownOpen.value = true; };
             const closeLifetimeAccountDropdown = (account) => {
               if(account != null && account.id != null && account.id.trim() !== '') selectedLifetimeAccount.value = account.id;
               lifetimeAccountDropdownOpen.value = false;
-              if (selectedLifetimeAccount.value != null && selectedLifetimeAccount.value.trim() !== '' && lifetimeAccountSubmitRef.value !== null) lifetimeAccountSubmitRef.value.focus();
-              else lifetimeAccountInputRef.value?.blur();
             };
             const lifetimeDrops = Vue.ref(null);
-            const lifetimeFilterConditionsCount = Vue.ref(1);
             const lifetimeFilterTopLevel = Vue.ref([]);
             const lifetimeFilterOperators = Vue.ref([]);
             const lifetimeFilterValues = Vue.ref([]);
+            const lifetimeFilterConditionsCount = Vue.ref(1);
 
-            const lifetimeOrFilterConditionsCount = Vue.ref([]);
             const lifetimeOrFilterTopLevel = Vue.ref([[]]);
             const lifetimeOrFilterOperators = Vue.ref([[]]);
             const lifetimeOrFilterValues = Vue.ref([[]]);
+            const lifetimeOrFilterConditionsCount = Vue.ref([]);
 
             const dLifetimeFilterValues = Vue.ref([]);
             const dLifetimeOrFilterValues = Vue.ref([[]]);
@@ -1366,6 +1392,19 @@
                 dLifetimeOrFilterValues.value = lifetimeOrFilterValues.value.map((orFilter, index) => {return(dLifetimeOrFilterValues.value[index] == undefined ? [] : dLifetimeOrFilterValues.value[index].slice(0, orFilter.length))});
               }, { deep: true }
             );
+
+            const clearLifetimeFilter = () => {
+              lifetimeFilterTopLevel.value = [];
+              lifetimeFilterOperators.value = [];
+              lifetimeFilterValues.value = [];
+              lifetimeFilterConditionsCount.value = 1;
+              lifetimeOrFilterConditionsCount.value = [];
+              lifetimeOrFilterTopLevel.value = [[]];
+              lifetimeOrFilterOperators.value = [[]];
+              lifetimeOrFilterValues.value = [[]];
+              dLifetimeFilterValues.value = [];
+              dLifetimeOrFilterValues.value = [[]];
+            };
 
             const lifetimeAllowExpectedTotals = Vue.ref(false);
             const lifetimeShowExpectedTotalsPref = Vue.ref(false);
@@ -1489,14 +1528,14 @@
             const lifetimeMennoMissionData = Vue.ref(null);
             const viewLifetimeDropsOfEid = async (filterLoad) => {
               lifetimeDataBeingFiltered.value = filterLoad;
-              //Reset allLoadedMissions - potential insane lag spikes for some reason
+              //Reset allLoadedMissions - potential insane lag spikes due to overloading the DOM
               allLoadedMissions.value = null;
               filteredMissions.value = null;
               loadedEid.value = null;
 
               const start = performance.now();
               lifetimeState.value = LifetimeLoadState.FetchingIds;
-              const idsJson = JSON.parse(await window.getMissionIds(selectedLifetimeAccount.value));
+              const idsJson = await window.getMissionIds(selectedLifetimeAccount.value);
               if(idsJson == {} || idsJson == null || idsJson.length == 0){
                 lifetimeState.value = LifetimeLoadState.Failed;
                 return;
@@ -1506,7 +1545,7 @@
                 resetLifetimeDropsLoadedProgress(null, null, idsJson.length);
                 lifetimeState.value = LifetimeLoadState.FilteringIds;
               }
-              const missionsJSON = shouldFilter ? JSON.parse(await window.viewMissionsOfEid(selectedLifetimeAccount.value)) : [];
+              const missions = shouldFilter ? await window.viewMissionsOfEid(selectedLifetimeAccount.value) : [];
               const idFilter = async (arr, predicate) => {
                 return arr.reduce(async (memo, e) => {
                   return await predicate(e) ? [...await memo, e] : await memo;
@@ -1515,7 +1554,7 @@
               const ids = shouldFilter ? await idFilter(idsJson, async (id) => {
                   lifetimeDropsLoadedProgress.value.percentageDone = `${((idsJson.indexOf(id) + 1) / idsJson.length) * 100}%`;
                   lifetimeDropsLoadedProgress.value.loadedCount++;
-                  return (await missionMatchesFilter(missionsJSON.find(mission => mission.missionId == id), lifetimeDataFilter.value, lifetimeOrDataFilter.value));
+                  return (await missionMatchesFilter(missions.find(mission => mission.missionId == id), lifetimeDataFilter.value, lifetimeOrDataFilter.value));
                 }
               ) : idsJson;
               lifetimeDropsExcludedCount.value = idsJson.length - ids.length;
@@ -1537,11 +1576,11 @@
                 const missionShipInfo = mission.shipInfo;
                 firstMatches = firstMatches ?? [missionShipInfo.ship, missionShipInfo.durationType, missionShipInfo.level, missionShipInfo.targetArtifact];
                 if (!nonMatch) {
-                    if (firstMatches[0] != missionShipInfo.ship) firstMatches[0] = -1;
-                    if (firstMatches[1] != missionShipInfo.durationType) firstMatches[1] = -1;
-                    if (firstMatches[2] != missionShipInfo.level) firstMatches[2] = -1;
-                    if (firstMatches[3] != missionShipInfo.targetArtifact) firstMatches[3] = -1;
-                    nonMatch = (firstMatches.indexOf(-1) != -1);
+                  if (firstMatches[0] != missionShipInfo.ship) firstMatches[0] = -1;
+                  if (firstMatches[1] != missionShipInfo.durationType) firstMatches[1] = -1;
+                  if (firstMatches[2] != missionShipInfo.level) firstMatches[2] = -1;
+                  if (firstMatches[3] != missionShipInfo.targetArtifact) firstMatches[3] = -1;
+                  nonMatch = (firstMatches.indexOf(-1) != -1);
                 }
                 mission.artifacts.forEach(artifact => {mergeItems(lifetimeDrops.value.artifacts, artifact); lifetimeDrops.value.artifactCount += artifact.count;});
                 mission.stones.forEach(stone => {mergeItems(lifetimeDrops.value.stones, stone); lifetimeDrops.value.stoneCount += stone.count;});
@@ -1555,17 +1594,19 @@
               lifetimeMennoMissionData.value = null;
               lifetimeAllowExpectedTotals.value = lifetimeHasExactlyOneConfiguration(firstMatches);
               if(lifetimeAllowExpectedTotals.value){
-                const mennoConfigurationItems = await window.getMennoData(
+                const mennoConfigItems = await window.getMennoData(
                   parseInt(lifetimeOneShipInt.value != null ? lifetimeOneShipInt.value : firstMatches[0]), 
                   parseInt(lifetimeOneDurationInt.value != null ? lifetimeOneDurationInt.value : firstMatches[1]), 
                   parseInt(lifetimeOneLevelInt.value != null ? lifetimeOneLevelInt.value : firstMatches[2]),
                   parseInt(lifetimeOneTargetInt.value ?? firstMatches[3]) != -1 ? parseInt(lifetimeOneTargetInt.value ?? firstMatches[3]) : 1000
                 );
                 secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
-                lifetimeMennoMissionData.value = {
-                  totalDropsCount: mennoConfigurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
-                  configs: mennoConfigurationItems
-                };
+                if(mennoConfigItems){
+                  lifetimeMennoMissionData.value = {
+                    totalDropsCount: mennoConfigItems?.reduce((acc, cur) => acc + cur.totalDrops, 0) ?? 0,
+                    configs: mennoConfigItems ?? []
+                  };
+                }
               }
 
               const end = performance.now();
@@ -1593,26 +1634,20 @@
 
             const viewMissionAccountSelectRef = Vue.ref(null);
             const viewMissionAccountInputRef = Vue.ref(null);
-            const viewMissionAccountSubmitRef = Vue.ref(null);
             const viewMissionAccountDropdownOpen = Vue.ref(false);
             const openMissionsViewAccountDropdown = () => { viewMissionAccountDropdownOpen.value = true; };
             const closeMissionsViewAccountDropdown = (account) => {
               if(account != null && account != '') selectedMissionAccount.value = account.id;
               viewMissionAccountDropdownOpen.value = false;
-              if (selectedMissionAccount.value != null && selectedMissionAccount.value.trim() !== '' && viewMissionAccountSubmitRef.value !== null) viewMissionAccountSubmitRef.value.focus();
-              else viewMissionAccountInputRef.value?.blur();
             };
 
             const playerIdSelectRef = Vue.ref(null);
             const playerIdInputRef = Vue.ref(null);
-            const playerIdSubmitRef = Vue.ref(null);
             const playerIdDropdownOpen = Vue.ref(false);
             const openPlayerIdDropdown = () => { playerIdDropdownOpen.value = true; };
             const closePlayerIdDropdown = (id) => {
               if(id != null && id != '') playerId.value = id;
               playerIdDropdownOpen.value = false;
-              if (playerId.value.trim() !== '' && playerIdSubmitRef.value !== null) playerIdSubmitRef.value.focus();
-              else playerIdInputRef.value?.blur();
             };
             const getEidProblem = id => {
               const normalizedId = normalizePlayerId(id).toUpperCase();
@@ -1765,8 +1800,14 @@
             const multiViewMissionData = Vue.ref([]);
             const missionsBeingViewed = Vue.ref(null);
             const viewMissionData = Vue.ref({});
-            const doesDataExist = Vue.ref(false);
             const existingData = Vue.ref([]); //Empty array of strings
+            const refreshExistingData = async () => {existingData.value = await window.getExistingData();};
+            Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts, currentState), async () => {
+              await refreshExistingData();
+            });
+            const doesDataExist = Vue.computed(() => {
+              return existingData.value.length > 0;
+            });
             const objectedExistingData = Vue.computed(() => {
               return existingData.value.map(account => {
                 return {
@@ -1944,13 +1985,6 @@
                 default: return "";
               }
             }
-            const refreshExistingData = async () => {
-              doesDataExist.value = await window.doesDataExist();
-              if(doesDataExist.value) existingData.value = await window.getExistingData();
-            };
-            Vue.watch((exportedFiles, knownAccounts, previouslyKnownAccounts, currentState), async () => {
-              await refreshExistingData();
-            });
 
             const eidMissionsBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
@@ -2035,12 +2069,9 @@
               filterApplyTime.value = ""; //Reset the filter apply time
               multiViewFreeSelectIds.value = []; //Reset the multiViewFreeSelectIds
               eidMissionsBeingLoaded.value = true;
-              const missionsLoadValue = await window.viewMissionsOfEid(selectedMissionAccount.value.toString());
-              if (missionsLoadValue !== "") {
-                allLoadedMissions.value = JSON.parse(missionsLoadValue);
-                filteredMissions.value = allLoadedMissions.value;
-                loadedEid.value = selectedMissionAccount.value.toString();
-              }
+              allLoadedMissions.value = await window.viewMissionsOfEid(selectedMissionAccount.value);
+              filteredMissions.value = allLoadedMissions.value;
+              loadedEid.value = selectedMissionAccount.value.toString();
               eidMissionsBeingLoaded.value = false;
             };
 
@@ -2125,6 +2156,19 @@
               if(secondsSinceLastMennoUpdate.value == 2147483647) lastMennoUpdateString.value = "(never)";
               else lastMennoUpdateString.value = new Date(Date.now() - (secondsSinceLastMennoUpdate.value * 1000)).toLocaleString();
             });
+            const ssModalOpen = Vue.ref(false);
+            const openSSModal = () => {
+              const el = document.querySelector('.overlay-ss');
+              el.style.display = 'flex';
+              el.classList.remove('hidden');
+              ssModalOpen.value = true;
+            };
+            const closeSSModal = () => {
+              const el = document.querySelector('.overlay-ss');
+              el.style.display = 'none';
+              el.classList.add('hidden');
+              ssModalOpen.value = false;
+            };
             const mennoModalOpen = Vue.ref(false);
             const openMennoModal = (isAuto = false) => {
               mennoDataAutoRefresh.value = isAuto;
@@ -2430,10 +2474,9 @@
                     const filterRarity = filter.val.split("_")[2]; const rarityBypass = (filterRarity == '%');
                     const filterLevel = filter.val.split("_")[1]; const levelBypass = (filterLevel == '%');
                     const filterName = filter.val.split("_")[0]; const nameBypass = (filterName == '%');
-                    const loadValue = await window.getShipDrops(loadedEid.value, mission.missionId);
-                    if(loadValue == "") filterPassed = false;
+                    const allDrops = await window.getShipDrops(loadedEid.value, mission.missionId);
+                    if(allDrops == null) filterPassed = false;
                     else{
-                      const allDrops = JSON.parse(loadValue);
                       switch(filter.op){
                         case 'c':{ //Contains
                           var foundDrop = false;
@@ -2525,13 +2568,10 @@
             }
 
             const getSpecificMissionData = async (eid, missionId, extendedInfo) => {
-              const shipInfoStr = await window.getShipInfo(eid, missionId);
-              if(shipInfoStr == "") return null;
-              const shipInfo = JSON.parse(shipInfoStr);
-
-              const loadValue = await window.getShipDrops(eid, missionId);
-              if(loadValue == "") return null;
-              const allDrops = JSON.parse(loadValue);
+              const shipInfo = await window.getShipInfo(eid, missionId);
+              if(!shipInfo.ship || !shipInfo.missionId) return null;
+              const allDrops = await window.getShipDrops(eid, missionId);
+              if(allDrops == null) return null;
 
               const artifacts = allDrops.filter(drop => drop.specType == "Artifact");
               const stones = allDrops.filter(drop => drop.specType == "Stone");
@@ -2572,8 +2612,37 @@
             Vue.watch(defaultViewMode, async () => {
               await window.setDefaultViewMode(defaultViewMode.value);
             });
+            const screenshotsEnabled = Vue.ref(false);
+            Vue.watch(screenshotsEnabled, async () => {
+              await window.setScreenshotsEnabled(screenshotsEnabled.value);
+            });
+            const takeScreenshot = async (eleOrB64, schemaName) => {
+              const schemaType = {
+                'schema': schemaName,
+                'dtString': new Date().toLocaleString().replace(/,/g, '').replace(/:/g, '-').replace(/\//g, '-').replace(/ /g, '_'),
+              };
+              const element = document.getElementById(eleOrB64);
+              if(!element) {
+                schemaType.b64Data = eleOrB64; //If it's a base64 string 
+                //Pass the data back to go
+                await window.saveScreenshot(schemaType);
+              } else { //If it's an element id
+                openSSModal();
+                html2canvas(element, {
+                  logging: false,
+                  useCORS: true,
+                  onrendered: async function(canvas) {
+                    const imgData = canvas.toDataURL('image/png');
+                    schemaType.b64Data = imgData;
+                    //Pass the data back to go
+                    await window.saveScreenshot(schemaType);
+                  }
+                });
+                closeSSModal();
+              }
+            };
 
-            const viewSpecificMission = async (missionId) => {
+            const viewSpecificMission = async (missionId, returnValues = false) => {
               //Do not allow viewing a mission while data is being fetched - prevent collisions
               if(isFetching.value) return false; 
               const newMissionViewData = await getSpecificMissionData(loadedEid.value, missionId, true);
@@ -2589,12 +2658,14 @@
               const mennoShip = newMissionViewData.shipInfo.ship;
               const mennoDuration = newMissionViewData.shipInfo.durationType;
               const mennoLevel = newMissionViewData.shipInfo.level;
-              const rawMennoData = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt)
-              if(rawMennoData?.configurationItems != null){
-                mennoMissionData.value = {
-                  totalDropsCount: rawMennoData?.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
-                  configs: rawMennoData.configurationItems
+              const mennoConfigItems = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt);
+              if(mennoConfigItems){
+                const mennoData = {
+                  totalDropsCount: mennoConfigItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
+                  configs: mennoConfigItems
                 };
+                if(returnValues) newMissionViewData.mennoData = mennoData;
+                else mennoMissionData.value = mennoData;
               }
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
               newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
@@ -2602,6 +2673,10 @@
               newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
               newMissionViewData.ingredients = useThisFunc(newMissionViewData?.ingredients);
               missionBeingViewed.value = missionId;
+              
+              //Return the data if requested, instead of viewing it
+              if(returnValues) return newMissionViewData;
+
               viewMissionData.value = newMissionViewData;
               openMissionOverlay();
             };
@@ -2636,42 +2711,12 @@
                 return false;
               }
               openMultiMissionOverlay();
-              var index = 0;
               missionsBeingViewed.value = [];
               multiViewMissionData.value = [];
               for(const missionId of missionIds){
-                const newMissionViewData = await getSpecificMissionData(loadedEid.value, missionId, true);
-                if(newMissionViewData == null) return false;
-                var useThisFunc;
-                switch(viewMissionSortMethod.value){
-                  case 'default':
-                    useThisFunc = sortGroupAlreadyCombed;
-                    break;
-                  case 'iv':
-                    useThisFunc = inventoryVisualizerSort;
-                    break;
-                }
-
-                var mennoTargetInt = newMissionViewData.shipInfo.targetInt;
-                if(mennoTargetInt == -1) mennoTargetInt = 1000; //Accounting for "Unknown" targets
-                const mennoShip = newMissionViewData.shipInfo.ship;
-                const mennoDuration = newMissionViewData.shipInfo.durationType;
-                const mennoLevel = newMissionViewData.shipInfo.level;
-                const rawMennoData = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt)
-                if(rawMennoData?.configurationItems != null){
-                  newMissionViewData.mennoData = {
-                    totalDropsCount: rawMennoData.configurationItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
-                    configs: rawMennoData.configurationItems
-                  };
-                }
-                secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
-                newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
-                newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
-                newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
-                newMissionViewData.ingredients = useThisFunc(newMissionViewData?.ingredients);
+                const newMissionViewData = await viewSpecificMission(missionId, true);
                 multiViewMissionData.value.push(newMissionViewData);
                 missionsBeingViewed.value.push(missionId);
-                index++;
               }
               rowViewBeingLoaded.value = false;
             };
@@ -2700,8 +2745,8 @@
             // ==============================================
 
             const autoRefreshMennoPreference = Vue.ref(false);
-            Vue.watch(autoRefreshMennoPreference, async (newValue) => {
-              await window.setAutoRefreshMennoPreference(newValue);
+            Vue.watch(autoRefreshMennoPreference, async () => {
+              await window.setAutoRefreshMennoPreference(autoRefreshMennoPreference.value);
             });
 
             const setPreferredBrowser = async (browser) => {
@@ -2740,20 +2785,32 @@
             };
 
             Vue.onMounted(async () => {
-              //Check for updates
-              const arrResponse = await window.checkForUpdates();
-              appHasUpdate.value = arrResponse[0];
-              appReleaseNotes.value = arrResponse[1];
+              //Reload the data
+              await refreshExistingData();
+
+              //Settings loads
+              autoRefreshMennoPreference.value = await window.getAutoRefreshMennoPreference();
+              useGifsForRarity.value = await window.getUseGifsForRarity();
+              defaultViewMode.value = viewMissionSortMethod.value = await window.getDefaultViewMode();
+              if(['default', 'iv'].indexOf(defaultViewMode.value) > -1){
+                lifetimeSortMethod.value = defaultViewMode.value;
+              }
+              screenshotsEnabled.value = await window.getScreenshotsEnabled();
+
+              // Check for updates and destructure the response
+              const [hasUpdate, releaseNotes] = await window.checkForUpdates();
+              appHasUpdate.value = hasUpdate;
+              appReleaseNotes.value = releaseNotes;
 
               //Browser preference
               preferredBrowser.value = await getPreferredBrowser();
               allBrowsers.value = await window.getDetectedBrowsers();
 
               //Load configs
-              artifactConfigs.value = JSON.parse(await window.getAfxConfigs());
-              maxQuality.value = JSON.parse(await window.getMaxQuality());
-              durationConfigs.value = JSON.parse(await window.getDurationConfigs());
-              possibleTargets.value = JSON.parse(await window.getPossibleTargets());
+              artifactConfigs.value = await window.getAfxConfigs();
+              maxQuality.value = await window.getMaxQuality();
+              durationConfigs.value = await window.getDurationConfigs();
+              possibleTargets.value = await window.getPossibleTargets();
 
               //Load Menno data
               if (await window.isMennoRefreshNeeded()) {
@@ -2763,16 +2820,6 @@
               }
               canUseMennoData.value = await window.loadMennoData();
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
-
-              //Settings loads
-              autoRefreshMennoPreference.value = await window.getAutoRefreshMennoPreference();
-              useGifsForRarity.value = await window.getUseGifsForRarity();
-              viewMissionSortMethod.value = await window.getDefaultViewMode();
-              lifetimeSortMethod.value = await window.getDefaultViewMode();
-              defaultViewMode.value = viewMissionSortMethod.value;
-
-              //Reload the data
-              await refreshExistingData();
             });
 
             const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeDrops);
@@ -2831,7 +2878,6 @@
               nicknameForSelectedPlayerId,
               playerIdSelectRef,
               playerIdInputRef,
-              playerIdSubmitRef,
               playerIdDropdownOpen,
               getEidProblem,
               openPlayerIdDropdown,
@@ -2851,18 +2897,24 @@
 
               appHasUpdate,
 
-              //Pprefs
+              //Prefs
               defaultViewMode,
               allBrowsers,
               preferredBrowser,
               browserDisplayName,
               prefBrowserDropdownOpen,
               preferredBrowserSelectRef,
+              autoRefreshMennoPreference,
+              screenshotsEnabled,
+              ssModalOpen,
               getBrowserDisplayName,
               getPreferredBrowser,
               setPreferredBrowser,
               openPrefBrowserDropdown,
               closePrefBrowserDropdown,
+              takeScreenshot,
+              closeSSModal,
+              openSSModal,
 
               //Lifetime data
               LifetimeLoadState,
@@ -2875,7 +2927,6 @@
               selectedLifetimeAccount,
               lifetimeAccountSelectRef,
               lifetimeAccountInputRef,
-              lifetimeAccountSubmitRef,
               lifetimeAccountDropdownOpen,
               openLifetimeAccountDropdown,
               closeLifetimeAccountDropdown,
@@ -2883,6 +2934,7 @@
               getLifetimeStatusColor,
               getLifetimeStatusText,
               getLifetimeIsProgressSpinning,
+              clearLifetimeFilter,
               lifetimeFilterConditionsCount,
               lifetimeFilterTopLevel,
               lifetimeFilterOperators,
@@ -2919,7 +2971,6 @@
               viewMissionAccountInputRef,
               viewMissionAccountSelectRef,
               viewMissionAccountDropdownOpen,
-              viewMissionAccountSubmitRef,
               missionBeingViewed,
               hideOptions,
               mennoModalOpen,

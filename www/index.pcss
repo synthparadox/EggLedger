@@ -298,7 +298,7 @@ hr {
   box-sizing: border-box;
 }
 
-.overlay-mission, .overlay-multi-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update, .overlay-menno {
+.overlay-mission, .overlay-multi-mission, .overlay-drop, .overlay-target, .overlay-target-lifetime, .overlay-update, .overlay-menno, .overlay-ss {
   background: rgba(0, 0, 0, 0.7);
 }
 
@@ -457,4 +457,13 @@ hr {
   height: calc(100%);
   border-top: 2px solid;
   border-bottom: 2px solid;
+}
+
+.screenshot-button {
+  @apply absolute top-0 right-0 bg-transparent border-gray-200 cursor-pointer rounded-full p-1;
+  width: 2.8rem;
+
+  &:hover {
+    @apply ring-1 ring-gray-200;
+  }
 }

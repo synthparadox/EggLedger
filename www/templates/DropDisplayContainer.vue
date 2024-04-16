@@ -6,7 +6,7 @@
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops" :total-drops-count="getTotalCount()"
+        :total-drops-count="getTotalCount()"
     ></drop-display>
 
     <!-- Stones -->
@@ -15,7 +15,7 @@
         label-display-value="Eggfinity Stones" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops" :total-drops-count="getTotalCount()"
+        :total-drops-count="getTotalCount()"
     ></drop-display>
 
     <!-- Ingredients -->
@@ -24,7 +24,7 @@
         label-display-value="Ingredients" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops" :total-drops-count="getTotalCount()"
+        :total-drops-count="getTotalCount()"
     ></drop-display>
 
     <!-- Stone Fragments -->
@@ -33,7 +33,7 @@
         label-display-value="Stone Fragments" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :show-expected-total-drops="showExpectedTotalDrops" :total-drops-count="getTotalCount()"
+        :total-drops-count="getTotalCount()"
     ></drop-display>
 
 </template>
@@ -60,7 +60,6 @@
             afRarityText: Function,
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
-            showExpectedTotalDrops: Boolean,
         },
     }
 

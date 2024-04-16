@@ -6,8 +6,7 @@
 /ei/ei.proto.OLD
 /ei/ei.pb.go.OLD
 node_modules/
-/www/index_pcss.hash
-tailwind.config.hash
+*.hash
 
 # Ignore custom-tailored files
 daveedbuild.sh
