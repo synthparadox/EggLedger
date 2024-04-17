@@ -26,13 +26,13 @@
                             {{ boundEffectString(item.effectString)[2] }}
                         </span>
 
-                        <hr v-if="ledgerType == 'lifetime' && lifetimeShowPerShip" class="mt-05rem mb-05rem w-full">
+                        <hr v-if="ledgerType == 'lifetime' && lifetimeShowPerShip" class="mt-0_5rem mb-0_5rem w-full">
                         <span v-if="ledgerType == 'lifetime' && lifetimeShowPerShip">
                             (<span class="text-green-500">{{ (item.count / lifetimeMissionCount).toFixed(5) }}</span> per ship - 
                             <span class="text-green-500">1</span>:<span class="text-green-500">{{ (1 / (item.count / lifetimeMissionCount)).toFixed(2) }}</span>)
                         </span>
 
-                        <hr v-if="ledgerType == 'lifetime' && showExpectedDrops" class="mt-05rem mb-05rem w-full">
+                        <hr v-if="ledgerType == 'lifetime' && showExpectedDrops" class="mt-0_5rem mb-0_5rem w-full">
                         <span v-if="ledgerType == 'lifetime' && showExpectedDrops">
                             <span v-if="getDropCalcs(item.id, item.level, item.rarity) == null">
                                 <span class="text-red-700">Not enough data to determine drop rate.</span>
@@ -42,7 +42,7 @@
                             </span>
                         </span>
 
-                        <hr v-if="ledgerType == 'mission' && showExpectedDrops" class="mt-05rem mb-05rem w-full">
+                        <hr v-if="ledgerType == 'mission' && showExpectedDrops" class="mt-0_5rem mb-0_5rem w-full">
                         <span v-if="ledgerType == 'mission' && showExpectedDrops">
                             <span v-if="getDropCalcs(item.id, item.level, item.rarity) == null">
                                 <span class="text-red-700">Not enough data to determine drop rate.</span>

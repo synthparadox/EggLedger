@@ -83,7 +83,7 @@ hr {
 }
 
 .filter-select {
-  @apply block rounded-md text-sm bg-darkest tabular-nums appearance-none mr-1rem mt-05rem pl-05rem pt-05rem pb-05rem pr-select;
+  @apply block rounded-md text-sm bg-darkest tabular-nums appearance-none mr-1rem mt-0_5rem pl-0_5rem pt-0_5rem pb-0_5rem pr-select;
 
   &:focus{
     @apply ring-blue-500 border-blue-500;
@@ -95,7 +95,7 @@ hr {
 }
 
 .ext-opt-label {
-  @apply text-gray-400 mr-05rem
+  @apply text-gray-400 mr-0_5rem
 }
 
 .opt-span {
@@ -142,6 +142,24 @@ hr {
   }
 }
 
+.number-input {
+  @apply text-gray-400 block rounded-md tabular-nums;
+
+  &:focus{
+    @apply ring-blue-500 border-blue-500;
+  }
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance:textfield; /* Firefox */
+}
+
 .input-search {
   @apply text-gray-400 block rounded-md bg-transparent tabular-nums w-9/10;
 
@@ -151,7 +169,7 @@ hr {
 }
 
 .select-form {
-  @apply flex rounded-md shadow-sm mt-0
+  @apply flex rounded-md shadow-sm mt-0i;
 }
 
 .url-link {
@@ -199,7 +217,7 @@ hr {
 }
 
 .ledger-input-overlay {
-  @apply absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums z-eidoverlay
+  @apply absolute top-0 left-0 w-full px-3 py-2 truncate border border-transparent text-sm text-gray-300 tabular-nums z-_20
 }
 
 .ledger-af-link {
@@ -255,7 +273,7 @@ hr {
 }
 
 .popup-opt {
-  @apply text-sm text-gray-400 cursor-pointer select-none py-1 pl-3 tabular-nums flex relative text-center items-center rounded-md mr-05rem;
+  @apply text-sm text-gray-400 cursor-pointer select-none py-1 pl-3 tabular-nums flex relative text-center items-center rounded-md mr-0_5rem;
   outline: none;
 
   &:hover{
@@ -269,7 +287,7 @@ hr {
 }
 
 .filter-incomplete {
-  @apply whitespace-pre max-h-9 items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-05rem
+  @apply whitespace-pre max-h-9 items-center justify-center text-red-700 text-xs border border-red-700 rounded-md bg-transparent py-2 px-4 mt-0_5rem
 }
 
 .mission-view-overlay {
@@ -347,6 +365,12 @@ hr {
 .double-cap-span {
   @apply text-center;
   background-image: radial-gradient(rgb(139, 14, 158), rgb(128, 13, 126), rgb(92, 9, 91));
+  border-radius: 10px;
+}
+
+.bugged-cap-span {
+  @apply text-center;
+  background-image: radial-gradient(rgb(110, 5, 5), rgb(138, 21, 21), rgb(168, 25, 25));
   border-radius: 10px;
 }
 
@@ -457,13 +481,4 @@ hr {
   height: calc(100%);
   border-top: 2px solid;
   border-bottom: 2px solid;
-}
-
-.screenshot-button {
-  @apply absolute top-0 right-0 bg-transparent border-gray-200 cursor-pointer rounded-full p-1;
-  width: 2.8rem;
-
-  &:hover {
-    @apply ring-1 ring-gray-200;
-  }
 }

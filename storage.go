@@ -24,7 +24,9 @@ type AppStorage struct {
 	AutoRefreshMennoPref    bool      `json:"auto_refresh_menno_pref"`
 	UseGifsForRarity        bool      `json:"use_gifs_for_rarity"`
 	DefaultViewMode         string    `json:"default_view_mode"`
-	ScreenshotsEnabled      bool      `json:"screenshots_enabled"`
+	DefaultResolutionX      int       `json:"default_resolution_x"`
+	DefaultResolutionY      int       `json:"default_resolution_y"`
+	DefaultScalingFactor    float64   `json:"default_scaling_factor"`
 }
 
 type Account struct {
@@ -140,9 +142,53 @@ func (s *AppStorage) SetDefaultViewMode(mode string) {
 	go s.Persist()
 }
 
-func (s *AppStorage) SetScreenshotsEnabled(flag bool) {
+func (s *AppStorage) SetDefaultResolution(x, y int) {
 	s.Lock()
-	s.ScreenshotsEnabled = flag
+	if x < 650 || x > 3840 {
+		x = 650
+	}
+	if y < 650 || y > 2160 {
+		y = 650
+	}
+	s.DefaultResolutionX = x
+	s.DefaultResolutionY = y
 	s.Unlock()
 	go s.Persist()
+}
+
+func (s *AppStorage) GetDefaultResolution() []int {
+	s.Lock()
+	defer s.Unlock()
+	defx := s.DefaultResolutionX
+	defy := s.DefaultResolutionY
+	if defx == 0 || defy == 0 {
+		return []int{650, 650}
+	}
+	if defx < 650 || defx > 3840 {
+		defx = 650
+	}
+	if defy < 650 || defy > 2160 {
+		defy = 650
+	}
+	return []int{s.DefaultResolutionX, s.DefaultResolutionY}
+}
+
+func (s *AppStorage) SetDefaultScalingFactor(factor float64) {
+	s.Lock()
+	if factor < 0.5 || factor > 2.0 {
+		factor = 1.0
+	}
+	s.DefaultScalingFactor = factor
+	s.Unlock()
+	go s.Persist()
+}
+
+func (s *AppStorage) GetDefaultScalingFactor() float64 {
+	s.Lock()
+	defer s.Unlock()
+	factor := s.DefaultScalingFactor
+	if factor < 0.5 || factor > 2.0 {
+		factor = 1.0
+	}
+	return factor
 }

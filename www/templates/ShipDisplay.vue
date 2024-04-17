@@ -18,18 +18,26 @@
         <span>Returned: {{ viewMissionData.returnStr }}</span> <br />
         <span>Duration: {{ viewMissionData.durationStr }}</span> <br />
         <span class="flex flex-row items-center justify-center">
-            <span :class="(viewMissionData.shipInfo.isDubCap ? 'mr-05rem' : '')">Capacity: {{ viewMissionData.shipInfo.capacity }} </span>
-                <span v-if="viewMissionData.shipInfo.isDubCap" 
-                    class="max-w-28 flex py-1 double-cap-span items-center justify-center flex-1"
-                >
-                    <img 
-                        alt="Artifact Crate" 
-                        src="/images/icon_afx_chest_2.png" 
-                        class="w-6 mr-05rem"
-                    >
-                    <span class="tooltip-custom text-xs font-bold">
-                        {{viewMissionData.capacityModifier}}x Capacity
-                        <span class="font-normal text-sm text-gray-400 tooltiptext-custom speech-bubble">
+        <span :class="((viewMissionData.shipInfo.isDubCap || viewMissionData.shipInfo.isBuggedCap) ? 'mr-0_5rem' : '')">Capacity: {{ viewMissionData.shipInfo.capacity }} </span>
+            <span v-if="viewMissionData.shipInfo.isBuggedCap" class="max-w-32 flex py-1 bugged-cap-span items-center justify-center flex-1">
+                <img alt="Skull Emoji" src="/images/skull.png" class="w-6 mr-0_5rem">
+                <span class="tooltip-custom text-xs font-bold">
+                    0.6x Capacity
+                    <span class="font-normal text-sm text-gray-400 tooltiptext-custom speech-bubble">
+                        This ship was launched during <br>the
+                        <span class="text-buggedcap">
+                            0.6x Capacity "Event"
+                        </span>
+                        and <i>may have</i> returned<br />
+                        with fewer artifacts than normal.
+                    </span>
+                </span>
+            </span>
+            <span v-if="!viewMissionData.shipInfo.isBuggedCap && viewMissionData.shipInfo.isDubCap" class="max-w-28 flex py-1 double-cap-span items-center justify-center flex-1">
+                <img alt="Artifact Crate" src="/images/icon_afx_chest_2.png" class="w-6 mr-0_5rem">
+                <span class="tooltip-custom text-xs font-bold">
+                    {{viewMissionData.capacityModifier}}x Capacity
+                    <span class="font-normal text-sm text-gray-400 tooltiptext-custom speech-bubble">
                         This ship was launched during a<br />
                         <span class="text-dubcap">
                             {{viewMissionData.capacityModifier}}x Capacity Event
@@ -39,8 +47,8 @@
                     </span>
                 </span>
             </span>
-            <br />
         </span>
+        <br />
         <div v-if="viewMissionData.shipInfo.target != '' && viewMissionData.shipInfo.target.toUpperCase() != 'UNKNOWN'">
             <div class="items-center justify-center flex">
                 <span>Sensor Target: </span>

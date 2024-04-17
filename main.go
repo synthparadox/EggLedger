@@ -131,6 +131,7 @@ type LoadedMission struct {
 	Capacity       int32                        `json:"capacity"`
 	NominalCapcity int32                        `json:"nominalCapacity"`
 	IsDubCap       bool                         `json:"isDubCap"`
+	IsBuggedCap    bool                         `json:"isBuggedCap"`
 	Target         string                       `json:"target"`
 	TargetInt      int32                        `json:"targetInt"`
 }
@@ -328,6 +329,11 @@ func isDubCap(mission *ei.CompleteMissionResponse) bool {
 	}
 }
 
+func isBuggedCap(mission *ei.CompleteMissionResponse) bool {
+	//If it was launched between 2024-04-10 00:00 EST (1712721600 ) and 2024-04-16 13:00 EST (1713286800), it's bugged
+	return mission.Info.GetStartTimeDerived() > 1712721600 && mission.Info.GetStartTimeDerived() < 1713286800
+}
+
 func viewMissionsOfId(eid string) ([]LoadedMission, error) {
 
 	if len(_nominalShipCapacities) == 0 {
@@ -374,6 +380,7 @@ func viewMissionsOfId(eid string) ([]LoadedMission, error) {
 			Capacity:       int32(info.GetCapacity()),
 			NominalCapcity: int32(_nominalShipCapacities[info.GetShip()][info.GetDurationType()][info.GetLevel()]),
 			IsDubCap:       isDubCap(completeMission),
+			IsBuggedCap:    isBuggedCap(completeMission),
 			Target:         properTargetName(info.TargetArtifact),
 		}
 		if missionInst.Target == "" {
@@ -413,12 +420,20 @@ func main() {
 
 	args := []string{}
 	args = append(args, "--disable-features=TranslateUI,BlinkGenPropertyTrees")
+	scalingFactor := _storage.GetDefaultScalingFactor()
+	if scalingFactor != 1.0 {
+		args = append(args, "--force-device-scale-factor="+fmt.Sprintf("%f", scalingFactor))
+	}
 	//Fuck Edge
 	args = append(args, "--disable-sync")
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
-	u, err := lorca.New("", "", chrome, 650, 650, args...)
+	widthPreference, heightPreference := func() (int, int) {
+		resolutionPrefs := _storage.GetDefaultResolution()
+		return resolutionPrefs[0], resolutionPrefs[1]
+	}()
+	u, err := lorca.New("", "", chrome, widthPreference, heightPreference, args...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -469,6 +484,22 @@ func main() {
 		log.Error(args...)
 		emitMessage(fmt.Sprint(args...), true)
 	}
+
+	ui.MustBind("getDefaultScalingFactor", func() float64 {
+		return _storage.GetDefaultScalingFactor()
+	})
+
+	ui.MustBind("setDefaultScalingFactor", func(factor float64) {
+		_storage.SetDefaultScalingFactor(factor)
+	})
+
+	ui.MustBind("getDefaultResolution", func() []int {
+		return _storage.GetDefaultResolution()
+	})
+
+	ui.MustBind("setDefaultResolution", func(x, y int) {
+		_storage.SetDefaultResolution(x, y)
+	})
 
 	ui.MustBind("setPreferredBrowser", func(path string) bool {
 		if path == "" {
@@ -1055,6 +1086,7 @@ func main() {
 			Capacity:       int32(info.GetCapacity()),
 			NominalCapcity: int32(_nominalShipCapacities[info.GetShip()][info.GetDurationType()][info.GetLevel()]),
 			IsDubCap:       isDubCap(completeMission),
+			IsBuggedCap:    isBuggedCap(completeMission),
 			Target:         properTargetName(info.TargetArtifact),
 			TargetInt:      int32(info.GetTargetArtifact()),
 		}
@@ -1122,44 +1154,6 @@ func main() {
 		} else {
 			return int(time.Since(lastRefresh).Seconds())
 		}
-	})
-
-	type ScreenshotData struct {
-		Schema   string `json:"schema"`
-		DTString string `json:"dtString"`
-		B64Data  string `json:"b64Data"`
-	}
-
-	ui.MustBind("saveScreenshot", func(ssData ScreenshotData) error {
-		// Store the screenshot in exports/screenshots
-		ssDir := filepath.Join(_rootDir, "exports", "screenshots")
-
-		// Create the screenshots directory if it doesn't exist
-		err = os.MkdirAll(ssDir, 0755)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-
-		fullPath := filepath.Join(ssDir, ssData.Schema+ssData.DTString+".png")
-
-		err = exportB64ImageToFile(ssData.B64Data, fullPath)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-		return nil
-	})
-
-	ui.MustBind("getScreenshotsEnabled", func() bool {
-		_storage.Lock()
-		ssEnabled := _storage.ScreenshotsEnabled
-		_storage.Unlock()
-		return ssEnabled
-	})
-
-	ui.MustBind("setScreenshotsEnabled", func(flag bool) {
-		_storage.SetScreenshotsEnabled(flag)
 	})
 
 	ui.MustBind("getDefaultViewMode", func() string {

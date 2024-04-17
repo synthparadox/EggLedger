@@ -2,7 +2,7 @@
     <div class="max-h-60 overflow-y-auto">
         <div class="relative flex-grow max-h-6/10" v-for="(filter, index) in filterArray" :key="index">
             <!-- Separator -->
-            <div v-if="index != 0" class="text-gray-400 mt-05rem">-- AND --</div>
+            <div v-if="index != 0" class="text-gray-400 mt-0_5rem">-- AND --</div>
 
             <div class="filter-container focus-within:z-10">
                 <!-- Top level filter options -->
@@ -39,7 +39,7 @@
                 <button
                     v-if="filterLevelIf(index, null, 'or')" :disabled="isOrDisabled(index)" title="Add alternate filter condition" 
                     :id="getIdHeader() + 'add-or-' + index" type="button" v-on:click="e => { e.preventDefault(); $emit('addOr', index)}"
-                    class="mr-1rem flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-05rem filter-button"
+                    class="mr-1rem flex items-center h-6 w-6 justify-center text-sml border text-yellow-700 border-yellow-700 bg-darkest rounded-md bg-transparent py-2 px-4 mt-0_5rem filter-button"
                 >OR</button>
                 <!-- Clear button -->
                 <filter-clear-button v-if="filterLevelIf(index, null, 'clear')" :index="index" :internal-id="getIdHeader() + 'clear-' + index"
@@ -51,7 +51,7 @@
                 class="ml-2rem filter-container focus-within:z-10"
                 v-for="(orFilter, orIndex) in generateOrFiltersConditionsArr(index)">
                 <!-- Separator -->
-                <div class="text-gray-400 mt-05rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
+                <div class="text-gray-400 mt-0_5rem mr-1rem"><span class="text-gray text-lg">⮡ </span> OR</div>
 
                 <!-- Top level filter options -->
                 <filter-select v-if="true" :internal-id="getIdHeader() + 'top-' + index + '-' + orIndex"

@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
     <script src="shortcuts.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
   </head>
   <body>
     <div id="app" class="h-stretch">
@@ -31,12 +30,11 @@
           class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-y-scroll bg-darker"
         >
           <div id="test-id" class="flex-1 px-3 py-2 overflow-auto shadow-sm block text-sm font-mono text-gray-400 bg-darkest rounded-md">
-            <!--<screenshot-button v-if="screenshotsEnabled" element-id="test-id" schema-name="test-schema" @take="takeScreenshot"></screenshot-button>-->
-            <div>
+            <div class="w-full pl-0_5rem pr-0_5rem">
               <span class="text-base">
                 Preferred browser for Ledger (<span class="text-gray-300 text-sm">effective on restart</span>)
               </span> <br>
-              <div ref="preferredBrowserSelectRef" class="text-sm relative w-full flex-grow focus-within:z-10">
+              <div ref="preferredBrowserSelectRef" class="text-sm relative w-full flex-grow focus-within:z-10 pl-0_5rem">
                 <div v-if="preferredBrowser" class="ledger-input-overlay">
                   <span>{{preferredBrowser}}</span> (<span class="text-gray-300">{{getBrowserDisplayName(preferredBrowser)}}</span>)</span>
                 </div>
@@ -60,27 +58,49 @@
                     v-bind:key="browser" class="drop-opt bg-darker"
                     v-on:click="closePrefBrowserDropdown(browser)"
                   >
-                    {{browser}} <span class="inline-block max-w-90pc">(<span class="text-gray-300">{{getBrowserDisplayName(browser)}}</span>)</span>
+                    {{browser}} <span class="inline-block max-w-9/10">(<span class="text-gray-300">{{getBrowserDisplayName(browser)}}</span>)</span>
                   </li>
                 </ul>
               </div>
             </div>
             <hr class="mt-1rem mb-1rem w-full">
+            <div class="text-sm relative w-full pl-0_5rem pr-0_5rem">
+              <span class="text-base">
+                Default app resolution (<span class="text-gray-300 text-sm">effective on restart</span>)
+              </span> <br>
+              <div class="flex flex-row items-center pl-0_5rem">
+                <div class="flex flex-col w-full max-w-10rem text-center mt-0_5rem">
+                  <input type="number" class="number-input text-sm bg-darker" v-model="resolutionPrefX"/>
+                  <span class="text-sm text-gray-400 mt-0_5rem">Width<br>(<span class="text-gray-300">X</span>)</span>
+                </div>
+                <span class="text-xl font-bold ml-0_5rem mr-0_5rem mb-2_5rem">x</span>
+                <div class="flex flex-col w-full max-w-10rem text-center mt-0_5rem">
+                  <input type="number" class="number-input text-sm bg-darker" v-model="resolutionPrefY"/>
+                  <span class="text-sm text-gray-400 mt-0_5rem">Height<br>(<span class="text-gray-300">Y</span>)</span>
+                </div>
+                <span class="text-xl font-bold ml-0_5rem mr-0_5rem mb-2_5rem">@</span>
+                <div class="flex flex-col w-full max-w-5rem text-center mt-0_5rem">
+                  <input type="number" class="number-input text-sm bg-darker" v-model="scalingFactor"/>
+                  <span class="text-sm text-gray-400 mt-0_5rem">Scaling Factor</span>
+                </div>
+              </div>
+            </div>
+            <hr class="mt-1rem mb-1rem w-full">
             <div class="px-2 py-2 text-sm text-gray-400 bg-darker rounded-md tabular-nums overflow-auto">
-              <span class="mr-05rem font-bold text-lg text-gray-400 ledger-underline">Menno's Ship Data</span><br />
+              <span class="mr-0_5rem font-bold text-lg text-gray-400 ledger-underline">Menno's Ship Data</span><br />
               <span class="italic text-gray-400">Data last refreshed on <span :class="secondsSinceLastMennoUpdate == 2147483647 ? 'text-red-700' : 'text-green-500' ">{{ lastMennoUpdateString }}</span></span><br>
-              <button class="mt-05rem mb-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              <button class="mt-0_5rem mb-0_5rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-bind:disabled="secondsSinceLastMennoUpdate < 86400"
                 v-on:click="asyncUpdateMennoData"
               >
                 Refresh Data Now
               </button><br/>
               <span class="italic text-sm text-gray-500" v-if="secondsSinceLastMennoUpdate < 86400">To reduce the load on Menno's API, manual refreshes can be performed once every day</span>
-              <div class="mt-05rem">
+              <div class="mt-0_5rem">
                 <input
                 id="autoRefreshMennoCheckbox"
                 type="checkbox"
-                class="ext-opt-check mr-05rem"
+                class="ext-opt-check mr-0_5rem"
                 v-model="autoRefreshMennoPreference"
               >
               <label for="autoRefreshMennoCheckbox" class="ext-opt-label">Automatically refresh Menno data once weekly</label>
@@ -88,25 +108,16 @@
             </div>
             <hr class="mt-1rem mb-1rem w-full">
             <div class="px-2 py-2 text-sm text-gray-400 bg-darker rounded-md tabular-nums overflow-auto">
-              <span class="mr-05rem font-bold text-lg text-gray-400 ledger-underline">Other Globals</span><br />
+              <span class="mr-0_5rem font-bold text-lg text-gray-400 ledger-underline">Other Globals</span><br />
               <div>
                 <input
                   id="useGifsForRarityCheckbox"
                   type="checkbox"
-                  class="ext-opt-check mr-05rem"
+                  class="ext-opt-check mr-0_5rem"
                   v-model="useGifsForRarity"
                 >
                 <label for="useGifsForRarityCheckbox" class="ext-opt-label">Use GIFs for rarity icons</label>
               </div>
-              <!--<div>
-                <input
-                  id="enableScreenshotsCheckbox"
-                  type="checkbox"
-                  class="ext-opt-check mr-05rem"
-                  v-model="screenshotsEnabled"
-                >
-                <label for="enableScreenshotsCheckbox" class="ext-opt-label">Enable screenshots (BETA)</label>
-              </div>-->
               <div>
                 <span class="font-bold text-base text-gray-400">Default Drop-Sort Method</span><br />
                 <span class="opt-span">
@@ -513,7 +524,6 @@
 
           <div class="top-click-detect mission-view-overlay overlay-mission">
             <div id="ship-display-inner" class="inner-click-detect max-w-70vw max-h-90vh overflow-auto bg-dark rounded-lg relative p-1rem">
-              <!--<screenshot-button v-if="screenshotsEnabled" element-id="ship-display-inner" schema-name="ship-display" @take="takeScreenshot"></screenshot-button>-->
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -537,7 +547,7 @@
                 </svg>
               </button>
               <div v-if="rowViewBeingLoaded" class="text-center">
-                <div class="mt-05rem text-center text-xl text-gray-400">Multi-Mission View Loading</div>
+                <div class="mt-0_5rem text-center text-xl text-gray-400">Multi-Mission View Loading</div>
                 <hr class="mt-1rem mb-1rem w-full">
                 <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
               </div>
@@ -619,8 +629,8 @@
             </button>
           </form>
 
-          <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
-            <span class="mr-05rem h-20 font-bold text-gray-400" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">Filter</span>
+          <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-0_75rem">
+            <span class="mr-0_5rem h-20 font-bold text-gray-400" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">Filter</span>
             <button
               v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)"
               id="toggleFilterButton"
@@ -640,10 +650,10 @@
             >
               <!-- Warning (if not already seen) -->
               <div v-if="!(filterWarningRead) && !hideFilterWarning" class="text-red-700 border border-red-700 rounded-md mb-1 mt-1 py-2 px-4 max-w-50vw">
-                <span class="font-bold ledger-underline mb-025rem">Warning:</span><br />
+                <span class="font-bold ledger-underline mb-0_25rem">Warning:</span><br />
                 The filter feature is experimental, and may not work as expected (especially with complicated combinations). You may experience unexpected results, including lag spikes, potential app crashes, and UI distortion. Please use it carefully, and report any issues you encounter.
                 <br /><br />
-                <button type="button" class="p-075rem btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
+                <button type="button" class="p-0_75rem btn-link text-blue-500 border border-blue-500 rounded-md" v-on:click="dismissFilterWarning()">I understand</button>
               </div>
 
               <full-filter
@@ -662,21 +672,21 @@
                 v-if="idle"
                 id="filter-apply-button"
                 type="submit"
-                class="mt-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="mt-0_5rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-bind:disabled="(dataFilter === [] || dataBeingFiltered || !filterHasChanged)"
               >
                 Apply Filter
               </button>
 
               <!-- Show loading gif while filter is being applied -->
-              <span v-if="dataBeingFiltered" class="text-green-700 mt-05rem">
+              <span v-if="dataBeingFiltered" class="text-green-700 mt-0_5rem">
                 <i>
                   <img src="images/loading.gif" alt="Loading..." class="target-ico" />
                   Applying filter, please wait...
                 </i>
               </span>
               <!-- Show the time that it took to apply the filter -->
-              <span v-if="!dataBeingFiltered && filterApplyTime != ''" class="text-green-700 mt-05rem">
+              <span v-if="!dataBeingFiltered && filterApplyTime != ''" class="text-green-700 mt-0_5rem">
                 <i>
                   Filtered in {{ filterApplyTime }} <span class="text-gray-500">
                     ( <span class="text-green-700">
@@ -688,10 +698,10 @@
             </form>
           </div>
 
-          <div v-if="doesDataExist" class="min-h-7 max-h-50 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 max-h-50 px-2 py-2 text-sm text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-0_75rem">
             <div v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div>
-                <span class="mr-05rem font-bold text-base text-gray-400">Options</span>
+                <span class="mr-0_5rem font-bold text-base text-gray-400">Options</span>
                 <button
                   id="toggleOptionsButtonVM"
                   class="text-base toggle-link" 
@@ -713,6 +723,10 @@
                 <span class="opt-span">
                   <label for="recolorDCCB" class="ext-opt-label">Re-color dubcaps</label>
                   <input id="recolorDCCB" type="checkbox" v-model="recolorDC" class=" ext-opt-check"/>
+                </span>
+                <span class="opt-span">
+                  <label for="recolorBCCB" class="ext-opt-label">Re-color bugged-caps</label>
+                  <input id="recolorBCCB" type="checkbox" v-model="recolorBC" class="ext-opt-check"/>
                 </span>
                 <span class="opt-span">
                   <label for="showExpectedDropsPerShip" class="ext-opt-label">Show "Expected Drops Per Ship"</label>
@@ -748,12 +762,12 @@
             </div>
           </div>
 
-          <div v-if="doesDataExist" class="flex-1 px-2 overflow-auto shadow-sm bg-darkest rounded-md mt-075rem">
+          <div v-if="doesDataExist" class="flex-1 px-2 overflow-auto shadow-sm bg-darkest rounded-md mt-0_75rem">
             <div ref="resultsDiv" v-if="groupedMissions && Object.keys(groupedMissions).length > 0 || (filteredMissions != null && allLoadedMissions != null && Object.keys(filteredMissions).length != Object.keys(allLoadedMissions).length)">
               <div class="filter-form text-lg" v-if="filteredMissions.length == 0">
-                <span class="mt-05rem ml-1rem">No missions to display.</span>
+                <span class="mt-0_5rem ml-1rem">No missions to display.</span>
               </div>
-              <div v-else id="missionListDiv" class="mt-05rem px-2 py-1 overflow-y-auto shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
+              <div v-else id="missionListDiv" class="mt-0_5rem px-2 py-1 overflow-y-auto shadow-sm block text-xs font-mono text-gray-500 bg-darkest rounded-md">
                 <div class="bg-darkest w-full">
                   <span class="text-xl">
                     Missions
@@ -762,16 +776,16 @@
                       View Selected Missions <span class="text-gray-500">(</span>{{multiViewFreeSelectIds.length}}<span class="text-gray-500">)</span>
                     </button>
                   </span>
-                  <hr class="mb-05rem w-full">
+                  <hr class="mb-0_5rem w-full">
                 </div>
                 <template class="mt-3rem" v-for="(yearVF, yearIndex) in groupedMissions" :key="yearIndex">
-                  <span :class="'text-lg font-bold mr-05rem ledger-underline'">{{ groupedArrays.year[yearIndex].year }}</span>
+                  <span :class="'text-lg font-bold mr-0_5rem ledger-underline'">{{ groupedArrays.year[yearIndex].year }}</span>
                   <button class="tb-c text-lg toggle-link" type="button" v-on:click="toggleElements($event, groupedArrays.year[yearIndex])">
                     {{(groupedArrays.year[yearIndex].enabled ? 'Collapse' : 'Expand')}}
                   </button>
                   <div v-if="groupedArrays.year[yearIndex].enabled" v-for="(monthVF, monthIndex) in yearVF" :key="monthIndex">
                     <div class="mt-1rem ml-2rem">
-                      <span class="text-base font-bold mr-05rem ledger-underline">{{ groupedArrays.year[yearIndex].year }}-{{ groupedArrays.month[yearIndex][monthIndex].month }}</span>
+                      <span class="text-base font-bold mr-0_5rem ledger-underline">{{ groupedArrays.year[yearIndex].year }}-{{ groupedArrays.month[yearIndex][monthIndex].month }}</span>
                       <button class="tb-c text-base toggle-link" type="button" v-on:click="toggleElements($event, groupedArrays.year[yearIndex], groupedArrays.month[yearIndex][monthIndex])">
                        {{(groupedArrays.month[yearIndex][monthIndex].enabled ? 'Collapse' : 'Expand')}}
                       </button>
@@ -779,7 +793,7 @@
                         <div class="mt-1rem ml-2rem">
                           <span v-if="viewByDate" class="text-sm font-bold ledger-underline">
                             {{ groupedArrays.year[yearIndex].year }}-{{ groupedArrays.month[yearIndex][monthIndex].month }}-{{ groupedArrays.day[yearIndex][monthIndex][dayIndex].day }}
-                          </span> <button v-if="viewByDate" class="tb-c text-sm mr-05rem toggle-link" type="button" v-on:click="toggleElements($event, groupedArrays.year[yearIndex], groupedArrays.month[yearIndex][monthIndex], groupedArrays.day[yearIndex][monthIndex][dayIndex])">
+                          </span> <button v-if="viewByDate" class="tb-c text-sm mr-0_5rem toggle-link" type="button" v-on:click="toggleElements($event, groupedArrays.year[yearIndex], groupedArrays.month[yearIndex][monthIndex], groupedArrays.day[yearIndex][monthIndex][dayIndex])">
                             {{(groupedArrays.day[yearIndex][monthIndex][dayIndex].enabled ? 'Collapse' : 'Expand')}}
                           </button>
                           <div class="mt-1rem mission-grid">
@@ -800,7 +814,7 @@
                               >
                                 <!-- Checkbox for selecting a mission -->
                                 <input v-if="multiViewMode == 'free'"
-                                  type="checkbox" class="ext-opt-check mr-05rem" :value="mission" :id="'multiViewMissionCb_' + mission.missionId"
+                                  type="checkbox" class="ext-opt-check mr-0_5rem" :value="mission" :id="'multiViewMissionCb_' + mission.missionId"
                                   v-on:change="e => {e.preventDefault(); handleMultiViewSelection(e, mission.missionId);}"
                                   :checked="multiViewFreeSelectIds.includes(mission.missionId)"
                                 ></input>
@@ -808,17 +822,17 @@
                                   class="text-sm mr-5 font-bold btn btn-outline-dark bg-transparent"
                                   type="button" v-on:click="viewSpecificMission(mission.missionId)"
                                 >
-                                  <span v-if="!viewByDate" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmission' : ((recolorDC && mission.isDubCap) ? 'text-dubcap' : 'text-gray-400'))">
+                                  <span v-if="!viewByDate" :class="getShipColorText(mission)">
                                     {{
                                       groupedArrays.year[yearIndex].year + '-' + 
                                       (groupedArrays.month[yearIndex][monthIndex].month < 10 ? '0' : '') + groupedArrays.month[yearIndex][monthIndex].month + '-' + 
                                       (groupedArrays.day[yearIndex][monthIndex][dayIndex].day < 10 ? '0' : '') + groupedArrays.day[yearIndex][monthIndex][dayIndex].day
                                     }}
                                   </span>
-                                  <span v-show="viewMissionTimes" :class="(missionBeingViewed == mission.missionId ? 'text-selectedmissiondarker' : ((recolorDC && mission.isDubCap) ? 'text-dubcapdarker' : 'text-gray-500'))">
+                                  <span v-show="viewMissionTimes" :class="getShipColorText(mission, true)">
                                     {{' ' + mission.launchTime}}
                                   </span>
-                                  <span class="text-gray-400 ml-05rem">
+                                  <span class="text-gray-400 ml-0_5rem">
                                     <span :class="durToTextClass(mission.durationType)">{{mission.shipString}}</span>
                                     <span v-if="mission.level != null && mission.level > 0"> ({{mission.level}}<span class="text-goldenstar">★</span>)</span>
                                     <img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
@@ -915,7 +929,7 @@
             </div>
           </div>
 
-          <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-075rem">
+          <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-0_75rem">
             <span class="h-20 font-bold text-gray-400" v-if="(lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">Mission Filter: </span>
             <button
               v-if="(lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered"
@@ -953,7 +967,7 @@
               <button
                 v-if="idle"
                 id="lifetime-filter-apply-button" type="submit"
-                class="mt-05rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="mt-0_5rem mr-1rem -ml-px relative p-0.5 text-center space-x-2 px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-darkerer hover:bg-dark_tab_hover disabled:opacity-50 disabled:hover:darker_tab_hover disabled:hover:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 v-bind:disabled="(lifetimeDataFilter === [] || lifetimeDataBeingFiltered || !lifetimeFilterHasChanged)"
               >
                 Apply Filter
@@ -963,11 +977,10 @@
 
           <div v-if="doesDataExist" class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
             <div id="lifetime-ss" class="mt-4" v-if="(doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">
-              <!--<screenshot-button v-if="screenshotsEnabled" element-id="lifetime-ss" schema-name="lifetime" @take="takeScreenshot"></screenshot-button>-->
               <span v-if="!lifetimeDataBeingFiltered && lifetimeDrops != null" class="ledger-underline text-base text-gray-400">
                 Data Coalesced from {{ lifetimeDrops.missionCount }} Missions <span v-if="lifetimeDropsExcludedCount != 0">({{lifetimeDropsExcludedCount}} Filtered Out)</span>
               </span>
-              <div class="mb-05rem">
+              <div class="mb-0_5rem">
                 <span>Options</span>
                 <br/>
                 <span class="mr-5">
@@ -979,7 +992,7 @@
                   <input id="lifetimeExpectedTotals" type="checkbox" v-bind:disabled="!canUseMennoData" v-model="lifetimeShowExpectedTotalsPref" class="ext-opt-check"/>
                 </span>
               </div>
-              <div class="mb-05rem">
+              <div class="mb-0_5rem">
                 <span>Sort method</span>
                 <br/>
                 <span class="mr-5">
@@ -1046,27 +1059,12 @@
         </footer>
       </div>
 
-      <div class="popup-selector-main overlay-ss h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
-        <div class="max-w-50vw bg-dark rounded-lg relative p-1rem">
-          <div class="text-gray-300 space-y-2 flex-auto flex-col text-center">
-            <span class="text-xl text-gray-400 mb-1rem">Screenshot in Progress</span><br/>
-            <hr class="mt-1rem mb-1rem w-full">
-            <span class="mt-05rem p-05rem text-lg">
-              A screenshot of the current view is being taken.<br>
-              This may take a while, depending on the number of elements displayed.<br>
-            </span> 
-            <hr class="mt-1rem mb-1rem w-full">
-            <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
-          </div>
-        </div>
-      </div>
-
       <div class="popup-selector-main overlay-menno h-full w-full z-40 fixed top-0 left-0 right-0 bottom-0 hidden items-center justify-center">
         <div class="max-w-50vw bg-dark rounded-lg relative p-1rem">
           <div class="text-gray-300 space-y-2 flex-auto flex-col text-center">
             <span class="text-xl text-gray-400 mb-1rem">Data Refresh in Progress</span><br/>
             <hr class="mt-1rem mb-1rem w-full">
-            <span class="mt-05rem p-05rem text-lg">
+            <span class="mt-0_5rem p-0_5rem text-lg">
               <a v-external-link target="_blank" class="url-link" href="https://github.com/menno-egginc/eggincdatacollection-docs/blob/main/DataEndpoints.md">Menno's Ship Data</a>
               is currently being loaded or refreshed.<br>
               This data is used to provide further insights to the drops of your ships,<br>
@@ -1095,7 +1093,7 @@
             <div v-if="appReleaseNotes !== ''" class="text-left flex-1 bg-darkerer overflow-auto gh-markdown-content max-h-60vh p-1rem rounded-md" v-html="markedParser(appReleaseNotes)"></div>
             <div class="mt-1rem flex-auto justify-center items-center">
               <a v-external-link class="items-center justify-center text-gray-200 hover:text-gray-300" href="https://github.com/DavidArthurCole/EggLedger/releases/latest">
-                <button class="min-w-30vw btn btn-outline-dark p-05rem pr-2rem pl-2rem rounded-md bg-blue-500 border-blue-600 hover:bg-blue-600 hover:border-blue-700">
+                <button class="min-w-30vw btn btn-outline-dark p-0_5rem pr-2rem pl-2rem rounded-md bg-blue-500 border-blue-600 hover:bg-blue-600 hover:border-blue-700">
                   Download
                 </button>
               </a>
@@ -1218,7 +1216,6 @@
             'full-filter': Vue.defineAsyncComponent(() => loadModule('./templates/FullFilter.vue', options)),
             'search-over-selector': Vue.defineAsyncComponent(() => loadModule('./templates/SearchOverSelector.vue', options)),
             'ship-display': Vue.defineAsyncComponent(() => loadModule('./templates/ShipDisplay.vue', options)),
-            'screenshot-button': Vue.defineAsyncComponent(() => loadModule('./templates/ScreenshotButton.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1482,13 +1479,14 @@
             Vue.watch(lifetimeSortMethod, () => reSortLifetime());
             const reSortLifetime = () => {
               if(lifetimeDrops.value != null && lifetimeDrops.value.artifacts != null && lifetimeDrops.value.stones != null && lifetimeDrops.value.stoneFragments != null && lifetimeDrops.value.ingredients != null){
-                var useThisFunc;
-                switch(lifetimeSortMethod.value){
-                  case 'default': useThisFunc = sortGroupAlreadyCombed; break;
-                  case 'iv': useThisFunc = inventoryVisualizerSort; break;
-                  case 'random': useThisFunc = shuffle; break;
-                  case 'count': useThisFunc = sortGroupByCount; break;
-                }
+                const useThisFunc = (() => {
+                  switch(lifetimeSortMethod.value){
+                    case 'default': return sortGroupAlreadyCombed;
+                    case 'iv': return inventoryVisualizerSort;
+                    case 'random': return shuffle;
+                    case 'count': return sortGroupByCount;
+                  }
+                })();
                 lifetimeDrops.value.artifacts = useThisFunc(lifetimeDrops.value.artifacts);
                 lifetimeDrops.value.stones = useThisFunc(lifetimeDrops.value.stones);
                 lifetimeDrops.value.stoneFragments = useThisFunc(lifetimeDrops.value.stoneFragments);
@@ -1793,10 +1791,17 @@
             const viewByDate = Vue.ref(false);
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
+            const recolorBC = Vue.ref(false);
             const useGifsForRarity = Vue.ref(false);
             Vue.watch(useGifsForRarity, async () => {
               await window.setUseGifsForRarity(useGifsForRarity.value);
             });
+            const getShipColorText = (missionData, altMode = false) => {
+              if(missionBeingViewed === missionData.missionId) return altMode ? 'text-selectedmissiondarker' : 'text-selectedmission';
+              if(recolorBC.value && missionData.isBuggedCap) return altMode ? 'text-buggedcapdarker' : 'text-buggedcap';
+              if(recolorDC.value && missionData.isDubCap) return altMode ? 'text-dubcapdarker' : 'text-dubcap';
+              return altMode ? 'text-gray-500': 'text-gray-400';
+            };
             const multiViewMissionData = Vue.ref([]);
             const missionsBeingViewed = Vue.ref(null);
             const viewMissionData = Vue.ref({});
@@ -1831,9 +1836,7 @@
                 if (!acc[key]) {
                   acc[key] = obj;
                   acc[key].count = 1;
-                }else{
-                  acc[key].count++;
-                }
+                } else acc[key].count++;
                 return acc;
               }, {});
             };
@@ -2612,49 +2615,19 @@
             Vue.watch(defaultViewMode, async () => {
               await window.setDefaultViewMode(defaultViewMode.value);
             });
-            const screenshotsEnabled = Vue.ref(false);
-            Vue.watch(screenshotsEnabled, async () => {
-              await window.setScreenshotsEnabled(screenshotsEnabled.value);
-            });
-            const takeScreenshot = async (eleOrB64, schemaName) => {
-              const schemaType = {
-                'schema': schemaName,
-                'dtString': new Date().toLocaleString().replace(/,/g, '').replace(/:/g, '-').replace(/\//g, '-').replace(/ /g, '_'),
-              };
-              const element = document.getElementById(eleOrB64);
-              if(!element) {
-                schemaType.b64Data = eleOrB64; //If it's a base64 string 
-                //Pass the data back to go
-                await window.saveScreenshot(schemaType);
-              } else { //If it's an element id
-                openSSModal();
-                html2canvas(element, {
-                  logging: false,
-                  useCORS: true,
-                  onrendered: async function(canvas) {
-                    const imgData = canvas.toDataURL('image/png');
-                    schemaType.b64Data = imgData;
-                    //Pass the data back to go
-                    await window.saveScreenshot(schemaType);
-                  }
-                });
-                closeSSModal();
-              }
-            };
 
             const viewSpecificMission = async (missionId, returnValues = false) => {
               //Do not allow viewing a mission while data is being fetched - prevent collisions
-              if(isFetching.value) return false; 
+              if(isFetching.value) return false;
               const newMissionViewData = await getSpecificMissionData(loadedEid.value, missionId, true);
               if(newMissionViewData == null) return false;
-              var useThisFunc;
-              switch(viewMissionSortMethod.value){
-                case 'default': useThisFunc = sortGroupAlreadyCombed; break;
-                case 'iv': useThisFunc = inventoryVisualizerSort; break;
-              }
-
-              var mennoTargetInt = newMissionViewData.shipInfo.targetInt;
-              if(mennoTargetInt == -1) mennoTargetInt = 1000; //Accounting for "Unknown" targets
+              const useThisFunc = (() => {
+                switch(viewMissionSortMethod.value){
+                  case 'default': return sortGroupAlreadyCombed;
+                  case 'iv': return inventoryVisualizerSort;
+                }
+              })();
+              const mennoTargetInt = newMissionViewData.shipInfo.targetInt == -1 ? 1000 : newMissionViewData.shipInfo.targetInt; //Accounting for "Unknown" targets
               const mennoShip = newMissionViewData.shipInfo.ship;
               const mennoDuration = newMissionViewData.shipInfo.durationType;
               const mennoLevel = newMissionViewData.shipInfo.level;
@@ -2672,11 +2645,11 @@
               newMissionViewData.stones = useThisFunc(newMissionViewData?.stones);
               newMissionViewData.stoneFragments = useThisFunc(newMissionViewData?.stoneFragments);
               newMissionViewData.ingredients = useThisFunc(newMissionViewData?.ingredients);
-              missionBeingViewed.value = missionId;
               
               //Return the data if requested, instead of viewing it
               if(returnValues) return newMissionViewData;
 
+              missionBeingViewed.value = missionId;
               viewMissionData.value = newMissionViewData;
               openMissionOverlay();
             };
@@ -2783,6 +2756,18 @@
               if(pref != null && pref != '') setPreferredBrowser(pref);
               prefBrowserDropdownOpen.value = false;
             };
+            const resolutionPrefX = Vue.ref(0);
+            const resolutionPrefY = Vue.ref(0);
+            const scalingFactor = Vue.ref(0.0);
+            Vue.watch(resolutionPrefX, async () => {
+              await window.setDefaultResolution(resolutionPrefX.value, resolutionPrefY.value);
+            });
+            Vue.watch(resolutionPrefY, async () => {
+              await window.setDefaultResolution(resolutionPrefX.value, resolutionPrefY.value);
+            });
+            Vue.watch(scalingFactor, async () => {
+              await window.setDefaultScalingFactor(scalingFactor.value);
+            });
 
             Vue.onMounted(async () => {
               //Reload the data
@@ -2795,16 +2780,21 @@
               if(['default', 'iv'].indexOf(defaultViewMode.value) > -1){
                 lifetimeSortMethod.value = defaultViewMode.value;
               }
-              screenshotsEnabled.value = await window.getScreenshotsEnabled();
 
               // Check for updates and destructure the response
               const [hasUpdate, releaseNotes] = await window.checkForUpdates();
               appHasUpdate.value = hasUpdate;
               appReleaseNotes.value = releaseNotes;
 
-              //Browser preference
+              //Browser preferences
               preferredBrowser.value = await getPreferredBrowser();
               allBrowsers.value = await window.getDetectedBrowsers();
+
+              //Resolution & scaling preferences
+              const [resX, resY] = await window.getDefaultResolution();
+              resolutionPrefX.value = resX;
+              resolutionPrefY.value = resY;
+              scalingFactor.value = await window.getDefaultScalingFactor();
 
               //Load configs
               artifactConfigs.value = await window.getAfxConfigs();
@@ -2905,14 +2895,15 @@
               prefBrowserDropdownOpen,
               preferredBrowserSelectRef,
               autoRefreshMennoPreference,
-              screenshotsEnabled,
               ssModalOpen,
+              resolutionPrefX,
+              resolutionPrefY,
+              scalingFactor,
               getBrowserDisplayName,
               getPreferredBrowser,
               setPreferredBrowser,
               openPrefBrowserDropdown,
               closePrefBrowserDropdown,
-              takeScreenshot,
               closeSSModal,
               openSSModal,
 
@@ -2975,6 +2966,7 @@
               hideOptions,
               mennoModalOpen,
               canUseMennoData,
+              getShipColorText,
               toggleOptions,
               viewMissionsOfEid,
               toggleElements,
@@ -3001,6 +2993,7 @@
               viewByDate,
               viewMissionTimes,
               recolorDC,
+              recolorBC,
               useGifsForRarity,
               loadedEid,
               allLoadedMissions,

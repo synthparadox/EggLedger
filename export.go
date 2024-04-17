@@ -3,14 +3,12 @@ package main
 import (
 	"archive/zip"
 	"bytes"
-	"encoding/base64"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -267,36 +265,6 @@ func exportMissionsToXlsx(missions []*mission, path string) error {
 	}
 
 	if err := os.Rename(temp.Name(), path); err != nil {
-		return wrap(err)
-	}
-
-	return nil
-}
-
-func exportB64ImageToFile(b64 string, path string) error {
-	action := fmt.Sprintf("exporting base64 image to %s", path)
-	wrap := func(err error) error {
-		return errors.Wrap(err, "error "+action)
-	}
-
-	parts := strings.Split(b64, ";base64,")
-	if len(parts) != 2 {
-		fmt.Println("Invalid Base64 image format")
-		return wrap(nil)
-	}
-	base64Data := parts[1]
-
-	// Decode base64 to binary data
-	decoded, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		fmt.Println("Base64 decoding error:", err)
-		return wrap(err)
-	}
-
-	// Write binary data to a PNG file
-	err = os.WriteFile(path, decoded, 0644)
-	if err != nil {
-		fmt.Println("Error writing PNG file:", err)
 		return wrap(err)
 	}
 
