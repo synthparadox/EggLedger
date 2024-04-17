@@ -70,17 +70,17 @@
               </span> <br>
               <div class="flex flex-row items-center pl-0_5rem">
                 <div class="flex flex-col w-full max-w-10rem text-center mt-0_5rem">
-                  <input type="number" class="number-input text-sm bg-darker" v-model="resolutionPrefX"/>
+                  <input type="number" id="resPrefX" class="number-input text-sm bg-darker" v-model="resolutionPrefX"/>
                   <span class="text-sm text-gray-400 mt-0_5rem">Width<br>(<span class="text-gray-300">X</span>)</span>
                 </div>
                 <span class="text-xl font-bold ml-0_5rem mr-0_5rem mb-2_5rem">x</span>
                 <div class="flex flex-col w-full max-w-10rem text-center mt-0_5rem">
-                  <input type="number" class="number-input text-sm bg-darker" v-model="resolutionPrefY"/>
+                  <input type="number" id="resPrefY" class="number-input text-sm bg-darker" v-model="resolutionPrefY"/>
                   <span class="text-sm text-gray-400 mt-0_5rem">Height<br>(<span class="text-gray-300">Y</span>)</span>
                 </div>
                 <span class="text-xl font-bold ml-0_5rem mr-0_5rem mb-2_5rem">@</span>
                 <div class="flex flex-col w-full max-w-5rem text-center mt-0_5rem">
-                  <input type="number" class="number-input text-sm bg-darker" v-model="scalingFactor"/>
+                  <input type="number" id="scalePref" class="number-input text-sm bg-darker" v-model="scalingFactor"/>
                   <span class="text-sm text-gray-400 mt-0_5rem">Scaling Factor</span>
                 </div>
               </div>
@@ -1615,6 +1615,7 @@
             };
 
             const lifetimeHasExactlyOneConfiguration = (firstMatches) => {
+              if(firstMatches == null) return false;
               return (lifetimeHasExactlyOneShip.value || firstMatches[0] != -1) &&
                 (lifetimeHasExactlyOneDuration.value || firstMatches[1] != -1) &&
                 (lifetimeHasExactlyOneLevel.value || firstMatches[2] != -1) &&
@@ -2572,7 +2573,7 @@
 
             const getSpecificMissionData = async (eid, missionId, extendedInfo) => {
               const shipInfo = await window.getShipInfo(eid, missionId);
-              if(!shipInfo.ship || !shipInfo.missionId) return null;
+              if(shipInfo.ship == null || shipInfo.ship < 0 || !shipInfo.missionId) return null;
               const allDrops = await window.getShipDrops(eid, missionId);
               if(allDrops == null) return null;
 
