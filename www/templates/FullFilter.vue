@@ -179,7 +179,8 @@
                     { text: 'Duration', value: 'duration' },
                     { text: 'Level', value: 'level' },
                     { text: 'Target', value: 'target' },
-                    { text: 'Double Cap', value: 'dubcap' }
+                    { text: 'Double Cap', value: 'dubcap' },
+                    { text: 'Bugged Cap', value: 'buggedcap'}
                 ];
                 if (this.isLifetime) return commonOptions;
                 return commonOptions.concat({ text: 'Drops/Loot', value: 'drops' }, { text: 'Launch Date', value: 'launchDT' }, { text: 'Return Date', value: 'returnDT' });
@@ -208,7 +209,8 @@
                         { text: 'before', value: '<' },
                         { text: 'after', value: '>' }
                     ];
-                    case 'dubcap': return [
+                    case 'dubcap': 
+                    case 'buggedcap': return [
                         { text: 'is', value: '=' },
                     ];
                 }
@@ -226,7 +228,7 @@
                     case 'duration': return Array.from({ length: 4 }, (_, index) => ({
                         text: Array("Short", "Standard", "Extended", "Tutorial")[index],
                         value: index,
-                        styleClass: Array("text-short", "text-standard", "text-extended", "text-tutorial")[index]
+                        styleClass: Array("text-duration-0", "text-duration-1", "text-duration-2", "text-duration-3")[index]
                     }));
                     case 'level': return Array.from({ length: 9 }, (_, index) => ({
                         text: index + '★',
@@ -250,7 +252,8 @@
                         filteredConfigs.unshift({ text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare', imagePath: 'rare.gif' });
                         return filteredConfigs;
                     }
-                    case 'dubcap': return [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }];
+                    case 'dubcap':
+                    case 'buggedcap': return [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }];
                     default: return [];
                 }
             },

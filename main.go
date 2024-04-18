@@ -50,7 +50,6 @@ var (
 	_appIsTranslocated bool
 
 	_devMode               = os.Getenv("DEV_MODE") != ""
-	_dateFormat            = "%02d:%02d:%02d"
 	_eiAfxConfigErr        = eiafx.LoadConfig()
 	_eiAfxConfigMissions   []*ei.ArtifactsConfigurationResponse_MissionParameters
 	_eiAfxConfigArtis      []*ei.ArtifactsConfigurationResponse_ArtifactParameters
@@ -113,29 +112,6 @@ type ExportedFile struct {
 	EID      string `json:"eid"`
 }
 
-type LoadedMission struct {
-	LaunchDay      int32                        `json:"launchDay"`
-	LaunchMonth    int32                        `json:"launchMonth"`
-	LaunchYear     int32                        `json:"launchYear"`
-	LaunchTime     string                       `json:"launchTime"`
-	ReturnDay      int32                        `json:"returnDay"`
-	ReturnMonth    int32                        `json:"returnMonth"`
-	ReturnYear     int32                        `json:"returnYear"`
-	ReturnTime     string                       `json:"returnTime"`
-	MissiondId     string                       `json:"missionId"`
-	Ship           *ei.MissionInfo_Spaceship    `json:"ship"`
-	ShipString     string                       `json:"shipString"`
-	DurationType   *ei.MissionInfo_DurationType `json:"durationType"`
-	DurationString string                       `json:"durationString"`
-	Level          int32                        `json:"level"`
-	Capacity       int32                        `json:"capacity"`
-	NominalCapcity int32                        `json:"nominalCapacity"`
-	IsDubCap       bool                         `json:"isDubCap"`
-	IsBuggedCap    bool                         `json:"isBuggedCap"`
-	Target         string                       `json:"target"`
-	TargetInt      int32                        `json:"targetInt"`
-}
-
 type MissionDrop struct {
 	Id           int32   `json:"id"`
 	SpecType     string  `json:"specType"`
@@ -148,7 +124,7 @@ type MissionDrop struct {
 	IVOrder      int32   `json:"ivOrder"`
 }
 
-type ExportAccount struct {
+type DatabaseAccount struct {
 	Id           string `json:"id"`
 	Nickname     string `json:"nickname"`
 	MissionCount int    `json:"missionCount"`
@@ -320,21 +296,7 @@ func initNominalShipCapacities() {
 	}
 }
 
-func isDubCap(mission *ei.CompleteMissionResponse) bool {
-	nominalCapcity := _nominalShipCapacities[mission.Info.GetShip()][mission.Info.GetDurationType()][mission.Info.GetLevel()]
-	if float32(mission.Info.GetCapacity()) >= (nominalCapcity * 1.7) { //1.7 to account for rounding errors (1.5x is the max with ER)
-		return true
-	} else {
-		return false
-	}
-}
-
-func isBuggedCap(mission *ei.CompleteMissionResponse) bool {
-	//If it was launched between 2024-04-10 00:00 EST (1712721600 ) and 2024-04-16 13:00 EST (1713286800), it's bugged
-	return mission.Info.GetStartTimeDerived() > 1712721600 && mission.Info.GetStartTimeDerived() < 1713286800
-}
-
-func viewMissionsOfId(eid string) ([]LoadedMission, error) {
+func viewMissionsOfId(eid string) ([]DatabaseMission, error) {
 
 	if len(_nominalShipCapacities) == 0 {
 		initNominalShipCapacities()
@@ -347,48 +309,10 @@ func viewMissionsOfId(eid string) ([]LoadedMission, error) {
 		return nil, err
 	}
 	//Array of LoadedMission
-	missionArr := []LoadedMission{}
+	missionArr := []DatabaseMission{}
 
 	for _, completeMission := range completeMissions {
-
-		info := completeMission.Info
-		launchDateTimeObject := time.Unix(int64(*info.StartTimeDerived), 0)
-		ltH, ltM, ltS := launchDateTimeObject.Clock()
-		launchTime := fmt.Sprintf(_dateFormat, ltH, ltM, ltS)
-		returnTimeObject := launchDateTimeObject.Add(time.Duration(info.GetDurationSeconds() * float64(time.Second)))
-		rtH, rtM, rtS := returnTimeObject.Clock()
-		returnTime := fmt.Sprintf(_dateFormat, rtH, rtM, rtS)
-
-		missionInst := LoadedMission{
-			LaunchDay:   int32(launchDateTimeObject.Day()),
-			LaunchMonth: int32(launchDateTimeObject.Month()),
-			LaunchYear:  int32(launchDateTimeObject.Year()),
-			LaunchTime:  launchTime,
-
-			ReturnDay:   int32(returnTimeObject.Day()),
-			ReturnMonth: int32(returnTimeObject.Month()),
-			ReturnYear:  int32(returnTimeObject.Year()),
-			ReturnTime:  returnTime,
-
-			DurationString: info.GetDurationString(),
-
-			MissiondId:     info.GetIdentifier(),
-			Ship:           info.Ship,
-			ShipString:     info.Ship.Name(),
-			DurationType:   info.DurationType,
-			Level:          int32(info.GetLevel()),
-			Capacity:       int32(info.GetCapacity()),
-			NominalCapcity: int32(_nominalShipCapacities[info.GetShip()][info.GetDurationType()][info.GetLevel()]),
-			IsDubCap:       isDubCap(completeMission),
-			IsBuggedCap:    isBuggedCap(completeMission),
-			Target:         properTargetName(info.TargetArtifact),
-		}
-		if missionInst.Target == "" {
-			missionInst.TargetInt = -1
-		} else {
-			missionInst.TargetInt = int32(info.GetTargetArtifact())
-		}
-		missionArr = append(missionArr, missionInst)
+		missionArr = append(missionArr, compileMissionInformation(completeMission))
 	}
 
 	return missionArr, nil
@@ -847,14 +771,22 @@ func main() {
 		}
 	})
 
-	ui.MustBind("getExistingData", func() []ExportAccount {
-		knownAccounts := []ExportAccount{}
+	ui.MustBind("getExistingData", func() []DatabaseAccount {
+		knownAccounts := []DatabaseAccount{}
 		for _, knownAccount := range _storage.KnownAccounts {
 			ids, err := db.RetrievePlayerCompleteMissionIds(knownAccount.Id)
 			if err != nil {
 				log.Error(err)
 			} else if len(ids) > 0 {
-				knownAccounts = append(knownAccounts, ExportAccount{Id: knownAccount.Id, Nickname: knownAccount.Nickname, MissionCount: len(ids), EBString: knownAccount.EBString, AccountColor: knownAccount.AccountColor})
+				knownAccounts = append(knownAccounts,
+					DatabaseAccount{
+						Id:           knownAccount.Id,
+						Nickname:     knownAccount.Nickname,
+						MissionCount: len(ids),
+						EBString:     knownAccount.EBString,
+						AccountColor: knownAccount.AccountColor,
+					},
+				)
 			}
 		}
 		return knownAccounts
@@ -869,12 +801,12 @@ func main() {
 		return ids
 	})
 
-	ui.MustBind("viewMissionsOfEid", func(eid string) []LoadedMission {
-		if loadedMissions, err := viewMissionsOfId(eid); err != nil {
+	ui.MustBind("viewMissionsOfEid", func(eid string) []DatabaseMission {
+		if dbMissions, err := viewMissionsOfId(eid); err != nil {
 			log.Error(err)
 			return nil
 		} else {
-			return loadedMissions
+			return dbMissions
 		}
 	})
 
@@ -1049,49 +981,8 @@ func main() {
 		return shipDrops
 	})
 
-	ui.MustBind("getShipInfo", func(playerId string, shipId string) LoadedMission {
-		//Get the mission from the database
-		completeMission, err := db.RetrieveCompleteMission(playerId, shipId)
-		if err != nil {
-			log.Error(err)
-			return LoadedMission{}
-		}
-
-		info := completeMission.Info
-		launchDateTimeObject := time.Unix(int64(*info.StartTimeDerived), 0)
-		ltH, ltM, ltS := launchDateTimeObject.Clock()
-		launchTime := fmt.Sprintf(_dateFormat, ltH, ltM, ltS)
-		returnTimeObject := launchDateTimeObject.Add(time.Duration(*info.DurationSeconds * float64(time.Second)))
-		rtH, rtM, rtS := returnTimeObject.Clock()
-		returnTime := fmt.Sprintf(_dateFormat, rtH, rtM, rtS)
-
-		missionInst := LoadedMission{
-			LaunchDay:   int32(launchDateTimeObject.Day()),
-			LaunchMonth: int32(launchDateTimeObject.Month()),
-			LaunchYear:  int32(launchDateTimeObject.Year()),
-			LaunchTime:  launchTime,
-
-			ReturnDay:   int32(returnTimeObject.Day()),
-			ReturnMonth: int32(returnTimeObject.Month()),
-			ReturnYear:  int32(returnTimeObject.Year()),
-			ReturnTime:  returnTime,
-
-			DurationString: info.GetDurationString(),
-
-			MissiondId:     *info.Identifier,
-			Ship:           info.Ship,
-			ShipString:     info.Ship.Name(),
-			DurationType:   info.DurationType,
-			Level:          int32(info.GetLevel()),
-			Capacity:       int32(info.GetCapacity()),
-			NominalCapcity: int32(_nominalShipCapacities[info.GetShip()][info.GetDurationType()][info.GetLevel()]),
-			IsDubCap:       isDubCap(completeMission),
-			IsBuggedCap:    isBuggedCap(completeMission),
-			Target:         properTargetName(info.TargetArtifact),
-			TargetInt:      int32(info.GetTargetArtifact()),
-		}
-
-		return missionInst
+	ui.MustBind("getMissionInfo", func(playerId string, missionId string) DatabaseMission {
+		return getMissionInformation(playerId, missionId)
 	})
 
 	ui.MustBind("openFile", func(file string) {

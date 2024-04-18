@@ -1,10 +1,10 @@
 <template>
-    <div v-if="ifCount > 0">
+    <div v-if="itemArray.length > 0">
         <div :class="labelClassList">
-            {{ labelDisplayValue }} ({{ ifCount.toString() }})
+            {{ labelDisplayValue }} ({{ itemArray.reduce((acc, item) => acc + item.count, 0).toString() }})
         </div>
         <div :class="getRepeatClass()">
-            <div :class="getInnerRepeatClass()" v-for="(item, itemIndex) in itemArray">
+            <div :class="getInnerRepeatClass()" v-for="(item, _) in itemArray">
                 <a v-external-link :class="getAClass(item)"
                     target="_blank" :href="afExplorerName(item, getSpecPathOffset())">
                     <img class="h-full w-full" :alt="item.gameName" :src="specPath(item, getSpecPathOffset())"/>
@@ -69,7 +69,6 @@
             useGifsForRarity: Boolean,
             labelClassList: String,
             labelDisplayValue: String,
-            ifCount: Number,
             itemArray: Array,
             type: String,
             ledgerType: String,

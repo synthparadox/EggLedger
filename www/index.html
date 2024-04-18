@@ -16,7 +16,7 @@
         <div class="h-11 flex-shrink-0 bg-dark">
           <div class="h-full flex items-end w-full mx-auto px-4 space-x-1.5 bg-dark border-b border-gray-300">
             <div
-              v-for="tab in [UITab.Ledger, UITab.MissionData, UITab.LifetimeDrops, UITab.Settings, UITab.About]"
+              v-for="tab in [UITab.Ledger, UITab.MissionData, UITab.LifetimeData, UITab.Settings, UITab.About]"
               class="relative -bottom-px px-4 pt-1.5 pb-1 text-sm font-medium text-gray-400 border border-darker_tab border-300 rounded-t-md"
               v-bind:class="tab === activeTab ? 'bg-dark_tab border-b-transparent' : 'bg-darker_tab hover:bg-dark_tab_hover cursor-pointer'"
               v-on:click="activeTab = tab" v-bind:key="tab">
@@ -214,7 +214,7 @@
               </div>
               <button
                 v-if="idle" type="submit" class="fetch-button disabled:hover:darker_tab_hover"
-                v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid || lifetimeDropsBeingLoaded || eidMissionsBeingLoaded"
+                v-bind:disabled="playerId.trim() === '' || !isPlayerIdValid || lifetimeDataBeingLoaded || eidMissionsBeingLoaded"
               >
                 Fetch
               </button>
@@ -310,7 +310,7 @@
                 >) am the active developer and maintainer.
               </p> 
               <p>
-                To report issues, ask for changes, and more generally, to reach me with any information, reach out on discord <span class="text-short">@davidarthurcole</span>, or <a 
+                To report issues, ask for changes, and more generally, to reach me with any information, reach out on discord <span class="text-duration-0">@davidarthurcole</span>, or <a 
                   v-external-link
                   href="https://github.com/DavidArthurCole/EggLedger/issues/new/choose"
                   target="_blank"
@@ -530,7 +530,7 @@
                 </svg>
               </button>
               <ship-display
-                :top-level-bool="(viewMissionData && viewMissionData != {} && viewMissionData.shipInfo != null)"
+                :top-level-bool="(viewMissionData && viewMissionData != {} && viewMissionData.missionInfo != null)"
                 :view-mission-data="viewMissionData" :is-multi="false"
                 :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
                 :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDropsPerShip"
@@ -562,7 +562,7 @@
                   >
                     <ship-display
                       :is-first="missionDataIndex == 0" :is-last="missionDataIndex == multiViewMissionData.length - 1"
-                      :top-level-bool="missionData && missionData != {} && missionData.shipInfo != null"
+                      :top-level-bool="missionData && missionData != {} && missionData.missionInfo != null"
                       :view-mission-data="missionData" :is-multi="true"
                       :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
                       :menno-mission-data="missionData.mennoData" :show-expected-drops="showExpectedDropsPerShip"
@@ -830,12 +830,12 @@
                                     }}
                                   </span>
                                   <span v-show="viewMissionTimes" :class="getShipColorText(mission, true)">
-                                    {{' ' + mission.launchTime}}
+                                    {{' ' + hhmmss(LedgerDate(mission.launchDT))}}
                                   </span>
                                   <span class="text-gray-400 ml-0_5rem">
-                                    <span :class="durToTextClass(mission.durationType)">{{mission.shipString}}</span>
+                                    <span :class="'text-duration-' + mission.durationType">{{mission.shipString}}</span>
                                     <span v-if="mission.level != null && mission.level > 0"> ({{mission.level}}<span class="text-goldenstar">★</span>)</span>
-                                    <img v-if="targetImage(mission.target) != ''" v-bind:src="targetImage(mission.target)[0]" :alt="targetImage(mission.target)[1]" class="target-ico" />
+                                    <target-display :target="mission.target"></target-display>
                                   </span>
                                 </button>
                               </div>
@@ -858,7 +858,7 @@
           </div>
         </div>
 
-        <div v-show="activeTab === UITab.LifetimeDrops" class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
+        <div v-show="activeTab === UITab.LifetimeData" class="flex-1 flex flex-col w-full mx-auto px-4 space-y-3 overflow-hidden bg-darker">
           <search-over-selector
             :item-list="lifetimeTargetSelectList"
             ledger-type="target" :is-lifetime="true"
@@ -873,7 +873,7 @@
             v-on:submit="event => {
               event.preventDefault();
               clearLifetimeFilter();
-              viewLifetimeDropsOfEid();
+              viewLifetimeDataOfEid();
           }">
             <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
               <!-- Overlay to tag input with number of missions -->
@@ -910,7 +910,7 @@
               </ul>
             </div>
             <button class="-ml-px relative w-20 text-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-400 filter-button"
-            v-if="idle" type="submit" v-bind:disabled="!idle || (selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || lifetimeDropsBeingLoaded)">
+            v-if="idle" type="submit" v-bind:disabled="!idle || (selectedLifetimeAccount === null || selectedLifetimeAccount == '' || objectedExistingData.find(a => a.id == selectedLifetimeAccount) == null || lifetimeDataBeingLoaded)">
               View
             </button>
           </form>
@@ -923,16 +923,16 @@
               <div class="h-3 relative rounded-full overflow-hidden mt-1">
                 <div class="w-full h-full bg-dark absolute"></div>
                 <div class="h-full absolute rounded-full bg-green-500"
-                  v-bind:style="{ width: lifetimeDropsLoadedProgress.percentageDone }"
+                  v-bind:style="{ width: lifetimeDataLoadedProgress.percentageDone }"
                 ></div>
               </div>
             </div>
           </div>
 
           <div v-if="doesDataExist" class="min-h-7 px-2 py-1 text-gray-400 bg-darkest rounded-md tabular-nums overflow-auto mt-0_75rem">
-            <span class="h-20 font-bold text-gray-400" v-if="(lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">Mission Filter: </span>
+            <span class="h-20 font-bold text-gray-400" v-if="(lifetimeData != null && !lifetimeDataBeingLoaded) || lifetimeDataBeingFiltered">Mission Filter: </span>
             <button
-              v-if="(lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered"
+              v-if="(lifetimeData != null && !lifetimeDataBeingLoaded) || lifetimeDataBeingFiltered"
               id="toggleLifetimeFilterButton"
               class="text-base toggle-link" 
               type="button" 
@@ -946,11 +946,11 @@
             <form 
               id="lifetimeFilterForm"
               name="lifetimeFilterForm"
-              v-if="(!hideLifetimeFilter && lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered"
+              v-if="(!hideLifetimeFilter && lifetimeData != null && !lifetimeDataBeingLoaded) || lifetimeDataBeingFiltered"
               class="filter-form text-xs"
               v-on:submit="event => {
                 event.preventDefault();
-                viewLifetimeDropsOfEid(true);
+                viewLifetimeDataOfEid(true);
               }"
             >
               <full-filter
@@ -976,16 +976,16 @@
           </div>
 
           <div v-if="doesDataExist" class="flex-1 px-2 py-1 overflow-auto shadow-sm block text-xs font-mono text-gray-300 bg-darkest rounded-md text-center">
-            <div id="lifetime-ss" class="mt-4" v-if="(doesDataExist && lifetimeDrops != null && !lifetimeDropsBeingLoaded) || lifetimeDataBeingFiltered">
-              <span v-if="!lifetimeDataBeingFiltered && lifetimeDrops != null" class="ledger-underline text-base text-gray-400">
-                Data Coalesced from {{ lifetimeDrops.missionCount }} Missions <span v-if="lifetimeDropsExcludedCount != 0">({{lifetimeDropsExcludedCount}} Filtered Out)</span>
+            <div id="lifetime-ss" class="mt-4" v-if="(doesDataExist && lifetimeData != null && !lifetimeDataBeingLoaded) || lifetimeDataBeingFiltered">
+              <span v-if="!lifetimeDataBeingFiltered && lifetimeData != null" class="ledger-underline text-base text-gray-400">
+                Data compiled from {{ lifetimeData.missionCount }} Missions <span v-if="lifetimeDataExcludedCount != 0">({{lifetimeDataExcludedCount}} Filtered Out)</span>
               </span>
               <div class="mb-0_5rem">
                 <span>Options</span>
                 <br/>
                 <span class="mr-5">
-                  <label for="lifetimeDropsPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
-                  <input id="lifetimeDropsPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
+                  <label for="lifetimeDataPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
+                  <input id="lifetimeDataPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
                 </span>
                 <span v-if="lifetimeAllowExpectedTotals">
                   <label for="lifetimeSortDefault" class="ext-opt-label">Show 'Expected Total Drops'</label>
@@ -1013,12 +1013,20 @@
                 </span>
               </div>
               <drop-display-container
+                v-if="!lifetimeDataBeingFiltered && lifetimeData != null && !lifetimeDataBeingLoaded"
                 :use-gifs-for-rarity="useGifsForRarity" ledger-type="lifetime"
                 :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
-                :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeDrops.missionCount"
-                :data="lifetimeDrops" :menno-mission-data="lifetimeMennoMissionData"
+                :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeData.missionCount"
+                :data="lifetimeData" :menno-mission-data="lifetimeMennoMissionData"
                 :show-expected-drops="lifetimeShowExpectedTotals"
               ></drop-display-container>
+              <div v-else class="max-w-half">
+                <hr class="mt-1rem mb-1rem w-full">
+                <span class="mt-0_5rem p-0_5rem text-lg">
+                  Lifetime data is being compiled, please wait...
+                </span><br>
+                <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
+              </div>
             </div>
           </div>
 
@@ -1128,7 +1136,7 @@
       // - getAfxConfigs(): PossibleArtifact[]
       // - getPossibleTargets(): PossibleTarget[]
       // - getShipDrops(playerId string, shipId string): MissionDrop[]
-      // - getShipInfo(playerId string, shipId string): LoadedMission
+      // - getMissionInfo(playerId string, shipId string): LoadedMission
       // - isMennoRefreshNeeded(): bool
       // - refreshMennoData(): void
       // - getMennoData(ship int, shipDuration int, shipLevel int, targetArtifact int): ConfigurationItem[]
@@ -1145,10 +1153,15 @@
         const appIsTranslocated = await window.appIsTranslocated();
         const previouslyKnownAccounts = (await window.knownAccounts()) ?? [];
 
+        //Extension of Date that takes a UNIX timestamp and returns a date object
+        const LedgerDate = (timestamp) => {
+          return new Date(timestamp * 1000);
+        }
+
         const UITab = {
           Ledger: 'Ledger',
           MissionData: 'Mission Data',
-          LifetimeDrops: 'Lifetime Drops',
+          LifetimeData: 'Lifetime Data',
           About: 'About',
           Settings: 'Settings',
         };
@@ -1216,6 +1229,7 @@
             'full-filter': Vue.defineAsyncComponent(() => loadModule('./templates/FullFilter.vue', options)),
             'search-over-selector': Vue.defineAsyncComponent(() => loadModule('./templates/SearchOverSelector.vue', options)),
             'ship-display': Vue.defineAsyncComponent(() => loadModule('./templates/ShipDisplay.vue', options)),
+            'target-display': Vue.defineAsyncComponent(() => loadModule('./templates/TargetDisplay.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1366,7 +1380,7 @@
               if(account != null && account.id != null && account.id.trim() !== '') selectedLifetimeAccount.value = account.id;
               lifetimeAccountDropdownOpen.value = false;
             };
-            const lifetimeDrops = Vue.ref(null);
+            const lifetimeData = Vue.ref(null);
             const lifetimeFilterTopLevel = Vue.ref([]);
             const lifetimeFilterOperators = Vue.ref([]);
             const lifetimeFilterValues = Vue.ref([]);
@@ -1478,7 +1492,7 @@
             const lifetimeSortMethod = Vue.ref('default');
             Vue.watch(lifetimeSortMethod, () => reSortLifetime());
             const reSortLifetime = () => {
-              if(lifetimeDrops.value != null && lifetimeDrops.value.artifacts != null && lifetimeDrops.value.stones != null && lifetimeDrops.value.stoneFragments != null && lifetimeDrops.value.ingredients != null){
+              if(lifetimeData.value != null && lifetimeData.value.artifacts != null && lifetimeData.value.stones != null && lifetimeData.value.stoneFragments != null && lifetimeData.value.ingredients != null){
                 const useThisFunc = (() => {
                   switch(lifetimeSortMethod.value){
                     case 'default': return sortGroupAlreadyCombed;
@@ -1487,10 +1501,10 @@
                     case 'count': return sortGroupByCount;
                   }
                 })();
-                lifetimeDrops.value.artifacts = useThisFunc(lifetimeDrops.value.artifacts);
-                lifetimeDrops.value.stones = useThisFunc(lifetimeDrops.value.stones);
-                lifetimeDrops.value.stoneFragments = useThisFunc(lifetimeDrops.value.stoneFragments);
-                lifetimeDrops.value.ingredients = useThisFunc(lifetimeDrops.value.ingredients);
+                lifetimeData.value.artifacts = useThisFunc(lifetimeData.value.artifacts);
+                lifetimeData.value.stones = useThisFunc(lifetimeData.value.stones);
+                lifetimeData.value.stoneFragments = useThisFunc(lifetimeData.value.stoneFragments);
+                lifetimeData.value.ingredients = useThisFunc(lifetimeData.value.ingredients);
               }
             };
             const getLifetimeIsProgressSpinning = () => {
@@ -1508,9 +1522,9 @@
                 case LifetimeLoadState.FetchingIds:
                   return "Fetching mission IDs...";
                 case LifetimeLoadState.FilteringIds:
-                  return "Filtering mission IDs... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
+                  return "Filtering mission IDs... " + lifetimeDataLoadedProgress.value.loadedCount + "/" + lifetimeDataLoadedProgress.value.totalCount;
                   case LifetimeLoadState.LoadingMissionData:
-                  return "Loading missions... " + lifetimeDropsLoadedProgress.value.loadedCount + "/" + lifetimeDropsLoadedProgress.value.totalCount;
+                  return "Loading missions... " + lifetimeDataLoadedProgress.value.loadedCount + "/" + lifetimeDataLoadedProgress.value.totalCount;
                 case LifetimeLoadState.Success:
                   return "Succeeded" + (lifetimeSuccessTime.value != null ? ` in ${lifetimeSuccessTime.value}` : "");
                 case LifetimeLoadState.Failed:
@@ -1519,12 +1533,12 @@
             };
             const lifetimeState = Vue.ref(LifetimeLoadState.Idle);
             const lifetimeSuccessTime = Vue.ref(null);
-            const lifetimeDropsBeingLoaded = Vue.computed(() => lifetimeState.value == LifetimeLoadState.FetchingIds || lifetimeState.value == LifetimeLoadState.LoadingMissionData);
-            const lifetimeDropsLoadedProgress = Vue.ref({});
-            const resetLifetimeDropsLoadedProgress = (npd, nlc, ntc) => {lifetimeDropsLoadedProgress.value = {percentageDone: npd ?? '0%', loadedCount: nlc ?? 0,totalCount: ntc ?? 0,};};
-            const lifetimeDropsExcludedCount = Vue.ref(0);
+            const lifetimeDataBeingLoaded = Vue.computed(() => lifetimeState.value == LifetimeLoadState.FetchingIds || lifetimeState.value == LifetimeLoadState.LoadingMissionData);
+            const lifetimeDataLoadedProgress = Vue.ref({});
+            const resetLifetimeDataLoadedProgress = (npd, nlc, ntc) => {lifetimeDataLoadedProgress.value = {percentageDone: npd ?? '0%', loadedCount: nlc ?? 0,totalCount: ntc ?? 0,};};
+            const lifetimeDataExcludedCount = Vue.ref(0);
             const lifetimeMennoMissionData = Vue.ref(null);
-            const viewLifetimeDropsOfEid = async (filterLoad) => {
+            const viewLifetimeDataOfEid = async (filterLoad) => {
               lifetimeDataBeingFiltered.value = filterLoad;
               //Reset allLoadedMissions - potential insane lag spikes due to overloading the DOM
               allLoadedMissions.value = null;
@@ -1540,7 +1554,7 @@
               }
               const shouldFilter = (lifetimeDataFilter.value != null && lifetimeDataFilter.value.length > 0 && filterLoad);
               if(shouldFilter){
-                resetLifetimeDropsLoadedProgress(null, null, idsJson.length);
+                resetLifetimeDataLoadedProgress(null, null, idsJson.length);
                 lifetimeState.value = LifetimeLoadState.FilteringIds;
               }
               const missions = shouldFilter ? await window.viewMissionsOfEid(selectedLifetimeAccount.value) : [];
@@ -1550,42 +1564,40 @@
                 }, Promise.resolve([]));
               }
               const ids = shouldFilter ? await idFilter(idsJson, async (id) => {
-                  lifetimeDropsLoadedProgress.value.percentageDone = `${((idsJson.indexOf(id) + 1) / idsJson.length) * 100}%`;
-                  lifetimeDropsLoadedProgress.value.loadedCount++;
+                  lifetimeDataLoadedProgress.value.percentageDone = `${((idsJson.indexOf(id) + 1) / idsJson.length) * 100}%`;
+                  lifetimeDataLoadedProgress.value.loadedCount++;
                   return (await missionMatchesFilter(missions.find(mission => mission.missionId == id), lifetimeDataFilter.value, lifetimeOrDataFilter.value));
                 }
               ) : idsJson;
-              lifetimeDropsExcludedCount.value = idsJson.length - ids.length;
+              lifetimeDataExcludedCount.value = idsJson.length - ids.length;
               
-              lifetimeDrops.value = {
-                artifacts: [], artifactCount: 0,
-                stones: [], stoneCount: 0,
-                stoneFragments: [], stoneFragmentCount: 0,
-                ingredients: [], ingredientCount: 0,
+              lifetimeData.value = {
+                artifacts: [], stones: [],
+                stoneFragments: [], ingredients: [],
                 missionCount: ids.length,
               };
               lifetimeState.value = LifetimeLoadState.LoadingMissionData;
-              resetLifetimeDropsLoadedProgress(null, null, ids.length);
+              resetLifetimeDataLoadedProgress(null, null, ids.length);
               var firstMatches = null;
               var nonMatch = false;
               for(const id of ids){
                 const mission = await getSpecificMissionData(selectedLifetimeAccount.value, id, false);
                 if(mission == null) continue;
-                const missionShipInfo = mission.shipInfo;
-                firstMatches = firstMatches ?? [missionShipInfo.ship, missionShipInfo.durationType, missionShipInfo.level, missionShipInfo.targetArtifact];
+                const missionInfo = mission.missionInfo;
+                firstMatches = firstMatches ?? [missionInfo.ship, missionInfo.durationType, missionInfo.level, missionInfo.targetArtifact];
                 if (!nonMatch) {
-                  if (firstMatches[0] != missionShipInfo.ship) firstMatches[0] = -1;
-                  if (firstMatches[1] != missionShipInfo.durationType) firstMatches[1] = -1;
-                  if (firstMatches[2] != missionShipInfo.level) firstMatches[2] = -1;
-                  if (firstMatches[3] != missionShipInfo.targetArtifact) firstMatches[3] = -1;
+                  if (firstMatches[0] != missionInfo.ship) firstMatches[0] = -1;
+                  if (firstMatches[1] != missionInfo.durationType) firstMatches[1] = -1;
+                  if (firstMatches[2] != missionInfo.level) firstMatches[2] = -1;
+                  if (firstMatches[3] != missionInfo.targetArtifact) firstMatches[3] = -1;
                   nonMatch = (firstMatches.indexOf(-1) != -1);
                 }
-                mission.artifacts.forEach(artifact => {mergeItems(lifetimeDrops.value.artifacts, artifact); lifetimeDrops.value.artifactCount += artifact.count;});
-                mission.stones.forEach(stone => {mergeItems(lifetimeDrops.value.stones, stone); lifetimeDrops.value.stoneCount += stone.count;});
-                mission.stoneFragments.forEach(stoneFragment => {mergeItems(lifetimeDrops.value.stoneFragments, stoneFragment); lifetimeDrops.value.stoneFragmentCount += stoneFragment.count;});
-                mission.ingredients.forEach(ingredient => {mergeItems(lifetimeDrops.value.ingredients, ingredient); lifetimeDrops.value.ingredientCount += ingredient.count;});
-                lifetimeDropsLoadedProgress.value.percentageDone = `${((ids.indexOf(id) + 1) / ids.length) * 100}%`;
-                lifetimeDropsLoadedProgress.value.loadedCount++;
+                mission.artifacts.forEach(artifact => {mergeItems(lifetimeData.value.artifacts, artifact)});
+                mission.stones.forEach(stone => {mergeItems(lifetimeData.value.stones, stone)});
+                mission.stoneFragments.forEach(stoneFragment => {mergeItems(lifetimeData.value.stoneFragments, stoneFragment)});
+                mission.ingredients.forEach(ingredient => {mergeItems(lifetimeData.value.ingredients, ingredient)});
+                lifetimeDataLoadedProgress.value.percentageDone = `${((ids.indexOf(id) + 1) / ids.length) * 100}%`;
+                lifetimeDataLoadedProgress.value.loadedCount++;
               }
               reSortLifetime();
 
@@ -1895,15 +1907,6 @@
               const finalString = words.join(" ");
               return finalString.charAt(0).toUpperCase() + finalString.slice(1);
             };
-            const durToTextClass = (dur) => {
-              switch(dur){
-                case 0: return "text-short";
-                case 1: return "text-standard";
-                case 2: return "text-extended";
-                case 3: return "text-tutorial";
-                default: return "";
-              }
-            };
             const afRarityText = (drop, bypass) => {
               if(drop.specType != 'Artifact' && !bypass) return "";
               switch(drop.rarity){
@@ -2005,13 +2008,13 @@
               if (filteredMissions.value == null || filteredMissions.value.length === 0) return {};
 
               // Generate a list of all the years that have missions
-              const uniqueYears = [...new Set(filteredMissions.value.map(mission => mission.launchYear))].reverse();
+              const uniqueYears = [...new Set(filteredMissions.value.map(mission => LedgerDate(mission.launchDT).getFullYear()))].reverse();
               //Make a copy of the uniqueYears array, and add an enabled property to each year
               groupedArrays.value.year = uniqueYears.map(year => { return { year: year, enabled: true}; });
 
               // Create a 2D array storing months used in each year
               const uniqueMonthsArr = uniqueYears.map(year =>
-                [...new Set(filteredMissions.value.filter(mission => mission.launchYear === year).map(mission => mission.launchMonth))].reverse()
+                [...new Set(filteredMissions.value.filter(mission => LedgerDate(mission.launchDT).getFullYear() === year).map(mission => LedgerDate(mission.launchDT).getMonth() + 1))].reverse()
               );
               //Make a copy of the uniqueMonthsArr array, and add an enabled property to each month
               groupedArrays.value.month = uniqueMonthsArr.map(year => year.map(month => { return { month: month, enabled: true}; }));
@@ -2021,8 +2024,10 @@
                 uniqueMonthsArr[yearIndex].map(month =>
                   [...new Set(
                     filteredMissions.value
-                      .filter(mission => mission.launchYear === year && mission.launchMonth === month)
-                      .map(mission => mission.launchDay)
+                      .filter(mission => {
+                        const date = LedgerDate(mission.launchDT);
+                        return date.getFullYear() === year && date.getMonth() === month - 1;
+                      }).map(mission => LedgerDate(mission.launchDT).getDate())
                   )].reverse()
                 )
               );
@@ -2034,8 +2039,10 @@
                 uniqueMonthsArr[yearIndex].map((month, monthIndex) =>
                   uniqueDaysArr[yearIndex][monthIndex].map(day =>
                     filteredMissions.value
-                      .filter(mission => mission.launchYear === year && mission.launchMonth === month && mission.launchDay === day)
-                      .reverse()
+                      .filter(mission => {
+                        const date = LedgerDate(mission.launchDT);
+                        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+                      }).reverse()
                   )
                 )
               );
@@ -2210,7 +2217,7 @@
                 case 'duration': return Array.from({ length: 4 }, (_, index) => ({
                     text: Array.of('Short', 'Standard', 'Extended', 'Tutorial')[index],
                     value: index,
-                    styleClass: durToTextClass(index)
+                    styleClass: 'text-duration-' + index
                   }));
                 case 'level': return Array.from({ length: 9 }, (_, index) => ({
                     text: index + '★',
@@ -2262,7 +2269,6 @@
 
               if(isDrops && dropsValue != null && dropsValue != ''){
                 switch(dropsValue.split("_")[ 2]) {
-                  case "0": newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
                   case "1": newBorder = 'border-rare'; newText = 'text-rare'; break;
                   case "2": newBorder = 'border-epic'; newText = 'text-epic'; break;
                   case "3": newBorder = 'border-legendary'; newText = 'text-legendary'; break;
@@ -2270,20 +2276,18 @@
                 }
               } else if(isDuration && el.value != ''){
                 switch(el.value){
-                  case "0": newBorder = 'border-short'; newText = 'text-short'; break;
-                  case "1": newBorder = 'border-standard'; newText = 'text-standard'; break;
-                  case "2": newBorder = 'border-extended'; newText = 'text-extended'; break;
-                  case "3": newBorder = 'border-tutorial'; newText = 'text-tutorial'; break;
+                  case "0": newBorder = 'border-short'; newText = 'text-duration-0'; break;
+                  case "1": newBorder = 'border-standard'; newText = 'text-duration-1'; break;
+                  case "2": newBorder = 'border-extended'; newText = 'text-duration-2'; break;
+                  case "3": newBorder = 'border-tutorial'; newText = 'text-duration-3'; break;
                   default: newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
                 }
               } else {
                 newBorder = 'border-gray-300';
                 newText = 'text-gray-400';
               }
-              el.classList.remove(existingBorder);
-              el.classList.add(newBorder);
-              el.classList.remove(existingText);
-              el.classList.add(newText);
+              el.classList.replace(existingBorder, newBorder);
+              el.classList.replace(existingText, newText);
             };
 
             const updateFilterNoReCount = () => {
@@ -2464,13 +2468,14 @@
               var filterPassed = true;
               if(filter.topLevel != null && filter.op != null && filter.val != null){
                 switch(filter.topLevel){
+                  case 'buggedcap': filterPassed = commonFilterLogic(mission.isBuggedCap, null, filter.val, filterPassed); break; //Operator is value in this case, always 'is'
                   case 'dubcap': filterPassed = commonFilterLogic(mission.isDubCap, null, filter.val, filterPassed); break; //Operator is value in this case, always 'is'
                   case 'ship': filterPassed = commonFilterLogic(mission.ship, filter.val, filter.op, filterPassed); break;
                   case 'duration': filterPassed = commonFilterLogic(mission.durationType, filter.val, filter.op, filterPassed); break;
                   case 'level': filterPassed = commonFilterLogic(mission.level, filter.val, filter.op, filterPassed); break;
                   case 'target': filterPassed = commonFilterLogic(mission.targetInt, filter.val, filter.op, filterPassed); break;
-                  case 'launchDT': filterPassed = commonFilterLogic(new Date(mission.launchYear, mission.launchMonth - 1, mission.launchDay - 1), new Date(filter.val), filter.op, filterPassed); break;
-                  case 'returnDT': filterPassed = commonFilterLogic(new Date(mission.returnYear, mission.returnMonth - 1, mission.returnDay - 1), new Date(filter.val), filter.op, filterPassed); break;
+                  case 'launchDT': filterPassed = commonFilterLogic(LedgerDate(mission.launchDT), new Date(filter.val), filter.op, filterPassed); break;
+                  case 'returnDT': filterPassed = commonFilterLogic(LedgerDate(mission.returnDT), new Date(filter.val), filter.op, filterPassed); break;
                   case 'drops': {
                     const durConfig = durationConfigs.value[mission.ship].durations[mission.durationType];
                     const maxQuality = durConfig.maxQuality + (durConfig.levelQualityBump * mission.level);
@@ -2551,29 +2556,9 @@
               dataBeingFiltered.value = false;
             };
 
-            const targetImage = (target) => {
-              if(target == null || target == "" || target == "UNKNOWN") return "";
-              else{
-                target = target.toUpperCase().replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");; //Redundancy
-                var tier = 4;
-                if(target.indexOf('_FRAGMENT') > -1) {
-                  target = target.replace('_FRAGMENT', '');
-                  tier = 1;
-                }
-                if(target == 'GOLD_METEORITE' || target == 'TAU_CETI_GEODE' || target == 'SOLAR_TITANIUM') tier = 3;
-                const path = "images/artifacts/" + target + "/" + target + "_" + tier + ".png";
-                return [path, target];
-              }
-            };
-
-            const padNumber = (num) => {
-              num = parseInt(num.toString()); //Make sure it's a number
-              return (num < 10 ? '0' : '') + num;
-            }
-
             const getSpecificMissionData = async (eid, missionId, extendedInfo) => {
-              const shipInfo = await window.getShipInfo(eid, missionId);
-              if(shipInfo.ship == null || shipInfo.ship < 0 || !shipInfo.missionId) return null;
+              const missionInfo = await window.getMissionInfo(eid, missionId);
+              if(missionInfo.ship == null || missionInfo.ship < 0 || !missionInfo.missionId) return null;
               const allDrops = await window.getShipDrops(eid, missionId);
               if(allDrops == null) return null;
 
@@ -2583,15 +2568,11 @@
               const ingredients = allDrops.filter(drop => drop.specType == "Ingredient");
               //Compute the duration in days, hours, minutes
               const commonProperties = {
-                shipInfo: shipInfo,
+                missionInfo: missionInfo,
                 artifacts: sortedGroupedSpecType(artifacts),
                 stones: sortedGroupedSpecType(stones),
                 stoneFragments: sortedGroupedSpecType(stoneFragments),
                 ingredients: sortedGroupedSpecType(ingredients),
-                artifactCount: artifacts.length,
-                stoneCount: stones.length,
-                stoneFragmentCount: stoneFragments.length,
-                ingredientCount: ingredients.length
               };
 
               if (extendedInfo) {
@@ -2599,12 +2580,12 @@
                 const shipIndex = filteredMissions.value.findIndex(mission => mission.missionId == missionId);
                 return {
                   ...commonProperties,
-                  launchStr: shipInfo.launchYear + '-' + padNumber(shipInfo.launchMonth) + '-' + padNumber(shipInfo.launchDay) + ' ' + shipInfo.launchTime,
-                  returnStr: shipInfo.returnYear + '-' + padNumber(shipInfo.returnMonth) + '-' + padNumber(shipInfo.returnDay) + ' ' + shipInfo.returnTime,
-                  durationStr: shipInfo.durationString,
+                  launchDT: LedgerDate(missionInfo.launchDT),
+                  returnDT: LedgerDate(missionInfo.returnDT),
+                  durationStr: missionInfo.durationString,
                   prevMission: shipIndex > 0 ? filteredMissions.value[shipIndex - 1].missionId : null,
                   nextMission: shipIndex < filteredMissions.value.length - 1 ? filteredMissions.value[shipIndex + 1].missionId : null,
-                  capacityModifier: Math.min(2, shipInfo.capacity / shipInfo.nominalCapacity),
+                  capacityModifier: Math.min(2, missionInfo.capacity / missionInfo.nominalCapacity),
                 };
               } else return commonProperties;
             };
@@ -2628,10 +2609,10 @@
                   case 'iv': return inventoryVisualizerSort;
                 }
               })();
-              const mennoTargetInt = newMissionViewData.shipInfo.targetInt == -1 ? 1000 : newMissionViewData.shipInfo.targetInt; //Accounting for "Unknown" targets
-              const mennoShip = newMissionViewData.shipInfo.ship;
-              const mennoDuration = newMissionViewData.shipInfo.durationType;
-              const mennoLevel = newMissionViewData.shipInfo.level;
+              const mennoTargetInt = newMissionViewData.missionInfo.targetInt == -1 ? 1000 : newMissionViewData.missionInfo.targetInt; //Accounting for "Unknown" targets
+              const mennoShip = newMissionViewData.missionInfo.ship;
+              const mennoDuration = newMissionViewData.missionInfo.durationType;
+              const mennoLevel = newMissionViewData.missionInfo.level;
               const mennoConfigItems = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt);
               if(mennoConfigItems){
                 const mennoData = {
@@ -2813,7 +2794,7 @@
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
             });
 
-            const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeDrops);
+            const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeData);
             const filterTopSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-top' : 'filter-top');
             const filterValSelector = Vue.computed(() => isLifetime.value ? 'lifetime-filter-value-' : 'filter-value-');
             const tSearchBarSelector = Vue.computed(() => isLifetime.value ? 'target-search-lifetime' : 'target-search');
@@ -2888,6 +2869,8 @@
 
               appHasUpdate,
 
+              LedgerDate,
+
               //Prefs
               defaultViewMode,
               allBrowsers,
@@ -2910,9 +2893,9 @@
 
               //Lifetime data
               LifetimeLoadState,
-              lifetimeDrops,
-              lifetimeDropsBeingLoaded,
-              lifetimeDropsLoadedProgress,
+              lifetimeData,
+              lifetimeDataBeingLoaded,
+              lifetimeDataLoadedProgress,
               lifetimeState,
               lifetimeSortMethod,
               lifetimeSuccessTime,
@@ -2922,7 +2905,7 @@
               lifetimeAccountDropdownOpen,
               openLifetimeAccountDropdown,
               closeLifetimeAccountDropdown,
-              viewLifetimeDropsOfEid,
+              viewLifetimeDataOfEid,
               getLifetimeStatusColor,
               getLifetimeStatusText,
               getLifetimeIsProgressSpinning,
@@ -2947,7 +2930,7 @@
               lifetimeTargetFilterSelectedOrIndex,
               lifetimeTargetFilterMenuOpen,
               lifetimeTargetSearchTerm,
-              lifetimeDropsExcludedCount,
+              lifetimeDataExcludedCount,
               lifetimeShowDropsPerShip,
               lifetimeMennoMissionData,
               lifetimeShowExpectedTotals,
@@ -2972,7 +2955,6 @@
               viewMissionsOfEid,
               toggleElements,
               viewSpecificMission,
-              targetImage,
               closeMissionOverlay,
               refreshExistingData,
               openMissionsViewAccountDropdown,
@@ -3012,7 +2994,6 @@
               afRarityText,
               groupedSpecType,
               properCase,
-              durToTextClass,
 
               //Filter
               dataFilter,

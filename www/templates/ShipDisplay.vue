@@ -4,22 +4,22 @@
         :class="(isMulti ? ((isFirst ? ' pl-7rem' : ' pl-3rem') + (isLast ? ' pr-7rem' : ' pr-3rem')) : 'overflow-auto pl-7rem pr-7rem' ) + ' text-gray-300 text-center' + ( shipCount > 3 ? ' min-w-30vw' : '') "
     >
         <!-- Header information about the mission -->
-        <span :class="durToTextClass(viewMissionData.shipInfo.durationType)">
-            {{ viewMissionData.shipInfo.shipString }}
+        <span :class="durToTextClass(viewMissionData.missionInfo.durationType)">
+            {{ viewMissionData.missionInfo.shipString }}
         </span><br />
         <span 
-            v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0"
+            v-if="viewMissionData.missionInfo.level && viewMissionData.missionInfo.level > 0"
             class="text-star text-goldenstar" 
         >
-            {{ "★".repeat(viewMissionData.shipInfo.level) }}
+            {{ "★".repeat(viewMissionData.missionInfo.level) }}
         </span>
-        <br v-if="viewMissionData.shipInfo.level && viewMissionData.shipInfo.level > 0" />
-        <span>Launched: {{ viewMissionData.launchStr }}</span> <br />
-        <span>Returned: {{ viewMissionData.returnStr }}</span> <br />
+        <br v-if="viewMissionData.missionInfo.level && viewMissionData.missionInfo.level > 0" />
+        <span>Launched: {{ formatDate(viewMissionData.launchDT) }}</span> <br />
+        <span>Returned: {{ formatDate(viewMissionData.returnDT) }}</span> <br />
         <span>Duration: {{ viewMissionData.durationStr }}</span> <br />
         <span class="flex flex-row items-center justify-center">
-        <span :class="((viewMissionData.shipInfo.isDubCap || viewMissionData.shipInfo.isBuggedCap) ? 'mr-0_5rem' : '')">Capacity: {{ viewMissionData.shipInfo.capacity }} </span>
-            <span v-if="viewMissionData.shipInfo.isBuggedCap" class="max-w-32 flex py-1 bugged-cap-span items-center justify-center flex-1">
+        <span :class="((viewMissionData.missionInfo.isDubCap || viewMissionData.missionInfo.isBuggedCap) ? 'mr-0_5rem' : '')">Capacity: {{ viewMissionData.missionInfo.capacity }} </span>
+            <span v-if="viewMissionData.missionInfo.isBuggedCap" class="max-w-32 flex py-1 bugged-cap-span items-center justify-center flex-1">
                 <img alt="Skull Emoji" src="/images/skull.png" class="w-6 mr-0_5rem">
                 <span class="tooltip-custom text-xs font-bold">
                     0.6x Capacity
@@ -33,7 +33,7 @@
                     </span>
                 </span>
             </span>
-            <span v-if="!viewMissionData.shipInfo.isBuggedCap && viewMissionData.shipInfo.isDubCap" class="max-w-28 flex py-1 double-cap-span items-center justify-center flex-1">
+            <span v-if="!viewMissionData.missionInfo.isBuggedCap && viewMissionData.missionInfo.isDubCap" class="max-w-28 flex py-1 double-cap-span items-center justify-center flex-1">
                 <img alt="Artifact Crate" src="/images/icon_afx_chest_2.png" class="w-6 mr-0_5rem">
                 <span class="tooltip-custom text-xs font-bold">
                     {{viewMissionData.capacityModifier}}x Capacity
@@ -48,12 +48,11 @@
                 </span>
             </span>
         </span>
-        <br />
-        <div v-if="viewMissionData.shipInfo.target != '' && viewMissionData.shipInfo.target.toUpperCase() != 'UNKNOWN'">
+        <div v-if="viewMissionData.missionInfo.target != '' && viewMissionData.missionInfo.target.toUpperCase() != 'UNKNOWN'">
             <div class="items-center justify-center flex">
                 <span>Sensor Target: </span>
                 <div class="ml-1 text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">
-                    {{ properCase(viewMissionData.shipInfo.target.replaceAll("_", " ")) }}
+                    {{ properCase(viewMissionData.missionInfo.target.replaceAll("_", " ")) }}
                 </div>
             </div>
             <br/>
@@ -129,10 +128,10 @@
         methods: {
             durToTextClass(dur){
                 switch(dur){
-                case 0: return "text-short";
-                case 1: return "text-standard";
-                case 2: return "text-extended";
-                case 3: return "text-tutorial";
+                case 0: return "text-duration-0";
+                case 1: return "text-duration-1";
+                case 2: return "text-duration-2";
+                case 3: return "text-duration-3";
                 default: return "";
               }
             },
@@ -148,6 +147,15 @@
               const finalString = words.join(" ");
               return finalString.charAt(0).toUpperCase() + finalString.slice(1);
             },
+            formatDate(date){
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero based
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
         },
     }
 
