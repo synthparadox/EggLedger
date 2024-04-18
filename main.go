@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -55,6 +56,9 @@ var (
 	_eiAfxConfigArtis      []*ei.ArtifactsConfigurationResponse_ArtifactParameters
 	_nominalShipCapacities = map[ei.MissionInfo_Spaceship]map[ei.MissionInfo_DurationType][]float32{}
 	_latestMennoData       = MennoData{}
+	_possibleTargets       = []PossibleTarget{}
+	_possibleArtifacts     = []PossibleArtifact{}
+	_topLevelMaps          = map[string][]FilterValueOption{}
 )
 
 const (
@@ -164,6 +168,14 @@ type PossibleArtifact struct {
 	Level       int32                `json:"level"`
 	Rarity      int32                `json:"rarity"`
 	BaseQuality float64              `json:"baseQuality"`
+}
+
+type FilterValueOption struct {
+	Text       string `json:"text"`
+	Value      string `json:"value"`
+	StyleClass string `json:"styleClass"`
+	ImagePath  string `json:"imagePath"`
+	Rarity     int32  `json:"rarity"`
 }
 
 type ReleaseInfo struct {
@@ -276,6 +288,8 @@ func init() {
 
 	storageInit()
 	dataInit()
+	initPossibleTargets()
+	initPossibleArtifacts()
 }
 
 func initNominalShipCapacities() {
@@ -326,6 +340,126 @@ func properTargetName(name *ei.ArtifactSpec_Name) string {
 	}
 }
 
+func initPossibleTargets() {
+	PossibleTargetsRaw := []RawPossibleTarget{
+		{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted", ImageString: "none.png"},
+		{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan", ImageString: "bob_target.png"},
+		{Name: ei.ArtifactSpec_TACHYON_DEFLECTOR, DisplayName: "Tachyon Deflectors", ImageString: "deflector_target.png"},
+		{Name: ei.ArtifactSpec_SHIP_IN_A_BOTTLE, DisplayName: "Ships in a Bottle", ImageString: "siab_target.png"},
+		{Name: ei.ArtifactSpec_TITANIUM_ACTUATOR, DisplayName: "Titanium Actuators", ImageString: "actuator_target.png"},
+		{Name: ei.ArtifactSpec_DILITHIUM_MONOCLE, DisplayName: "Dilithium Monocles", ImageString: "monocle_target.png"},
+		{Name: ei.ArtifactSpec_QUANTUM_METRONOME, DisplayName: "Quantum Metronomes", ImageString: "metronome_target.png"},
+		{Name: ei.ArtifactSpec_PHOENIX_FEATHER, DisplayName: "Phoenix Feathers", ImageString: "feather_target.png"},
+		{Name: ei.ArtifactSpec_THE_CHALICE, DisplayName: "Chalices", ImageString: "chalice_target.png"},
+		{Name: ei.ArtifactSpec_INTERSTELLAR_COMPASS, DisplayName: "Interstellar Compasses", ImageString: "compass_target.png"},
+		{Name: ei.ArtifactSpec_CARVED_RAINSTICK, DisplayName: "Carved Rainsticks", ImageString: "rainstick_target.png"},
+		{Name: ei.ArtifactSpec_BEAK_OF_MIDAS, DisplayName: "Beaks of Midas", ImageString: "beak_target.png"},
+		{Name: ei.ArtifactSpec_MERCURYS_LENS, DisplayName: "Mercury's Lenses", ImageString: "lens_target.png"},
+		{Name: ei.ArtifactSpec_NEODYMIUM_MEDALLION, DisplayName: "Neodymium Medallions", ImageString: "medallion_target.png"},
+		{Name: ei.ArtifactSpec_ORNATE_GUSSET, DisplayName: "Gussets", ImageString: "gusset_target.png"},
+		{Name: ei.ArtifactSpec_TUNGSTEN_ANKH, DisplayName: "Tungsten Ankhs", ImageString: "ankh_target.png"},
+		{Name: ei.ArtifactSpec_AURELIAN_BROOCH, DisplayName: "Aurelian Brooches", ImageString: "brooch_target.png"},
+		{Name: ei.ArtifactSpec_VIAL_MARTIAN_DUST, DisplayName: "Vials of Martian Dust", ImageString: "vial_target.png"},
+		{Name: ei.ArtifactSpec_DEMETERS_NECKLACE, DisplayName: "Demeters Necklaces", ImageString: "necklace_target.png"},
+		{Name: ei.ArtifactSpec_LUNAR_TOTEM, DisplayName: "Lunar Totems", ImageString: "totem_target.png"},
+		{Name: ei.ArtifactSpec_PUZZLE_CUBE, DisplayName: "Puzzle Cubes", ImageString: "cube_target.png"},
+		{Name: ei.ArtifactSpec_PROPHECY_STONE, DisplayName: "Prophecy Stones", ImageString: "prophecy_target.png"},
+		{Name: ei.ArtifactSpec_CLARITY_STONE, DisplayName: "Clarity Stones", ImageString: "clarity_target.png"},
+		{Name: ei.ArtifactSpec_DILITHIUM_STONE, DisplayName: "Dilithium Stones", ImageString: "dilithium_target.png"},
+		{Name: ei.ArtifactSpec_LIFE_STONE, DisplayName: "Life Stones", ImageString: "life_target.png"},
+		{Name: ei.ArtifactSpec_QUANTUM_STONE, DisplayName: "Quantum Stones", ImageString: "quantum_target.png"},
+		{Name: ei.ArtifactSpec_SOUL_STONE, DisplayName: "Soul Stones", ImageString: "soul_target.png"},
+		{Name: ei.ArtifactSpec_TERRA_STONE, DisplayName: "Terra Stones", ImageString: "terra_target.png"},
+		{Name: ei.ArtifactSpec_TACHYON_STONE, DisplayName: "Tachyon Stones", ImageString: "tachyon_target.png"},
+		{Name: ei.ArtifactSpec_LUNAR_STONE, DisplayName: "Lunar Stones", ImageString: "lunar_target.png"},
+		{Name: ei.ArtifactSpec_SHELL_STONE, DisplayName: "Shell Stones", ImageString: "shell_target.png"},
+		{Name: ei.ArtifactSpec_SOLAR_TITANIUM, DisplayName: "Solar Titanium", ImageString: "titanium_target.png"},
+		{Name: ei.ArtifactSpec_TAU_CETI_GEODE, DisplayName: "Geodes", ImageString: "geode_target.png"},
+		{Name: ei.ArtifactSpec_GOLD_METEORITE, DisplayName: "Gold Meteorites", ImageString: "gold_target.png"},
+		{Name: ei.ArtifactSpec_PROPHECY_STONE_FRAGMENT, DisplayName: "Prophecy Stone Fragments", ImageString: "prophecy_frag_target.png"},
+		{Name: ei.ArtifactSpec_CLARITY_STONE_FRAGMENT, DisplayName: "Clarity Stone Fragments", ImageString: "clarity_frag_target.png"},
+		{Name: ei.ArtifactSpec_LIFE_STONE_FRAGMENT, DisplayName: "Life Stone Fragments", ImageString: "life_frag_target.png"},
+		{Name: ei.ArtifactSpec_TERRA_STONE_FRAGMENT, DisplayName: "Terra Stone Fragments", ImageString: "terra_frag_target.png"},
+		{Name: ei.ArtifactSpec_DILITHIUM_STONE_FRAGMENT, DisplayName: "Dilithium Stone Fragments", ImageString: "dilithium_frag_target.png"},
+		{Name: ei.ArtifactSpec_SOUL_STONE_FRAGMENT, DisplayName: "Soul Stone Fragments", ImageString: "soul_frag_target.png"},
+		{Name: ei.ArtifactSpec_QUANTUM_STONE_FRAGMENT, DisplayName: "Quantum Stone Fragments", ImageString: "quantum_frag_target.png"},
+		{Name: ei.ArtifactSpec_TACHYON_STONE_FRAGMENT, DisplayName: "Tachyon Stone Fragments", ImageString: "tachyon_frag_target.png"},
+		{Name: ei.ArtifactSpec_SHELL_STONE_FRAGMENT, DisplayName: "Shell Stone Fragments", ImageString: "shell_frag_target.png"},
+		{Name: ei.ArtifactSpec_LUNAR_STONE_FRAGMENT, DisplayName: "Lunar Stone Fragments", ImageString: "lunar_frag_target.png"},
+	}
+
+	// Convert the array to PossibleTarget
+	possibleTargets := []PossibleTarget{
+		{DisplayName: "None (Pre 1.27)", Id: -1, ImageString: "none.png"},
+	}
+	for _, rawTarget := range PossibleTargetsRaw {
+		possibleTarget := PossibleTarget{
+			DisplayName: rawTarget.DisplayName,
+			Id:          int32(rawTarget.Name),
+			ImageString: rawTarget.ImageString,
+		}
+		possibleTargets = append(possibleTargets, possibleTarget)
+	}
+
+	_possibleTargets = possibleTargets
+}
+
+func getMaxQuality() float32 {
+	maxQuality := float32(0)
+	for _, mission := range _eiAfxConfigMissions {
+		for _, duration := range mission.GetDurations() {
+			compedMaxQuality := float32(duration.GetMaxQuality()) + (duration.GetLevelQualityBump() * float32(len(mission.LevelMissionRequirements)))
+			if compedMaxQuality > maxQuality {
+				maxQuality = compedMaxQuality
+			}
+		}
+	}
+	return maxQuality
+}
+
+func initPossibleArtifacts() {
+	possibleArtifacts := []PossibleArtifact{}
+	maxQuality := getMaxQuality()
+
+	for _, artifact := range _eiAfxConfigArtis {
+		if float64(maxQuality) >= artifact.GetBaseQuality() {
+			possibleArtifact := PossibleArtifact{
+				Name:        *artifact.Spec.Name,
+				ProtoName:   artifact.Spec.Name.String(),
+				DisplayName: artifact.Spec.CasedSmallName(),
+				Level:       int32(artifact.Spec.GetLevel()),
+				Rarity:      int32(artifact.Spec.GetRarity()),
+				BaseQuality: float64(artifact.GetBaseQuality()),
+			}
+			possibleArtifacts = append(possibleArtifacts, possibleArtifact)
+		}
+	}
+
+	_possibleArtifacts = possibleArtifacts
+}
+
+func artifactDisplayText(drop PossibleArtifact) string {
+	displayName := drop.DisplayName
+	lDisplayName := strings.ToLower(displayName)
+	level := drop.Level
+	levelInc := int32(1)
+	if strings.Contains(lDisplayName, "stone") && !strings.Contains(lDisplayName, "fragment") {
+		levelInc = 2
+	}
+	return displayName + " (T" + strconv.FormatInt(int64(level+levelInc), 10) + ")"
+}
+
+func dropPath(drop PossibleArtifact) string {
+	addendum := int32(0)
+	if strings.Contains(drop.ProtoName, "_STONE") {
+		addendum = 1
+	}
+	fixedName := strings.ReplaceAll(drop.ProtoName, "_FRAGMENT", "")
+	fixedName = strings.ReplaceAll(fixedName, "ORNATE_GUSSET", "GUSSET")
+	fixedName = strings.ReplaceAll(fixedName, "VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST")
+	return "artifacts/" + fixedName + "/" + fixedName + "_" + strconv.FormatInt(int64(drop.Level+1+addendum), 10) + ".png"
+}
+
 func main() {
 	if _devMode {
 		log.Info("starting app in dev mode")
@@ -344,12 +478,14 @@ func main() {
 
 	args := []string{}
 	args = append(args, "--disable-features=TranslateUI,BlinkGenPropertyTrees")
+	/* User preference args */
 	scalingFactor := _storage.GetDefaultScalingFactor()
 	if scalingFactor != 1.0 {
 		args = append(args, "--force-device-scale-factor="+fmt.Sprintf("%f", scalingFactor))
 	}
-	//Fuck Edge
-	args = append(args, "--disable-sync")
+	if _storage.StartInFullscreen {
+		args = append(args, "--start-fullscreen")
+	}
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
@@ -453,12 +589,14 @@ func main() {
 		return _storage.AutoRefreshMennoPref
 	})
 
-	ui.MustBind("setUseGifsForRarity", func(flag bool) {
-		_storage.SetUseGifsForRarity(flag)
+	ui.MustBind("getStartInFullscreen", func() bool {
+		_storage.Lock()
+		defer _storage.Unlock()
+		return _storage.StartInFullscreen
 	})
 
-	ui.MustBind("getUseGifsForRarity", func() bool {
-		return _storage.UseGifsForRarity
+	ui.MustBind("setStartInFullscreen", func(flag bool) {
+		_storage.SetStartInFullscreen(flag)
 	})
 
 	ui.MustBind("appVersion", func() string {
@@ -491,6 +629,108 @@ func main() {
 
 	ui.MustBind("setFilterWarningRead", func(flag bool) {
 		_storage.SetFilterWarningRead(flag)
+	})
+
+	ui.MustBind("getFilterValueOptions", func(topLevel string) []FilterValueOption {
+
+		if _topLevelMaps[topLevel] != nil {
+			return _topLevelMaps[topLevel]
+		}
+
+		options := []FilterValueOption{}
+		switch strings.ToLower(topLevel) {
+		case "ship":
+			{
+				shipNames := []string{
+					"Chicken One", "Chicken Nine", "Chicken Heavy",
+					"BCR", "Quintillion Chicken", "Cornish-Hen Corvette",
+					"Galeggtica", "Defihent", "Voyegger", "Henerprise", "Atreggies Henliner",
+				}
+				for index := 0; index < len(shipNames); index++ {
+					options = append(options, FilterValueOption{
+						Text:  shipNames[index],
+						Value: strconv.FormatInt(int64(index), 10),
+					})
+				}
+			}
+		case "duration":
+			{
+				durationNames := []string{
+					"Short", "Standard", "Extended", "Tutorial",
+				}
+				for index := 0; index < len(durationNames); index++ {
+					options = append(options, FilterValueOption{
+						Text:       durationNames[index],
+						StyleClass: "text-duration-" + strconv.FormatInt(int64(index), 10),
+						Value:      strconv.FormatInt(int64(index), 10),
+					})
+				}
+			}
+		case "level":
+			{
+				for index := 0; index < 10; index++ {
+					options = append(options, FilterValueOption{
+						Text:  strconv.FormatInt(int64(index), 10) + "★",
+						Value: strconv.FormatInt(int64(index), 10),
+					})
+				}
+			}
+		case "target":
+			{
+				for _, target := range _possibleTargets {
+					options = append(options, FilterValueOption{
+						Text:      target.DisplayName,
+						Value:     strconv.FormatInt(int64(target.Id), 10),
+						ImagePath: target.ImageString,
+					})
+				}
+			}
+		case "drops":
+			{
+				options = append(options, FilterValueOption{
+					Text:      "Any Legendary",
+					Value:     "%_%_3_%",
+					Rarity:    3,
+					ImagePath: "icon_help.webp",
+				})
+				options = append(options, FilterValueOption{
+					Text:      "Any Epic",
+					Value:     "%_%_2_%",
+					Rarity:    2,
+					ImagePath: "icon_help.webp",
+				})
+				options = append(options, FilterValueOption{
+					Text:      "Any Rare",
+					Value:     "%_%_1_%",
+					Rarity:    1,
+					ImagePath: "icon_help.webp",
+				})
+				for _, drop := range _possibleArtifacts {
+					options = append(options, FilterValueOption{
+						Text:      artifactDisplayText(drop),
+						Value:     strconv.FormatInt(int64(drop.Name), 10) + "_" + strconv.FormatInt(int64(drop.Level), 10) + "_" + strconv.FormatInt(int64(drop.Rarity), 10) + "_" + strconv.FormatFloat(drop.BaseQuality, 'f', -1, 64),
+						Rarity:    drop.Rarity,
+						ImagePath: dropPath(drop),
+					})
+				}
+			}
+		case "dubcap":
+			fallthrough
+		case "buggedcap":
+			{
+				options = append(options, FilterValueOption{
+					Text:  "True",
+					Value: "true",
+				})
+				options = append(options, FilterValueOption{
+					Text:  "False",
+					Value: "false",
+				})
+			}
+		default:
+		}
+		_topLevelMaps[topLevel] = options
+		return options
 	})
 
 	w := &worker{
@@ -810,19 +1050,6 @@ func main() {
 		}
 	})
 
-	ui.MustBind("getMaxQuality", func() float32 {
-		maxQuality := float32(0)
-		for _, mission := range _eiAfxConfigMissions {
-			for _, duration := range mission.GetDurations() {
-				compedMaxQuality := float32(duration.GetMaxQuality()) + (duration.GetLevelQualityBump() * float32(len(mission.LevelMissionRequirements)))
-				if compedMaxQuality > maxQuality {
-					maxQuality = compedMaxQuality
-				}
-			}
-		}
-		return maxQuality
-	})
-
 	ui.MustBind("getDurationConfigs", func() []PossibleMission {
 		possibleMissions := []PossibleMission{}
 
@@ -847,88 +1074,6 @@ func main() {
 		}
 
 		return possibleMissions
-	})
-
-	ui.MustBind("getAfxConfigs", func() []PossibleArtifact {
-		possibleArtifacts := []PossibleArtifact{}
-
-		for _, artifact := range _eiAfxConfigArtis {
-			possibleArtifact := PossibleArtifact{
-				Name:        *artifact.Spec.Name,
-				ProtoName:   artifact.Spec.Name.String(),
-				DisplayName: artifact.Spec.CasedSmallName(),
-				Level:       int32(artifact.Spec.GetLevel()),
-				Rarity:      int32(artifact.Spec.GetRarity()),
-				BaseQuality: float64(artifact.GetBaseQuality()),
-			}
-			possibleArtifacts = append(possibleArtifacts, possibleArtifact)
-		}
-
-		return possibleArtifacts
-	})
-
-	ui.MustBind("getPossibleTargets", func() []PossibleTarget {
-		PossibleTargetsRaw := []RawPossibleTarget{
-			{Name: ei.ArtifactSpec_UNKNOWN, DisplayName: "Untargeted", ImageString: "none.png"},
-			{Name: ei.ArtifactSpec_BOOK_OF_BASAN, DisplayName: "Books of Basan", ImageString: "bob_target.png"},
-			{Name: ei.ArtifactSpec_TACHYON_DEFLECTOR, DisplayName: "Tachyon Deflectors", ImageString: "deflector_target.png"},
-			{Name: ei.ArtifactSpec_SHIP_IN_A_BOTTLE, DisplayName: "Ships in a Bottle", ImageString: "siab_target.png"},
-			{Name: ei.ArtifactSpec_TITANIUM_ACTUATOR, DisplayName: "Titanium Actuators", ImageString: "actuator_target.png"},
-			{Name: ei.ArtifactSpec_DILITHIUM_MONOCLE, DisplayName: "Dilithium Monocles", ImageString: "monocle_target.png"},
-			{Name: ei.ArtifactSpec_QUANTUM_METRONOME, DisplayName: "Quantum Metronomes", ImageString: "metronome_target.png"},
-			{Name: ei.ArtifactSpec_PHOENIX_FEATHER, DisplayName: "Phoenix Feathers", ImageString: "feather_target.png"},
-			{Name: ei.ArtifactSpec_THE_CHALICE, DisplayName: "Chalices", ImageString: "chalice_target.png"},
-			{Name: ei.ArtifactSpec_INTERSTELLAR_COMPASS, DisplayName: "Interstellar Compasses", ImageString: "compass_target.png"},
-			{Name: ei.ArtifactSpec_CARVED_RAINSTICK, DisplayName: "Carved Rainsticks", ImageString: "rainstick_target.png"},
-			{Name: ei.ArtifactSpec_BEAK_OF_MIDAS, DisplayName: "Beaks of Midas", ImageString: "beak_target.png"},
-			{Name: ei.ArtifactSpec_MERCURYS_LENS, DisplayName: "Mercury's Lenses", ImageString: "lens_target.png"},
-			{Name: ei.ArtifactSpec_NEODYMIUM_MEDALLION, DisplayName: "Neodymium Medallions", ImageString: "medallion_target.png"},
-			{Name: ei.ArtifactSpec_ORNATE_GUSSET, DisplayName: "Gussets", ImageString: "gusset_target.png"},
-			{Name: ei.ArtifactSpec_TUNGSTEN_ANKH, DisplayName: "Tungsten Ankhs", ImageString: "ankh_target.png"},
-			{Name: ei.ArtifactSpec_AURELIAN_BROOCH, DisplayName: "Aurelian Brooches", ImageString: "brooch_target.png"},
-			{Name: ei.ArtifactSpec_VIAL_MARTIAN_DUST, DisplayName: "Vials of Martian Dust", ImageString: "vial_target.png"},
-			{Name: ei.ArtifactSpec_DEMETERS_NECKLACE, DisplayName: "Demeters Necklaces", ImageString: "necklace_target.png"},
-			{Name: ei.ArtifactSpec_LUNAR_TOTEM, DisplayName: "Lunar Totems", ImageString: "totem_target.png"},
-			{Name: ei.ArtifactSpec_PUZZLE_CUBE, DisplayName: "Puzzle Cubes", ImageString: "cube_target.png"},
-			{Name: ei.ArtifactSpec_PROPHECY_STONE, DisplayName: "Prophecy Stones", ImageString: "prophecy_target.png"},
-			{Name: ei.ArtifactSpec_CLARITY_STONE, DisplayName: "Clarity Stones", ImageString: "clarity_target.png"},
-			{Name: ei.ArtifactSpec_DILITHIUM_STONE, DisplayName: "Dilithium Stones", ImageString: "dilithium_target.png"},
-			{Name: ei.ArtifactSpec_LIFE_STONE, DisplayName: "Life Stones", ImageString: "life_target.png"},
-			{Name: ei.ArtifactSpec_QUANTUM_STONE, DisplayName: "Quantum Stones", ImageString: "quantum_target.png"},
-			{Name: ei.ArtifactSpec_SOUL_STONE, DisplayName: "Soul Stones", ImageString: "soul_target.png"},
-			{Name: ei.ArtifactSpec_TERRA_STONE, DisplayName: "Terra Stones", ImageString: "terra_target.png"},
-			{Name: ei.ArtifactSpec_TACHYON_STONE, DisplayName: "Tachyon Stones", ImageString: "tachyon_target.png"},
-			{Name: ei.ArtifactSpec_LUNAR_STONE, DisplayName: "Lunar Stones", ImageString: "lunar_target.png"},
-			{Name: ei.ArtifactSpec_SHELL_STONE, DisplayName: "Shell Stones", ImageString: "shell_target.png"},
-			{Name: ei.ArtifactSpec_SOLAR_TITANIUM, DisplayName: "Solar Titanium", ImageString: "titanium_target.png"},
-			{Name: ei.ArtifactSpec_TAU_CETI_GEODE, DisplayName: "Geodes", ImageString: "geode_target.png"},
-			{Name: ei.ArtifactSpec_GOLD_METEORITE, DisplayName: "Gold Meteorites", ImageString: "gold_target.png"},
-			{Name: ei.ArtifactSpec_PROPHECY_STONE_FRAGMENT, DisplayName: "Prophecy Stone Fragments", ImageString: "prophecy_frag_target.png"},
-			{Name: ei.ArtifactSpec_CLARITY_STONE_FRAGMENT, DisplayName: "Clarity Stone Fragments", ImageString: "clarity_frag_target.png"},
-			{Name: ei.ArtifactSpec_LIFE_STONE_FRAGMENT, DisplayName: "Life Stone Fragments", ImageString: "life_frag_target.png"},
-			{Name: ei.ArtifactSpec_TERRA_STONE_FRAGMENT, DisplayName: "Terra Stone Fragments", ImageString: "terra_frag_target.png"},
-			{Name: ei.ArtifactSpec_DILITHIUM_STONE_FRAGMENT, DisplayName: "Dilithium Stone Fragments", ImageString: "dilithium_frag_target.png"},
-			{Name: ei.ArtifactSpec_SOUL_STONE_FRAGMENT, DisplayName: "Soul Stone Fragments", ImageString: "soul_frag_target.png"},
-			{Name: ei.ArtifactSpec_QUANTUM_STONE_FRAGMENT, DisplayName: "Quantum Stone Fragments", ImageString: "quantum_frag_target.png"},
-			{Name: ei.ArtifactSpec_TACHYON_STONE_FRAGMENT, DisplayName: "Tachyon Stone Fragments", ImageString: "tachyon_frag_target.png"},
-			{Name: ei.ArtifactSpec_SHELL_STONE_FRAGMENT, DisplayName: "Shell Stone Fragments", ImageString: "shell_frag_target.png"},
-			{Name: ei.ArtifactSpec_LUNAR_STONE_FRAGMENT, DisplayName: "Lunar Stone Fragments", ImageString: "lunar_frag_target.png"},
-		}
-
-		// Convert the array to PossibleTarget
-		possibleTargets := []PossibleTarget{
-			{DisplayName: "None (Pre 1.27)", Id: -1, ImageString: "none.png"},
-		}
-		for _, rawTarget := range PossibleTargetsRaw {
-			possibleTarget := PossibleTarget{
-				DisplayName: rawTarget.DisplayName,
-				Id:          int32(rawTarget.Name),
-				ImageString: rawTarget.ImageString,
-			}
-			possibleTargets = append(possibleTargets, possibleTarget)
-		}
-
-		return possibleTargets
 	})
 
 	ui.MustBind("getShipDrops", func(playerId string, shipId string) []MissionDrop {

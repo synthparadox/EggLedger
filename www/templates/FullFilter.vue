@@ -1,6 +1,6 @@
 <template>
     <div class="max-h-60 overflow-y-auto">
-        <div class="relative flex-grow max-h-6/10" v-for="(filter, index) in filterArray" :key="index">
+        <div class="relative flex-grow max-h-6/10" v-for="(_, index) in filterArray" :key="index">
             <!-- Separator -->
             <div v-if="index != 0" class="text-gray-400 mt-0_5rem">-- AND --</div>
 
@@ -16,7 +16,7 @@
                     @handle-filter-change="handleFilterChange"></filter-select>
                 <!-- Value options (Base) -->
                 <filter-select v-if="filterLevelIf(index, null, 'value', 'base')"
-                    :internal-id="getIdHeader() + 'value-' + index" :option-list="getFilterValueOptions(modVals.top[index])"
+                    :internal-id="getIdHeader() + 'value-' + index" :option-list="window.getFilterValueOptions(modVals.top[index])"
                     level="value" :index="index" :model-value="modVals.value[index]"
                     @change-filter-value="changeFilterValue" @handle-filter-change="handleFilterChange"></filter-select>
                 <!-- Target Selectors - opens a custom modal -->
@@ -69,7 +69,7 @@
                 <!-- Value options -->
                 <filter-select v-if="filterLevelIf(index, orIndex, 'value', 'base')"
                     :internal-id="getIdHeader() + 'value-' + index + '-' + orIndex"
-                    :option-list="getFilterValueOptions(modVals.orTop[index][orIndex])" level="value" :index="index"
+                    :option-list="window.getFilterValueOptions(modVals.orTop[index][orIndex])" level="value" :index="index"
                     :or-index="orIndex" :model-value="modVals.orValue[index][orIndex]"
                     @change-filter-value="changeFilterValue" @handle-filter-change="handleOrFilterChange"></filter-select>
 
@@ -129,8 +129,6 @@
             filterArray: Array,
             modVals: Object,
             isLifetime: Boolean,
-            artifactConfigs: Object,
-            possibleTargets: Object,
         },
         methods: {
             removeAndShift(index) {
@@ -215,55 +213,6 @@
                     ];
                 }
             },
-            getFilterValueOptions(topLevel) {
-                switch (topLevel) {
-                    case 'ship': return Array.from({ length: 11 }, (_, index) => ({
-                        text: Array(
-                            "Chicken One", "Chicken Nine", "Chicken Heavy",
-                            "BCR", "Quintillion Chicken", "Cornish-Hen Corvette",
-                            "Galeggtica", "Defihent", "Voyegger", "Henerprise", 'Atreggies Henliner',
-                        )[index],
-                        value: index,
-                    }));
-                    case 'duration': return Array.from({ length: 4 }, (_, index) => ({
-                        text: Array("Short", "Standard", "Extended", "Tutorial")[index],
-                        value: index,
-                        styleClass: Array("text-duration-0", "text-duration-1", "text-duration-2", "text-duration-3")[index]
-                    }));
-                    case 'level': return Array.from({ length: 9 }, (_, index) => ({
-                        text: index + '★',
-                        value: index
-                    }));
-                    case 'target': return possibleTargets.value.map(target => ({
-                        text: target.displayName,
-                        value: target.id,
-                        imagePath: target.imageString
-                    }));
-                    case 'drops': {
-                        const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
-                            text: this.artifactDisplayText(artifact),
-                            value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
-                            styleClass: (this.afRarityClass(artifact, true) != "" ? this.afRarityClass(artifact, true) : 'text-gray-400'),
-                            imagePath: this.dropPath(artifact),
-                            rarityGif: this.dropRarityPath(artifact),
-                        }))
-                        filteredConfigs.unshift({ text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary', imagePath: 'legendary.gif' });
-                        filteredConfigs.unshift({ text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic', imagePath: 'epic.gif' });
-                        filteredConfigs.unshift({ text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare', imagePath: 'rare.gif' });
-                        return filteredConfigs;
-                    }
-                    case 'dubcap':
-                    case 'buggedcap': return [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }];
-                    default: return [];
-                }
-            },
-            artifactDisplayText(artifact){
-              const displayName = artifact.displayName;
-              const level = artifact.level;
-              let displayText = displayName;
-              if(level != '%') displayText += " (T" + (level + ((displayName.toLowerCase().indexOf('stone') > -1 && displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ")";
-              return displayText;
-            },
             filterLevelIf(index, orIndex, level, vtype) {
                 const isOr = orIndex != null;
                 const topLevelRef = isOr ? this.modVals.orTop : this.modVals.top;
@@ -307,34 +256,6 @@
             },
             isBaseFilter(filterOp) {
                 return(!['launchDT','returnDT','drops','target'].includes(filterOp))
-            },
-            afRarityClass(drop, bypass) {
-                if (drop.specType != 'Artifact' && !bypass) return "";
-                const rarity = this.afRarityText(drop, bypass ?? false);
-                return (rarity == "" ? "" : "text-" + rarity.toLowerCase());
-            },
-            afRarityText(drop, bypass) {
-                if (drop.specType != 'Artifact' && !bypass) return "";
-                switch (drop.rarity) {
-                    case 1: return "Rare";
-                    case 2: return "Epic";
-                    case 3: return "Legendary";
-                    default: return "";
-                }
-            },
-            dropPath(drop) {
-                const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
-                const fixedName = drop.protoName.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
-                return "artifacts/" + fixedName + "/" + fixedName + "_" + (drop.level + 1 + addendum) + ".png";
-            },
-            dropRarityPath(drop) {
-                switch (drop.rarity) {
-                    case 0: return "";
-                    case 1: return "images/rare.gif";
-                    case 2: return "images/epic.gif";
-                    case 3: return "images/legendary.gif";
-                    default: return "";
-                }
             },
             isOrDisabled(index) {
                 const topLevelRef = this.modVals.orTop;

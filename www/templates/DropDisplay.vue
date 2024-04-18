@@ -13,8 +13,8 @@
                     </div>
                     <span class="text-sm tooltiptext-custom speech-bubble">
                         {{ item.gameName }} (T{{parseInt(item.level) + parseInt(getSpecPathOffset())}}) 
-                        <span v-if="type == 'artifact'" :class="afRarityClass(item)">
-                          {{ afRarityText(item) }}
+                        <span v-if="type == 'artifact'" :class="'text-rarity-' + item.rarity">
+                          {{ ['Common', 'Rare', 'Epic', 'Legendary'][item.rarity] }}
                         </span>
                         × {{ item.count }}
                         <br v-if="type == 'artifact' || type == 'stone'"/>
@@ -66,7 +66,6 @@
 <script>
     export default {
         props: {
-            useGifsForRarity: Boolean,
             labelClassList: String,
             labelDisplayValue: String,
             itemArray: Array,
@@ -74,8 +73,6 @@
             ledgerType: String,
             lifetimeShowPerShip: Boolean,
             lifetimeMissionCount: Number,
-            afRarityClass: Function,
-            afRarityText: Function,
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
             totalDropsCount: Number,
@@ -93,18 +90,9 @@
                 if(this.type == 'stone') return '2';
                 else return '1';
             },
-            afBackgroundClass(item){
-              switch (item.rarity) {
-                case 0: return 'bg-common';
-                case 1: return (this.useGifsForRarity ? "bg-cover bg-rare-animated" : 'bg-rare');
-                case 2: return (this.useGifsForRarity ? "bg-cover bg-epic-animated" : 'bg-epic')
-                case 3: return (this.useGifsForRarity ? "bg-cover bg-legendary-animated" : 'bg-legendary');
-                default: return 'bg-common';
-              }
-            },
             getAClass(af){
-                if(this.type == 'artifact') return 'ledger-af-link tooltip-custom ' + this.afBackgroundClass(af);
-                else return 'ledger-af-link tooltip-custom bg-common';
+                if(this.type == 'artifact') return 'ledger-af-link tooltip-custom bg-r-' + af.rarity;
+                else return 'ledger-af-link tooltip-custom bg-r-0';
             },
             afExplorerName(drop, addend) {
               return 'https://wasmegg-carpet.netlify.app/artifact-explorer/#/artifact/' + 
@@ -117,6 +105,7 @@
             numToDigClass(num){
               const parsedNum = parseInt(num.toString());
               switch (true) {
+                case parsedNum > 999999: return "w-sevendig";
                 case parsedNum > 99999: return "w-sixdig";
                 case parsedNum > 9999: return "w-fivedig";
                 case parsedNum > 999: return "w-fourdig";

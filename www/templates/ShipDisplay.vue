@@ -4,22 +4,22 @@
         :class="(isMulti ? ((isFirst ? ' pl-7rem' : ' pl-3rem') + (isLast ? ' pr-7rem' : ' pr-3rem')) : 'overflow-auto pl-7rem pr-7rem' ) + ' text-gray-300 text-center' + ( shipCount > 3 ? ' min-w-30vw' : '') "
     >
         <!-- Header information about the mission -->
-        <span :class="durToTextClass(viewMissionData.missionInfo.durationType)">
-            {{ viewMissionData.missionInfo.shipString }}
+        <span :class="'text-duration-' + missionInfo.durationType">
+            {{ missionInfo.shipString }}
         </span><br />
         <span 
-            v-if="viewMissionData.missionInfo.level && viewMissionData.missionInfo.level > 0"
+            v-if="missionInfo.level && missionInfo.level > 0"
             class="text-star text-goldenstar" 
         >
-            {{ "★".repeat(viewMissionData.missionInfo.level) }}
+            {{ "★".repeat(missionInfo.level) }}
         </span>
-        <br v-if="viewMissionData.missionInfo.level && viewMissionData.missionInfo.level > 0" />
+        <br v-if="missionInfo.level && missionInfo.level > 0" />
         <span>Launched: {{ formatDate(viewMissionData.launchDT) }}</span> <br />
         <span>Returned: {{ formatDate(viewMissionData.returnDT) }}</span> <br />
         <span>Duration: {{ viewMissionData.durationStr }}</span> <br />
         <span class="flex flex-row items-center justify-center">
-        <span :class="((viewMissionData.missionInfo.isDubCap || viewMissionData.missionInfo.isBuggedCap) ? 'mr-0_5rem' : '')">Capacity: {{ viewMissionData.missionInfo.capacity }} </span>
-            <span v-if="viewMissionData.missionInfo.isBuggedCap" class="max-w-32 flex py-1 bugged-cap-span items-center justify-center flex-1">
+        <span :class="((missionInfo.isDubCap || missionInfo.isBuggedCap) ? 'mr-0_5rem' : '')">Capacity: {{ missionInfo.capacity }} </span>
+            <span v-if="missionInfo.isBuggedCap" class="max-w-32 flex py-1 bugged-cap-span items-center justify-center flex-1">
                 <img alt="Skull Emoji" src="/images/skull.png" class="w-6 mr-0_5rem">
                 <span class="tooltip-custom text-xs font-bold">
                     0.6x Capacity
@@ -33,7 +33,7 @@
                     </span>
                 </span>
             </span>
-            <span v-if="!viewMissionData.missionInfo.isBuggedCap && viewMissionData.missionInfo.isDubCap" class="max-w-28 flex py-1 double-cap-span items-center justify-center flex-1">
+            <span v-if="!missionInfo.isBuggedCap && missionInfo.isDubCap" class="max-w-28 flex py-1 double-cap-span items-center justify-center flex-1">
                 <img alt="Artifact Crate" src="/images/icon_afx_chest_2.png" class="w-6 mr-0_5rem">
                 <span class="tooltip-custom text-xs font-bold">
                     {{viewMissionData.capacityModifier}}x Capacity
@@ -48,11 +48,11 @@
                 </span>
             </span>
         </span>
-        <div v-if="viewMissionData.missionInfo.target != '' && viewMissionData.missionInfo.target.toUpperCase() != 'UNKNOWN'">
+        <div v-if="missionInfo.target != '' && missionInfo.target.toUpperCase() != 'UNKNOWN'">
             <div class="items-center justify-center flex">
                 <span>Sensor Target: </span>
                 <div class="ml-1 text-center text-xs rounded-full w-max px-1.5 py-0.5 text-gray-400 bg-darkerer font-semibold">
-                    {{ properCase(viewMissionData.missionInfo.target.replaceAll("_", " ")) }}
+                    {{ properCase(missionInfo.target.replaceAll("_", " ")) }}
                 </div>
             </div>
             <br/>
@@ -86,9 +86,7 @@
         </button>
 
         <drop-display-container
-            :use-gifs-for-rarity="useGifsForRarity" ledger-type="mission"
-            :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
-            :data="viewMissionData" 
+            ledger-type="mission" :data="viewMissionData" 
             :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
         ></drop-display-container>
         
@@ -116,25 +114,18 @@
             topLevelBool: Boolean,
             viewMissionData: Object,
             isMulti: Boolean,
-            useGifsForRarity: Boolean,
-            afRarityClass: Function,
-            afRarityText: Function,
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
             shipCount: Number,
             isFirst: Boolean,
             isLast: Boolean,
         },
+        computed: {
+            missionInfo() {
+                return this.viewMissionData.missionInfo;
+            }
+        },
         methods: {
-            durToTextClass(dur){
-                switch(dur){
-                case 0: return "text-duration-0";
-                case 1: return "text-duration-1";
-                case 2: return "text-duration-2";
-                case 3: return "text-duration-3";
-                default: return "";
-              }
-            },
             properCase(string) {
               string = string.toLowerCase();
               // Capitalize the first letter of each word, unless it is 'of' or 'the'

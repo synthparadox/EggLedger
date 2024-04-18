@@ -22,11 +22,11 @@ type AppStorage struct {
 	FilterWarningRead       bool      `json:"filter_warning_read"`
 	PreferredChromiumPath   string    `json:"preferred_chromium_path"`
 	AutoRefreshMennoPref    bool      `json:"auto_refresh_menno_pref"`
-	UseGifsForRarity        bool      `json:"use_gifs_for_rarity"`
 	DefaultViewMode         string    `json:"default_view_mode"`
 	DefaultResolutionX      int       `json:"default_resolution_x"`
 	DefaultResolutionY      int       `json:"default_resolution_y"`
 	DefaultScalingFactor    float64   `json:"default_scaling_factor"`
+	StartInFullscreen       bool      `json:"start_in_fullscreen"`
 }
 
 type Account struct {
@@ -128,13 +128,6 @@ func (s *AppStorage) SetAutoRefreshMennoPref(flag bool) {
 	go s.Persist()
 }
 
-func (s *AppStorage) SetUseGifsForRarity(flag bool) {
-	s.Lock()
-	s.UseGifsForRarity = flag
-	s.Unlock()
-	go s.Persist()
-}
-
 func (s *AppStorage) SetDefaultViewMode(mode string) {
 	s.Lock()
 	s.DefaultViewMode = mode
@@ -191,4 +184,11 @@ func (s *AppStorage) GetDefaultScalingFactor() float64 {
 		factor = 1.0
 	}
 	return factor
+}
+
+func (s *AppStorage) SetStartInFullscreen(flag bool) {
+	s.Lock()
+	s.StartInFullscreen = flag
+	s.Unlock()
+	go s.Persist()
 }

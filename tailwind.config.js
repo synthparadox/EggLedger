@@ -20,9 +20,10 @@ module.exports = {
         goldenstar: "rgb(255, 215, 0)",
         'yellow-700': "rgb(251 191 36)", 
         shortdarker: "rgb(48, 111, 171)",
-        rare: '#6ab6ff',
-        epic: '#c03fe2',
-        legendary: '#eeab42',
+        'rarity-0': 'rgb(156 163 175)',
+        'rarity-1': "#6ab6ff",
+        'rarity-2': '#c03fe2',
+        'rarity-3': '#eeab42',
         dubcap: 'rgb(173, 10, 198)',
         dubcapdarker: 'rgb(120, 7, 138)',
         selectedmission: 'rgb(10, 173, 82)',
@@ -62,6 +63,7 @@ module.exports = {
         'fourdig': '2rem',
         'fivedig': '2.35rem',
         'sixdig': '2.7rem',
+        'sevendig': '3rem',
         '9/10': '90%',
       },
       minWidth: {
@@ -136,12 +138,12 @@ module.exports = {
 
         'upgrade_green': '#1c802e',
         'upgrade_green_hover': '#155e22',
+        'rarity-0': '#443e45'
       },
       backgroundImage: {
-        'rare': 'radial-gradient(#a8dfff,#8dd5ff,#3a9dfc)',
-        'epic': 'radial-gradient(#ce81f7,#b958ed,#8819c2)',
-        'legendary': 'radial-gradient(#fcdd6a, #ffdb58, #e09143)',
-        'common': 'radial-gradient(#443e45, #443e45, #443e45)',
+        'rarity-1': 'radial-gradient(#a8dfff,#8dd5ff,#3a9dfc)',
+        'rarity-2': 'radial-gradient(#ce81f7,#b958ed,#8819c2)',
+        'rarity-3': 'radial-gradient(#fcdd6a, #ffdb58, #e09143)',
       },
       borderColor: {
         "dark_tab": "#111211",

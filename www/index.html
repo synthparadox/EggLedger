@@ -66,7 +66,7 @@
             <hr class="mt-1rem mb-1rem w-full">
             <div class="text-sm relative w-full pl-0_5rem pr-0_5rem">
               <span class="text-base">
-                Default app resolution (<span class="text-gray-300 text-sm">effective on restart</span>)
+                App resolution defaults (<span class="text-gray-300 text-sm">effective on restart</span>)
               </span> <br>
               <div class="flex flex-row items-center pl-0_5rem">
                 <div class="flex flex-col w-full max-w-10rem text-center mt-0_5rem">
@@ -84,6 +84,15 @@
                   <span class="text-sm text-gray-400 mt-0_5rem">Scaling Factor</span>
                 </div>
               </div>
+              <div class="mt-0_5rem pl-0_5rem">
+                <input
+                  id="startInFullscreenCheckbox"
+                  type="checkbox"
+                  class="ext-opt-check mr-0_5rem"
+                  v-model="startInFullscreen"
+                >
+                <label for="startInFullscreenCheckbox" class="ext-opt-label">Launch app in fullscreen</label>
+              </div>
             </div>
             <hr class="mt-1rem mb-1rem w-full">
             <div class="px-2 py-2 text-sm text-gray-400 bg-darker rounded-md tabular-nums overflow-auto">
@@ -98,26 +107,17 @@
               <span class="italic text-sm text-gray-500" v-if="secondsSinceLastMennoUpdate < 86400">To reduce the load on Menno's API, manual refreshes can be performed once every day</span>
               <div class="mt-0_5rem">
                 <input
-                id="autoRefreshMennoCheckbox"
-                type="checkbox"
-                class="ext-opt-check mr-0_5rem"
-                v-model="autoRefreshMennoPreference"
-              >
-              <label for="autoRefreshMennoCheckbox" class="ext-opt-label">Automatically refresh Menno data once weekly</label>
+                  id="autoRefreshMennoCheckbox"
+                  type="checkbox"
+                  class="ext-opt-check mr-0_5rem"
+                  v-model="autoRefreshMennoPreference"
+                >
+                <label for="autoRefreshMennoCheckbox" class="ext-opt-label">Automatically refresh Menno data once weekly</label>
               </div>
             </div>
             <hr class="mt-1rem mb-1rem w-full">
             <div class="px-2 py-2 text-sm text-gray-400 bg-darker rounded-md tabular-nums overflow-auto">
               <span class="mr-0_5rem font-bold text-lg text-gray-400 ledger-underline">Other Globals</span><br />
-              <div>
-                <input
-                  id="useGifsForRarityCheckbox"
-                  type="checkbox"
-                  class="ext-opt-check mr-0_5rem"
-                  v-model="useGifsForRarity"
-                >
-                <label for="useGifsForRarityCheckbox" class="ext-opt-label">Use GIFs for rarity icons</label>
-              </div>
               <div>
                 <span class="font-bold text-base text-gray-400">Default Drop-Sort Method</span><br />
                 <span class="opt-span">
@@ -532,7 +532,6 @@
               <ship-display
                 :top-level-bool="(viewMissionData && viewMissionData != {} && viewMissionData.missionInfo != null)"
                 :view-mission-data="viewMissionData" :is-multi="false"
-                :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
                 :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDropsPerShip"
                 @view="val => viewSpecificMission(val)"
               ></ship-display>
@@ -564,7 +563,6 @@
                       :is-first="missionDataIndex == 0" :is-last="missionDataIndex == multiViewMissionData.length - 1"
                       :top-level-bool="missionData && missionData != {} && missionData.missionInfo != null"
                       :view-mission-data="missionData" :is-multi="true"
-                      :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
                       :menno-mission-data="missionData.mennoData" :show-expected-drops="showExpectedDropsPerShip"
                       :ship-count="multiViewMissionData.length"
                     ></ship-display>
@@ -658,7 +656,6 @@
 
               <full-filter
                 :filter-array="generateFilterConditionsArr()" :mod-vals="filterModVals()" :is-lifetime="false"
-                :artifact-configs="artifactConfig" :possible-targets="possibleTargets"
                 @handle-filter-change="handleFilterChange" @handle-or-filter-change="handleOrFilterChange"
                 @remove-and-shift="removeAndShift" @remove-or-and-shift="removeOrAndShift"
                 @open-target-filter-menu="openTargetFilterMenu" @open-drop-filter-menu="openDropFilterMenu"
@@ -955,7 +952,6 @@
             >
               <full-filter
                 :filter-array="generateFilterConditionsArr()" :mod-vals="filterModVals()" :is-lifetime="true"
-                :artifact-configs="artifactConfig" :possible-targets="possibleTargets"
                 @handle-filter-change="handleFilterChange" @handle-or-filter-change="handleOrFilterChange"
                 @remove-and-shift="removeAndShift" @remove-or-and-shift="removeOrAndShift"
                 @open-target-filter-menu="openTargetFilterMenu" @open-drop-filter-menu="openDropFilterMenu"
@@ -1013,9 +1009,7 @@
                 </span>
               </div>
               <drop-display-container
-                v-if="!lifetimeDataBeingFiltered && lifetimeData != null && !lifetimeDataBeingLoaded"
-                :use-gifs-for-rarity="useGifsForRarity" ledger-type="lifetime"
-                :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
+                v-if="!lifetimeDataBeingFiltered && lifetimeData != null && !lifetimeDataBeingLoaded" ledger-type="lifetime"
                 :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeData.missionCount"
                 :data="lifetimeData" :menno-mission-data="lifetimeMennoMissionData"
                 :show-expected-drops="lifetimeShowExpectedTotals"
@@ -1131,10 +1125,7 @@
       // - setFilterWarningRead(flag bool)
       // - getMissionIds(playerId string): string[]
       // - viewMissionsOfEid(playerId string): LoadedMission[]
-      // - getMaxQuality(): float32
       // - getDurationConfigs(): PossibleMission[]
-      // - getAfxConfigs(): PossibleArtifact[]
-      // - getPossibleTargets(): PossibleTarget[]
       // - getShipDrops(playerId string, shipId string): MissionDrop[]
       // - getMissionInfo(playerId string, shipId string): LoadedMission
       // - isMennoRefreshNeeded(): bool
@@ -1279,9 +1270,9 @@
             const targetFilterSelectedIndex = Vue.ref(null);
             const targetFilterSelectedOrIndex = Vue.ref(null);
             const targetFilterMenuOpen = Vue.ref(false);
-            const openTargetFilterMenu = (index, orIndex) => {
+            const openTargetFilterMenu = async (index, orIndex) => {
               window.removeEventListener('focus', handleFocus, true);
-              tSelectListRef().value = getFilterValueOptions('target');
+              tSelectListRef().value = await window.getFilterValueOptions('target');
               tSelectedIndexRef().value = index;
               tSelectedOrIndexRef().value = orIndex ?? null;
               tFilterMenuOpenRef().value = true;
@@ -1301,8 +1292,8 @@
               el.classList.add('hidden');
             };
             const targetSearchTerm = Vue.ref("");
-            Vue.watch(targetSearchTerm, () => {
-              targetSelectList.value = getFilterValueOptions('target').filter(target => target.text.toLowerCase().includes(targetSearchTerm.value.toLowerCase()));
+            Vue.watch(targetSearchTerm, async () => {
+              targetSelectList.value = (await window.getFilterValueOptions('target')).filter(target => target.text.toLowerCase().includes(targetSearchTerm.value.toLowerCase()));
             });
             const selectTargetFilter = (target) => {
               const newValue = target.value.toString().split('.')[0];
@@ -1326,9 +1317,9 @@
             const dropFilterSelectedIndex = Vue.ref(null);
             const dropFilterSelectedOrIndex = Vue.ref(null);
             const dropFilterMenuOpen = Vue.ref(false);
-            const openDropFilterMenu = (index, orIndex) => {
+            const openDropFilterMenu = async (index, orIndex) => {
               window.removeEventListener('focus', handleFocus, true);
-              dropSelectList.value = getFilterValueOptions('drops');
+              dropSelectList.value = await window.getFilterValueOptions('drops');
               dropFilterSelectedIndex.value = index;
               dropFilterSelectedOrIndex.value = orIndex ?? null;
               dropFilterMenuOpen.value = true;
@@ -1350,8 +1341,8 @@
               el.classList.add('hidden');
             };
             const dropSearchTerm = Vue.ref("");
-            Vue.watch(dropSearchTerm, () => {
-              dropSelectList.value = getFilterValueOptions('drops').filter(drop => drop.text.toLowerCase().includes(dropSearchTerm.value.toLowerCase()));
+            Vue.watch(dropSearchTerm, async () => {
+              dropSelectList.value = (await window.getFilterValueOptions('drops')).filter(drop => drop.text.toLowerCase().includes(dropSearchTerm.value.toLowerCase()));
             });
             const selectDropFilter = (drop) => {
               const newValue = drop.value.toString().split('.')[0];
@@ -1485,8 +1476,8 @@
             const lifetimeTargetFilterSelectedOrIndex = Vue.ref(null);
             const lifetimeTargetFilterMenuOpen = Vue.ref(false);
             const lifetimeTargetSearchTerm = Vue.ref("");
-            Vue.watch(lifetimeTargetSearchTerm, () => {
-              lifetimeTargetSelectList.value = getFilterValueOptions('target').filter(target => target.text.toLowerCase().includes(lifetimeTargetSearchTerm.value.toLowerCase()));
+            Vue.watch(lifetimeTargetSearchTerm, async () => {
+              lifetimeTargetSelectList.value = (await window.getFilterValueOptions('target')).filter(target => target.text.toLowerCase().includes(lifetimeTargetSearchTerm.value.toLowerCase()));
             });
 
             const lifetimeSortMethod = Vue.ref('default');
@@ -1805,10 +1796,6 @@
             const viewMissionTimes = Vue.ref(true);
             const recolorDC = Vue.ref(false);
             const recolorBC = Vue.ref(false);
-            const useGifsForRarity = Vue.ref(false);
-            Vue.watch(useGifsForRarity, async () => {
-              await window.setUseGifsForRarity(useGifsForRarity.value);
-            });
             const getShipColorText = (missionData, altMode = false) => {
               if(missionBeingViewed === missionData.missionId) return altMode ? 'text-selectedmissiondarker' : 'text-selectedmission';
               if(recolorBC.value && missionData.isBuggedCap) return altMode ? 'text-buggedcapdarker' : 'text-buggedcap';
@@ -1907,20 +1894,6 @@
               const finalString = words.join(" ");
               return finalString.charAt(0).toUpperCase() + finalString.slice(1);
             };
-            const afRarityText = (drop, bypass) => {
-              if(drop.specType != 'Artifact' && !bypass) return "";
-              switch(drop.rarity){
-                case 1: return "Rare";
-                case 2: return "Epic";
-                case 3: return "Legendary";
-                default: return "";
-              }
-            };
-            const afRarityClass = (drop, bypass) => {
-              if(drop.specType != 'Artifact' && !bypass) return "";
-              const rarity = afRarityText(drop, bypass ?? false);
-              return (rarity == "" ? "" : "text-" + rarity.toLowerCase());
-            };
 
             const multiViewMode = Vue.ref('off');
             const closeMultiMissionOverlay = () => {
@@ -1970,28 +1943,6 @@
               if(boolMissionBeingViewed.value) window.addEventListener('keydown', handleKeyDown);
               else window.removeEventListener('keydown', handleKeyDown);
             });
-
-            function artifactDisplayText(artifact){
-              const displayName = artifact.displayName;
-              const level = artifact.level;
-              var displayText = displayName;
-              if(level != '%') displayText += " (T" + (level + ((displayName.toLowerCase().indexOf('stone') > -1 && displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ")";
-              return displayText;
-            }
-            const dropPath = (drop) => {
-              const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
-              const fixedName = drop.protoName.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
-              return "artifacts/" + fixedName + "/" + fixedName + "_" + (drop.level + 1 + addendum) + ".png";
-            };
-            const dropRarityPath = (drop) => {
-              switch(drop.rarity){
-                case 0: return "";
-                case 1: return "images/rare.gif";
-                case 2: return "images/epic.gif";
-                case 3: return "images/legendary.gif";
-                default: return "";
-              }
-            }
 
             const eidMissionsBeingLoaded = Vue.ref(false);
             const loadedEid = Vue.ref(null);
@@ -2150,10 +2101,7 @@
               filterHasChanged.value = true;
             });
 
-            const possibleTargets = Vue.ref(null);
-            const maxQuality = Vue.ref("");
             const durationConfigs = Vue.ref(null);
-            const artifactConfigs = Vue.ref(null);
             const mennoDataAutoRefresh = Vue.ref(false);
             const mennoProgress = Vue.ref("");
             const secondsSinceLastMennoUpdate = Vue.ref(null);
@@ -2204,48 +2152,6 @@
               secondsSinceLastMennoUpdate.value = 0;
             };
 
-            const getFilterValueOptions = (topLevel) => {
-              switch(topLevel){
-                case 'ship': return Array.from({ length: 11 }, (_, index) => ({
-                    text: Array.of(
-                        'Chicken One', 'Chicken Nine', 'Chicken Heavy',
-                        'BCR', 'Quintillion Chicken', 'Cornish-Hen Corvette',
-                        'Galeggtica', 'Defihent', 'Voyegger', 'Henerprise', 'Atreggies Henliner'
-                      )[index],
-                    value: index,
-                  }));
-                case 'duration': return Array.from({ length: 4 }, (_, index) => ({
-                    text: Array.of('Short', 'Standard', 'Extended', 'Tutorial')[index],
-                    value: index,
-                    styleClass: 'text-duration-' + index
-                  }));
-                case 'level': return Array.from({ length: 9 }, (_, index) => ({
-                    text: index + '★',
-                    value: index
-                  }));
-                case 'target': return possibleTargets.value.map(target => ({
-                    text: target.displayName,
-                    value: target.id,
-                    imagePath: target.imageString
-                  }));
-                case 'drops': {
-                  const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
-                    text: artifactDisplayText(artifact),
-                    value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
-                    styleClass: (afRarityClass(artifact, true) != "" ? afRarityClass(artifact, true) : 'text-gray-400'),
-                    imagePath: dropPath(artifact),
-                    rarityGif: dropRarityPath(artifact),
-                  }))
-                  filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', styleClass: 'text-legendary', imagePath: 'legendary.gif'});
-                  filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', styleClass: 'text-epic', imagePath: 'epic.gif'});
-                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', styleClass: 'text-rare', imagePath: 'rare.gif'});
-                  return filteredConfigs;
-                }
-                case 'dubcap': return [{ text: 'True', value: 'true' },{ text: 'False', value: 'false' }];
-                default: return [];
-              }
-            }
-
             //==============================================
             // Filter window functions
             //==============================================
@@ -2269,9 +2175,9 @@
 
               if(isDrops && dropsValue != null && dropsValue != ''){
                 switch(dropsValue.split("_")[ 2]) {
-                  case "1": newBorder = 'border-rare'; newText = 'text-rare'; break;
-                  case "2": newBorder = 'border-epic'; newText = 'text-epic'; break;
-                  case "3": newBorder = 'border-legendary'; newText = 'text-legendary'; break;
+                  case "1": newBorder = 'border-rare'; newText = 'text-rarity-1'; break;
+                  case "2": newBorder = 'border-epic'; newText = 'text-rarity-2'; break;
+                  case "3": newBorder = 'border-legendary'; newText = 'text-rarity-3'; break;
                   default: newBorder = 'border-gray-300'; newText = 'text-gray-400'; break;
                 }
               } else if(isDuration && el.value != ''){
@@ -2328,7 +2234,7 @@
               orDataFilterRef().value = newOrDataFilter;
             };
 
-            const handleFilterChange = (event) => {
+            const handleFilterChange = async (event) => {
               const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
               if(targetEl.oldValue == null || targetEl.type == 'date') { 
@@ -2338,15 +2244,15 @@
               updateValueStyling(targetEl, false);
               if(targetId.indexOf(filterTopSelector.value) > -1) {
                 const index = parseInt(targetId.split("-").pop());
-                if(getFilterValueOptions(targetEl.value).indexOf(opRef().value[index]) == -1) opRef().value[index] = null;
-                if(getFilterValueOptions(targetEl.value).indexOf(valRef().value[index]) == -1) {
+                if((await window.getFilterValueOptions(targetEl.value)).indexOf(opRef().value[index]) == -1) opRef().value[index] = null;
+                if((await window.getFilterValueOptions(targetEl.value)).indexOf(valRef().value[index]) == -1) {
                   valRef().value[index] = null;
                   dValRef().value[index] = null;
                 }
               }
             };
 
-            const handleOrFilterChange = (event) => {
+            const handleOrFilterChange = async (event) => {
               const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
               const index = parseInt(targetId.split("-")[isLifetime.value ? 3 : 2]);
@@ -2354,8 +2260,8 @@
               updateFilterNoReCount();
               updateValueStyling(targetEl, true);
               if(targetId.indexOf(filterTopSelector.value) > -1) {
-                if(getFilterValueOptions(targetEl.value).indexOf(ofOpRef().value[index][orIndex]) == -1) ofOpRef().value[index][orIndex] = null;
-                if(getFilterValueOptions(targetEl.value).indexOf(ofValRef().value[index][orIndex]) == -1) {
+                if((await window.getFilterValueOptions(targetEl.value)).indexOf(ofOpRef().value[index][orIndex]) == -1) ofOpRef().value[index][orIndex] = null;
+                if((await window.getFilterValueOptions(targetEl.value)).indexOf(ofValRef().value[index][orIndex]) == -1) {
                   ofValRef().value[index][orIndex] = null;
                   ofDValRef().value[index][orIndex] = null;
                 }
@@ -2741,6 +2647,7 @@
             const resolutionPrefX = Vue.ref(0);
             const resolutionPrefY = Vue.ref(0);
             const scalingFactor = Vue.ref(0.0);
+            const startInFullscreen = Vue.ref(false);
             Vue.watch(resolutionPrefX, async () => {
               await window.setDefaultResolution(resolutionPrefX.value, resolutionPrefY.value);
             });
@@ -2750,6 +2657,9 @@
             Vue.watch(scalingFactor, async () => {
               await window.setDefaultScalingFactor(scalingFactor.value);
             });
+            Vue.watch(startInFullscreen, async () => {
+              await window.setStartInFullscreen(startInFullscreen.value);
+            });
 
             Vue.onMounted(async () => {
               //Reload the data
@@ -2757,7 +2667,6 @@
 
               //Settings loads
               autoRefreshMennoPreference.value = await window.getAutoRefreshMennoPreference();
-              useGifsForRarity.value = await window.getUseGifsForRarity();
               defaultViewMode.value = viewMissionSortMethod.value = await window.getDefaultViewMode();
               if(['default', 'iv'].indexOf(defaultViewMode.value) > -1){
                 lifetimeSortMethod.value = defaultViewMode.value;
@@ -2777,12 +2686,10 @@
               resolutionPrefX.value = resX;
               resolutionPrefY.value = resY;
               scalingFactor.value = await window.getDefaultScalingFactor();
+              startInFullscreen.value = await window.getStartInFullscreen();
 
               //Load configs
-              artifactConfigs.value = await window.getAfxConfigs();
-              maxQuality.value = await window.getMaxQuality();
               durationConfigs.value = await window.getDurationConfigs();
-              possibleTargets.value = await window.getPossibleTargets();
 
               //Load Menno data
               if (await window.isMennoRefreshNeeded()) {
@@ -2792,6 +2699,9 @@
               }
               canUseMennoData.value = await window.loadMennoData();
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
+
+              //Cache the filter value options ahead of time
+              ['ship', 'duration', 'level', 'target', 'drops'].forEach(async (i) => _ = await window.window.getFilterValueOptions(i));
             });
 
             const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeData);
@@ -2883,6 +2793,7 @@
               resolutionPrefX,
               resolutionPrefY,
               scalingFactor,
+              startInFullscreen,
               getBrowserDisplayName,
               getPreferredBrowser,
               setPreferredBrowser,
@@ -2977,21 +2888,15 @@
               viewMissionTimes,
               recolorDC,
               recolorBC,
-              useGifsForRarity,
               loadedEid,
               allLoadedMissions,
               filteredMissions,
               groupedMissions,
-              possibleTargets,
-              maxQuality,
               durationConfigs,
-              artifactConfigs,
               viewMissionData,
               groupedArrays,
               allVisible,
               viewMissionSortMethod,
-              afRarityClass,
-              afRarityText,
               groupedSpecType,
               properCase,
 
@@ -3037,7 +2942,6 @@
               updateFilterConditionsCount,
               updateValueStyling,
               updateFilterNoReCount,
-              getFilterValueOptions,
               removeAndShift,
               removeOrAndShift,
               generateFilterConditionsArr,

@@ -22,12 +22,12 @@
                     v-on:keydown="e => {e.preventDefault(); if(e.keyCode == '38' || e.keyCode == '40') {arrowKeyDown(e);} else if(e.keyCode == '13') {$emit('select', item); clearSearch();}}"
                     tabindex="0"
                 >
-                    <img 
-                        class="mr-1rem max-w-7" v-if="item.imagePath != null && item.imagePath != ''"
+                    <img
+                        v-if="item.imagePath"
+                        :class="'max-w-7 mr-1rem' + (ledgerType === 'drop' ? ' rounded-full bg-r-' + item.rarity : '')"
                         :alt="item.text" :src="getImgPath(item)"
-                        :style="(ledgerType === 'drop' && item.rarityGif ? 'background: url(' + item.rarityGif + ') center center no-repeat; background-size: cover;' : '')"
                     >
-                    <span :class="(ledgerType === 'drop' ? (item.styleClass ?? '') : 'text-gray-400')">
+                    <span :class="(ledgerType === 'drop' ? ('text-rarity-' + item.rarity) : 'text-gray-400')">
                         {{ item.text }}
                     </span>
                 </div>

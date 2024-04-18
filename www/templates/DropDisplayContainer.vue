@@ -4,7 +4,6 @@
         :item-array="data.artifacts" type="artifact" label-class-list="mission-view-div bg-blue-900"
         label-display-value="Artifacts" :ledger-type="ledgerType"
         :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
-        :use-gifs-for-rarity="useGifsForRarity" :af-rarity-class="afRarityClass" :af-rarity-text="afRarityText"
         :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
         :total-drops-count="getTotalCount()"
     ></drop-display>
@@ -57,13 +56,10 @@
             },
         },
         props: {
-            useGifsForRarity: Boolean,
             data: Object,
             ledgerType: String,
             lifetimeShowPerShip: Boolean,
             lifetimeMissionCount: Number,
-            afRarityClass: Function,
-            afRarityText: Function,
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
         },
