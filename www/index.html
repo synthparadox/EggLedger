@@ -523,16 +523,16 @@
           ></search-over-selector>
 
           <div class="top-click-detect mission-view-overlay overlay-mission">
-            <div id="ship-display-inner" class="inner-click-detect max-w-70vw max-h-90vh overflow-auto bg-dark rounded-lg relative p-1rem">
+            <div class="inner-click-detect max-w-70vw max-h-90vh overflow-auto bg-dark rounded-lg relative p-1rem">
               <button class="detect-trigger hover:text-gray-500 close-button" v-on:click="closeMissionOverlay()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
               <ship-display
-                :top-level-bool="(viewMissionData && viewMissionData != {} && viewMissionData.missionInfo != null)"
+                v-if="viewMissionData?.missionInfo != null"
                 :view-mission-data="viewMissionData" :is-multi="false"
-                :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDropsPerShip"
+                :show-expected-drops="showExpectedDropsPerShip"
                 @view="val => viewSpecificMission(val)"
               ></ship-display>
             </div>
@@ -560,10 +560,10 @@
                     :class="'w-1/' + multiViewMissionData.length"
                   >
                     <ship-display
+                      v-if="missionData?.missionInfo != null"
                       :is-first="missionDataIndex == 0" :is-last="missionDataIndex == multiViewMissionData.length - 1"
-                      :top-level-bool="missionData && missionData != {} && missionData.missionInfo != null"
                       :view-mission-data="missionData" :is-multi="true"
-                      :menno-mission-data="missionData.mennoData" :show-expected-drops="showExpectedDropsPerShip"
+                      :show-expected-drops="showExpectedDropsPerShip"
                       :ship-count="multiViewMissionData.length"
                     ></ship-display>
                   </div>
@@ -976,50 +976,63 @@
               <span v-if="!lifetimeDataBeingFiltered && lifetimeData != null" class="ledger-underline text-base text-gray-400">
                 Data compiled from {{ lifetimeData.missionCount }} Missions <span v-if="lifetimeDataExcludedCount != 0">({{lifetimeDataExcludedCount}} Filtered Out)</span>
               </span>
-              <div class="mb-0_5rem">
-                <span>Options</span>
+              <div>
+                <span>View Method</span>
                 <br/>
                 <span class="mr-5">
-                  <label for="lifetimeDataPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
-                  <input id="lifetimeDataPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
+                  <label for="lifetimeVisualView" class="ext-opt-label">Visual</label>
+                  <input id="lifetimeVisualView" type="radio" v-model="lifetimeViewMethod" value="visual" class="ext-opt-check"/>
                 </span>
-                <span v-if="lifetimeAllowExpectedTotals">
-                  <label for="lifetimeSortDefault" class="ext-opt-label">Show 'Expected Total Drops'</label>
-                  <input id="lifetimeExpectedTotals" type="checkbox" v-bind:disabled="!canUseMennoData" v-model="lifetimeShowExpectedTotalsPref" class="ext-opt-check"/>
+                <span class="mr-5">
+                  <label for="lifetimeTableView" class="ext-opt-label">Table</label>
+                  <input id="lifetimeTableView" type="radio" v-model="lifetimeViewMethod" value="table" class="ext-opt-check"/>
                 </span>
               </div>
-              <div class="mb-0_5rem">
-                <span>Sort method</span>
-                <br/>
-                <span class="mr-5">
-                  <label for="lifetimeSortDefault" class="ext-opt-label">Default</label>
-                  <input id="lifetimeSortDefault" type="radio" v-model="lifetimeSortMethod" value="default" class="ext-opt-check"/>
-                </span>
-                <span class="mr-5">
-                  <label for="lifetimeSortIV" class="ext-opt-label">Inventory Visualizer</label>
-                  <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
-                </span>
-                <span class="mr-5">
-                  <label for="lifetimeSortTotalCount" class="ext-opt-label">Total Count</label>
-                  <input id="lifetimeSortTotalCount" type="radio" v-model="lifetimeSortMethod" value="count" class="ext-opt-check"/>
-                </span>
-                <span class="mr-5">
-                  <label for="lifetimeSortRandom" class="ext-opt-label">Random</label>
-                  <input id="lifetimeSortRandom" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
-                </span>
-              </div>
-              <drop-display-container
-                v-if="!lifetimeDataBeingFiltered && lifetimeData != null && !lifetimeDataBeingLoaded" ledger-type="lifetime"
-                :lifetime-show-per-ship="lifetimeShowDropsPerShip" :lifetime-mission-count="lifetimeData.missionCount"
-                :data="lifetimeData" :menno-mission-data="lifetimeMennoMissionData"
-                :show-expected-drops="lifetimeShowExpectedTotals"
-              ></drop-display-container>
-              <div v-else class="max-w-half">
-                <hr class="mt-1rem mb-1rem w-full">
-                <span class="mt-0_5rem p-0_5rem text-lg">
-                  Lifetime data is being compiled, please wait...
-                </span><br>
-                <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
+              <div v-if="lifetimeViewMethod== 'visual'">
+                <div class="mb-0_5rem">
+                  <span>Options</span>
+                  <br/>
+                  <span class="mr-5">
+                    <label for="lifetimeDataPerShip" class="ext-opt-label">Show 'Average Drops per Ship'</label>
+                    <input id="lifetimeDataPerShip" type="checkbox" v-model="lifetimeShowDropsPerShip" class="ext-opt-check"/>
+                  </span>
+                  <span v-if="lifetimeAllowExpectedTotals">
+                    <label for="lifetimeSortDefault" class="ext-opt-label">Show 'Expected Total Drops'</label>
+                    <input id="lifetimeExpectedTotals" type="checkbox" v-bind:disabled="!canUseMennoData" v-model="lifetimeShowExpectedTotalsPref" class="ext-opt-check"/>
+                  </span>
+                </div>
+                <div class="mb-0_5rem">
+                  <span>Sort method</span>
+                  <br/>
+                  <span class="mr-5">
+                    <label for="lifetimeSortDefault" class="ext-opt-label">Default</label>
+                    <input id="lifetimeSortDefault" type="radio" v-model="lifetimeSortMethod" value="default" class="ext-opt-check"/>
+                  </span>
+                  <span class="mr-5">
+                    <label for="lifetimeSortIV" class="ext-opt-label">Inventory Visualizer</label>
+                    <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
+                  </span>
+                  <span class="mr-5">
+                    <label for="lifetimeSortTotalCount" class="ext-opt-label">Total Count</label>
+                    <input id="lifetimeSortTotalCount" type="radio" v-model="lifetimeSortMethod" value="count" class="ext-opt-check"/>
+                  </span>
+                  <span class="mr-5">
+                    <label for="lifetimeSortRandom" class="ext-opt-label">Random</label>
+                    <input id="lifetimeSortRandom" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
+                  </span>
+                </div>
+                <drop-display-container
+                  v-if="!lifetimeDataBeingFiltered && lifetimeData != null && !lifetimeDataBeingLoaded" ledger-type="lifetime"
+                  :lifetime-show-per-ship="lifetimeShowDropsPerShip" :data="lifetimeData"
+                  :show-expected-drops="lifetimeShowExpectedTotals"
+                ></drop-display-container>
+                <div v-else class="max-w-half">
+                  <hr class="mt-1rem mb-1rem w-full">
+                  <span class="mt-0_5rem p-0_5rem text-lg">
+                    Lifetime data is being compiled, please wait...
+                  </span><br>
+                  <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
+                </div>
               </div>
             </div>
           </div>
@@ -1528,7 +1541,6 @@
             const lifetimeDataLoadedProgress = Vue.ref({});
             const resetLifetimeDataLoadedProgress = (npd, nlc, ntc) => {lifetimeDataLoadedProgress.value = {percentageDone: npd ?? '0%', loadedCount: nlc ?? 0,totalCount: ntc ?? 0,};};
             const lifetimeDataExcludedCount = Vue.ref(0);
-            const lifetimeMennoMissionData = Vue.ref(null);
             const viewLifetimeDataOfEid = async (filterLoad) => {
               lifetimeDataBeingFiltered.value = filterLoad;
               //Reset allLoadedMissions - potential insane lag spikes due to overloading the DOM
@@ -1592,7 +1604,6 @@
               }
               reSortLifetime();
 
-              lifetimeMennoMissionData.value = null;
               lifetimeAllowExpectedTotals.value = lifetimeHasExactlyOneConfiguration(firstMatches);
               if(lifetimeAllowExpectedTotals.value){
                 const mennoConfigItems = await window.getMennoData(
@@ -1603,7 +1614,7 @@
                 );
                 secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
                 if(mennoConfigItems){
-                  lifetimeMennoMissionData.value = {
+                  lifetimeData.value.mennoData = {
                     totalDropsCount: mennoConfigItems?.reduce((acc, cur) => acc + cur.totalDrops, 0) ?? 0,
                     configs: mennoConfigItems ?? []
                   };
@@ -2496,9 +2507,9 @@
               } else return commonProperties;
             };
 
-            const mennoMissionData = Vue.ref(null);
             const missionBeingViewed = Vue.ref(null);
             const defaultViewMode = Vue.ref('default');
+            const lifetimeViewMethod = Vue.ref('visual');
             const viewMissionSortMethod = Vue.ref('default');
             Vue.watch(defaultViewMode, async () => {
               await window.setDefaultViewMode(defaultViewMode.value);
@@ -2521,12 +2532,10 @@
               const mennoLevel = newMissionViewData.missionInfo.level;
               const mennoConfigItems = await window.getMennoData(mennoShip, mennoDuration, mennoLevel, mennoTargetInt);
               if(mennoConfigItems){
-                const mennoData = {
+                newMissionViewData.mennoData = {
                   totalDropsCount: mennoConfigItems.reduce((acc, cur) => acc + cur.totalDrops, 0),
                   configs: mennoConfigItems
                 };
-                if(returnValues) newMissionViewData.mennoData = mennoData;
-                else mennoMissionData.value = mennoData;
               }
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
               newMissionViewData.artifacts = useThisFunc(newMissionViewData?.artifacts);
@@ -2814,6 +2823,7 @@
               lifetimeAccountSelectRef,
               lifetimeAccountInputRef,
               lifetimeAccountDropdownOpen,
+              lifetimeViewMethod,
               openLifetimeAccountDropdown,
               closeLifetimeAccountDropdown,
               viewLifetimeDataOfEid,
@@ -2843,7 +2853,6 @@
               lifetimeTargetSearchTerm,
               lifetimeDataExcludedCount,
               lifetimeShowDropsPerShip,
-              lifetimeMennoMissionData,
               lifetimeShowExpectedTotals,
               lifetimeShowExpectedTotalsPref,
               lifetimeAllowExpectedTotals,
@@ -2960,7 +2969,6 @@
               lastMennoUpdateString,
               secondsSinceLastMennoUpdate,
               showExpectedDropsPerShip,
-              mennoMissionData,
               asyncUpdateMennoData,
 
               openFile: window.openFile,

@@ -1,6 +1,5 @@
 <template>
     <div 
-        v-if="topLevelBool"
         :class="(isMulti ? ((isFirst ? ' pl-7rem' : ' pl-3rem') + (isLast ? ' pr-7rem' : ' pr-3rem')) : 'overflow-auto pl-7rem pr-7rem' ) + ' text-gray-300 text-center' + ( shipCount > 3 ? ' min-w-30vw' : '') "
     >
         <!-- Header information about the mission -->
@@ -87,7 +86,7 @@
 
         <drop-display-container
             ledger-type="mission" :data="viewMissionData" 
-            :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
+            :show-expected-drops="showExpectedDrops"
         ></drop-display-container>
         
         <!-- Shamelessly stolen straight from MK2's source code, with mobile note removed -->
@@ -111,10 +110,8 @@
             'view',
         ],
         props: {
-            topLevelBool: Boolean,
             viewMissionData: Object,
             isMulti: Boolean,
-            mennoMissionData: Object,
             showExpectedDrops: Boolean,
             shipCount: Number,
             isFirst: Boolean,

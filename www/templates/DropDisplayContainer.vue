@@ -1,38 +1,30 @@
 <template>
     <!-- Artifacts -->
     <drop-display
-        :item-array="data.artifacts" type="artifact" label-class-list="mission-view-div bg-blue-900"
-        label-display-value="Artifacts" :ledger-type="ledgerType"
-        :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
-        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :total-drops-count="getTotalCount()"
+        :item-array="data.artifacts" type="artifact" :menno-data="data.mennoData"
+        :ledger-type="ledgerType" :total-drops-count="getTotalCount()"
+        :lifetime-show-per-ship="lifetimeShowPerShip" :show-expected-drops="showExpectedDrops"
     ></drop-display>
 
     <!-- Stones -->
     <drop-display
-        :item-array="data.stones" type="stone" label-class-list="mission-view-div bg-fuchsia-900"
-        label-display-value="Eggfinity Stones" :ledger-type="ledgerType"
-        :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
-        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :total-drops-count="getTotalCount()"
+        :item-array="data.stones" type="stone" :menno-data="data.mennoData"
+        :ledger-type="ledgerType" :total-drops-count="getTotalCount()"
+        :lifetime-show-per-ship="lifetimeShowPerShip" :show-expected-drops="showExpectedDrops"
     ></drop-display>
 
     <!-- Ingredients -->
     <drop-display
-        :item-array="data.ingredients" type="ingredient" label-class-list="mission-view-div text-gray-400 bg-darkerer"
-        label-display-value="Ingredients" :ledger-type="ledgerType"
-        :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
-        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :total-drops-count="getTotalCount()"
+        :item-array="data.ingredients" type="ingredient" :menno-data="data.mennoData"
+        :ledger-type="ledgerType" :total-drops-count="getTotalCount()"
+        :lifetime-show-per-ship="lifetimeShowPerShip" :show-expected-drops="showExpectedDrops"
     ></drop-display>
 
     <!-- Stone Fragments -->
     <drop-display
-        :item-array="data.stoneFragments" type="stone_fragment" label-class-list="mission-view-div text-gray-400 bg-darkerer"
-        label-display-value="Stone Fragments" :ledger-type="ledgerType"
-        :lifetime-show-per-ship="lifetimeShowPerShip" :lifetime-mission-count="lifetimeMissionCount"
-        :menno-mission-data="mennoMissionData" :show-expected-drops="showExpectedDrops"
-        :total-drops-count="getTotalCount()"
+        :item-array="data.stoneFragments" type="stone_fragment" :menno-data="data.mennoData"
+        :ledger-type="ledgerType" :total-drops-count="getTotalCount()"
+        :lifetime-show-per-ship="lifetimeShowPerShip" :show-expected-drops="showExpectedDrops"
     ></drop-display>
 
 </template>
@@ -59,7 +51,6 @@
             data: Object,
             ledgerType: String,
             lifetimeShowPerShip: Boolean,
-            lifetimeMissionCount: Number,
             mennoMissionData: Object,
             showExpectedDrops: Boolean,
         },

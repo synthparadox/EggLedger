@@ -1,7 +1,7 @@
 <template>
     <div v-if="itemArray.length > 0">
-        <div :class="labelClassList">
-            {{ labelDisplayValue }} ({{ itemArray.reduce((acc, item) => acc + item.count, 0).toString() }})
+        <div :class="getLabelClassList()">
+            {{ getLabelDisplayValue() }} ({{ itemArray.reduce((acc, item) => acc + item.count, 0).toString() }})
         </div>
         <div :class="getRepeatClass()">
             <div :class="getInnerRepeatClass()" v-for="(item, _) in itemArray">
@@ -28,8 +28,8 @@
 
                         <hr v-if="ledgerType == 'lifetime' && lifetimeShowPerShip" class="mt-0_5rem mb-0_5rem w-full">
                         <span v-if="ledgerType == 'lifetime' && lifetimeShowPerShip">
-                            (<span class="text-green-500">{{ (item.count / lifetimeMissionCount).toFixed(5) }}</span> per ship - 
-                            <span class="text-green-500">1</span>:<span class="text-green-500">{{ (1 / (item.count / lifetimeMissionCount)).toFixed(2) }}</span>)
+                            (<span class="text-green-500">{{ (item.count / data.missionCount).toFixed(5) }}</span> per ship - 
+                            <span class="text-green-500">1</span>:<span class="text-green-500">{{ (1 / (item.count / data.missionCount)).toFixed(2) }}</span>)
                         </span>
 
                         <hr v-if="ledgerType == 'lifetime' && showExpectedDrops" class="mt-0_5rem mb-0_5rem w-full">
@@ -66,18 +66,35 @@
 <script>
     export default {
         props: {
-            labelClassList: String,
-            labelDisplayValue: String,
             itemArray: Array,
             type: String,
             ledgerType: String,
             lifetimeShowPerShip: Boolean,
-            lifetimeMissionCount: Number,
-            mennoMissionData: Object,
             showExpectedDrops: Boolean,
             totalDropsCount: Number,
+            mennoData: Array,
         },
         methods: {
+            getLabelDisplayValue(){
+                switch(this.type){
+                    case 'artifact': return 'Artifacts';
+                    case 'stone': return 'Eggfinity Stones';
+                    case 'ingredient': return 'Ingredients';
+                    case 'stone_fragment': return 'Stone Fragments';
+                    default: return 'Unknown';
+                }
+            },
+            getLabelClassList(){
+                let colorClass = '';
+                switch(this.type){
+                    case 'artifact': colorClass = 'bg-blue-900'; break;
+                    case 'stone': colorClass = 'bg-fuchsia-900'; break;
+                    case 'ingredient': colorClass = 'text-gray-400 bg-darkerer'; break;
+                    case 'stone_fragment': colorClass = 'text-gray-400 bg-darkerer'; break;
+                    default: colorClass = 'bg-gray-900'; break;
+                }
+                return 'mission-view-div ' + colorClass;
+            },
             getRepeatClass(){
                 if(this.ledgerType === 'lifetime') return 'ledger-af-repeat-lifetime';
                 else return 'ledger-af-repeat';
@@ -123,15 +140,15 @@
               return (!match ? ["?", "?", "?"] : [str.substring(0, match.index), match[1], str.substring(match.index + match[0].length)]);
             },
             getDropCalcs (dropId, dropLevel, dropRarity) {
-                if(this.mennoMissionData?.configs == null) return null;
-                const mennoItem = this.mennoMissionData.configs.find(item => 
+                if(this.mennoData?.configs == null) return null;
+                const mennoItem = this.mennoData.configs.find(item => 
                     item.artifactConfiguration.artifactType.id == dropId &&
                     item.artifactConfiguration.artifactLevel == dropLevel &&
                     item.artifactConfiguration.artifactRarity.id == dropRarity
                 );
                 if(mennoItem == null || !this.ledgerType) return null;
-                if(this.ledgerType == 'mission') return [mennoItem.totalDrops, this.mennoMissionData.totalDropsCount];
-                else if(this.ledgerType == 'lifetime') return [((mennoItem.totalDrops / this.mennoMissionData.totalDropsCount) * this.totalDropsCount).toFixed(3), 0];
+                if(this.ledgerType == 'mission') return [mennoItem.totalDrops, this.mennoData.totalDropsCount];
+                else if(this.ledgerType == 'lifetime') return [((mennoItem.totalDrops / this.mennoData.totalDropsCount) * this.totalDropsCount).toFixed(3), 0];
                 else return null;
             },
             getExpectedPerShip(dropId, dropLevel, dropRarity){
