@@ -74,6 +74,7 @@ module.exports = {
         '70vw': '70vw',
       },
       maxWidth: {
+        'half': '50%',
         '6': '1.5rem',
         '5rem': '5rem',
         '10rem': '10rem',
@@ -125,9 +126,11 @@ module.exports = {
       backgroundColor: {
         'white': '#ffffff',
         'dark': '#393b40',
+        'darkerthandark': '#33353a',
         'darker': '#242629',
         'darkerer': "#1c1d1f",
         'darkest': '#151617',
+        'darkester': '#0e0f10',
 
         'dark_tab': "#323633",
         'darker_tab': "#262927",

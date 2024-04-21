@@ -828,6 +828,7 @@ func (a *ArtifactSpec) TierName() string {
 		return []string{"MISALIGNED", "REGULAR", "PRECISE", "MEGGNIFICENT"}[*a.Level]
 	// Stones
 	case ArtifactSpec_DILITHIUM_STONE:
+		fallthrough
 	case ArtifactSpec_TACHYON_STONE:
 		return []string{"REGULAR", "EGGSQUISITE", "BRILLIANT"}[*a.Level]
 	case ArtifactSpec_SHELL_STONE:
@@ -835,6 +836,7 @@ func (a *ArtifactSpec) TierName() string {
 	case ArtifactSpec_LUNAR_STONE:
 		return []string{"REGULAR", "EGGSQUISITE", "MEGGNIFICENT"}[*a.Level]
 	case ArtifactSpec_PROPHECY_STONE:
+		fallthrough
 	case ArtifactSpec_SOUL_STONE:
 		return []string{"REGULAR", "EGGSQUISITE", "RADIANT"}[*a.Level]
 	case ArtifactSpec_QUANTUM_STONE:

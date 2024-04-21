@@ -11,6 +11,50 @@
   </head>
   <body>
     <div id="app" class="h-stretch">
+      <script>
+        //This will be done better in the future, but for now, this is the best way to get this function in place.
+        Array.prototype.any = function(predicate) {
+            // Loop through each element in the array
+            for (let i = 0; i < this.length; i++) {
+                // Apply the predicate function to the current element
+                if (predicate(this[i], i, this)) {
+                    return true; // If the condition is met, return true
+                }
+            }
+            return false; // If no element satisfies the condition, return false
+        };
+        Array.prototype.count = function(predicate) {
+            let count = 0;
+            // Loop through each element in the array
+            for (let i = 0; i < this.length; i++) {
+                // Apply the predicate function to the current element
+                if (predicate(this[i], i, this)) {
+                    count++; // If the condition is met, increment the count
+                }
+            }
+            return count; // Return the count
+        };
+        Array.prototype.where = function(predicate) {
+            const result = [];
+            // Loop through each element in the array
+            for (let i = 0; i < this.length; i++) {
+                // Apply the predicate function to the current element
+                if (predicate(this[i], i, this)) {
+                    result.push(this[i]); // If the condition is met, add the element to the result
+                }
+            }
+            return result; // Return the result
+        };
+        Array.prototype.sumBy = function(selector) {
+            let sum = 0;
+            // Loop through each element in the array
+            for (let i = 0; i < this.length; i++) {
+                // Apply the selector function to the current element
+                sum += selector(this[i], i, this); // Add the result to the sum
+            }
+            return sum; // Return the sum
+        };
+      </script>
       <!-- Set display to none initially and reset it once mounted to avoid flash of unrendered template. -->
       <div v-unhide class="h-stretch flex flex-col space-y-3 pb-3 bg-darker" style="display: none">
         <div class="h-11 flex-shrink-0 bg-dark">
@@ -919,7 +963,10 @@
               </div>
               <div class="h-3 relative rounded-full overflow-hidden mt-1">
                 <div class="w-full h-full bg-dark absolute"></div>
-                <div class="h-full absolute rounded-full bg-green-500"
+                <div v-if="lifetimeState == LifetimeLoadState.Failed || lifetimeState == LifetimeLoadState.FailedTooFast"
+                  class="h-full absolute rounded-full bg-data_loss_red w-full" 
+                ></div>
+                <div v-else class="h-full absolute rounded-full bg-green-500"
                   v-bind:style="{ width: lifetimeDataLoadedProgress.percentageDone }"
                 ></div>
               </div>
@@ -988,6 +1035,26 @@
                   <input id="lifetimeTableView" type="radio" v-model="lifetimeViewMethod" value="table" class="ext-opt-check"/>
                 </span>
               </div>
+              <div class="mb-0_5rem">
+                <span>Sort method</span>
+                <br/>
+                <span class="mr-5">
+                  <label for="lifetimeSortDefault" class="ext-opt-label">Default</label>
+                  <input id="lifetimeSortDefault" type="radio" v-model="lifetimeSortMethod" value="default" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="lifetimeSortIV" class="ext-opt-label">Inventory Visualizer</label>
+                  <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="lifetimeSortTotalCount" class="ext-opt-label">Total Count</label>
+                  <input id="lifetimeSortTotalCount" type="radio" v-model="lifetimeSortMethod" value="count" class="ext-opt-check"/>
+                </span>
+                <span class="mr-5">
+                  <label for="lifetimeSortRandom" class="ext-opt-label">Random</label>
+                  <input id="lifetimeSortRandom" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
+                </span>
+              </div>
               <div v-if="lifetimeViewMethod== 'visual'">
                 <div class="mb-0_5rem">
                   <span>Options</span>
@@ -1001,32 +1068,12 @@
                     <input id="lifetimeExpectedTotals" type="checkbox" v-bind:disabled="!canUseMennoData" v-model="lifetimeShowExpectedTotalsPref" class="ext-opt-check"/>
                   </span>
                 </div>
-                <div class="mb-0_5rem">
-                  <span>Sort method</span>
-                  <br/>
-                  <span class="mr-5">
-                    <label for="lifetimeSortDefault" class="ext-opt-label">Default</label>
-                    <input id="lifetimeSortDefault" type="radio" v-model="lifetimeSortMethod" value="default" class="ext-opt-check"/>
-                  </span>
-                  <span class="mr-5">
-                    <label for="lifetimeSortIV" class="ext-opt-label">Inventory Visualizer</label>
-                    <input id="lifetimeSortIV" type="radio" v-model="lifetimeSortMethod" value="iv" class="ext-opt-check"/>
-                  </span>
-                  <span class="mr-5">
-                    <label for="lifetimeSortTotalCount" class="ext-opt-label">Total Count</label>
-                    <input id="lifetimeSortTotalCount" type="radio" v-model="lifetimeSortMethod" value="count" class="ext-opt-check"/>
-                  </span>
-                  <span class="mr-5">
-                    <label for="lifetimeSortRandom" class="ext-opt-label">Random</label>
-                    <input id="lifetimeSortRandom" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
-                  </span>
-                </div>
                 <drop-display-container
                   v-if="!lifetimeDataBeingFiltered && lifetimeData != null && !lifetimeDataBeingLoaded" ledger-type="lifetime"
                   :lifetime-show-per-ship="lifetimeShowDropsPerShip" :data="lifetimeData"
                   :show-expected-drops="lifetimeShowExpectedTotals"
                 ></drop-display-container>
-                <div v-else class="max-w-half">
+                <div v-else class="max-w-half items-center">
                   <hr class="mt-1rem mb-1rem w-full">
                   <span class="mt-0_5rem p-0_5rem text-lg">
                     Lifetime data is being compiled, please wait...
@@ -1034,6 +1081,64 @@
                   <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
                 </div>
               </div>
+              <div v-else class="shadow overflow-hidden grid">
+                <div class="min-w-full max-w-full grid rounded-md">
+                  <table>
+                    <caption v-if="false">Lifetime Data</caption>
+                    <thead class="bg-darker text-xl">
+                      <tr>
+                        <th class="w-1/4 py-3 px-5 text-left">Rarity</th>
+                        <th class="w-1/4 py-3 px-5 text-left">Artifact</th>
+                        <th class="w-1/2 py-3 px-5 text-left">Ship(s)</th>
+                      </tr>
+                    </thead>
+                    <tbody class="ledger-tbody">
+                      <tr v-if="lifetimeData.artifacts.any(a => a.rarity == 3)">
+                        <td colspan="3" class="text-left py-4 px-5 font-bold text-rarity-3">
+                          Legendary <parened-item inner-class="text-rarity-3" :inner-text="lifetimeData.artifacts.where(a => a.rarity == 3).sumBy(a => a.count)"></parened-item>
+                          <button
+                            type="button"
+                            class="toggle-link ml-1rem"
+                            v-on:click="lifetimeDataLegExpanded = !lifetimeDataLegExpanded"
+                          >
+                            {{ lifetimeDataLegExpanded ? 'Collapse' : 'Expand' }}
+                          </button>
+                        </td>
+                      </tr>
+                      <tr v-if="lifetimeDataLegExpanded" v-for="(item, _) in lifetimeData.artifacts.where(a => a.rarity == 3)">
+                        <td></td>
+                        <td class="text-left py-2 px-5 font-bold text-rarity-3">
+                          {{ item.gameName }}<span class="text-gray-400">{{ (item.count > 1) ? ' x ' + item.count : '' }}</span>
+                        </td>
+                        <td class="py-2 px-5 font-bold">
+                          <button
+                            type="button" class="toggle-link"
+                            v-on:click="item.digShipInfo = !item.digShipInfo"
+                          >
+                            {{ item.digShipInfo ? 'Hide' : 'Show' }}
+                          </button>
+                          <br v-if="item.digShipInfo">
+                          <div class="text-left">
+                            <span v-if="item.digShipInfo" v-for="(missionInfo, _) in item.missionInfos ?? []" class="text-gray-400">
+                              {{ missionInfo.missionId }} <br />
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-if="lifetimeData.artifacts.any(a => a.rarity == 2)">
+                        <td colspan="3" class="text-left py-4 px-5 font-bold text-rarity-2">
+                          Epic <parened-item inner-class="text-rarity-2" :inner-text="lifetimeData.artifacts.where(a => a.rarity == 2).sumBy(a => a.count)"></parened-item>
+                        </td>
+                      </tr>
+                      <tr v-if="lifetimeData.artifacts.any(a => a.rarity == 1)">
+                        <td colspan="3" class="text-left py-4 px-5 font-bold text-rarity-1">
+                          Rare <parened-item inner-class="text-rarity-1" :inner-text="lifetimeData.artifacts.where(a => a.rarity == 1).sumBy(a => a.count)"></parened-item>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>              
             </div>
           </div>
 
@@ -1187,6 +1292,7 @@
           LoadingMissionData: 'LoadingMissionData',
           Success: 'Success',
           Failed: 'Failed',
+          FailedTooFast: 'FailedTooFast',
         }
 
         function normalizePlayerId(id) {
@@ -1234,6 +1340,7 @@
             'search-over-selector': Vue.defineAsyncComponent(() => loadModule('./templates/SearchOverSelector.vue', options)),
             'ship-display': Vue.defineAsyncComponent(() => loadModule('./templates/ShipDisplay.vue', options)),
             'target-display': Vue.defineAsyncComponent(() => loadModule('./templates/TargetDisplay.vue', options)),
+            'parened-item': Vue.defineAsyncComponent(() => loadModule('./templates/ParenedItem.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1384,6 +1491,11 @@
               if(account != null && account.id != null && account.id.trim() !== '') selectedLifetimeAccount.value = account.id;
               lifetimeAccountDropdownOpen.value = false;
             };
+
+            const lifetimeDataLegExpanded = Vue.ref(false);
+            const lifetimeDataEpicExpanded = Vue.ref(false);
+            const lifetimeDataRareExpanded = Vue.ref(false);
+
             const lifetimeData = Vue.ref(null);
             const lifetimeFilterTopLevel = Vue.ref([]);
             const lifetimeFilterOperators = Vue.ref([]);
@@ -1533,6 +1645,8 @@
                   return "Succeeded" + (lifetimeSuccessTime.value != null ? ` in ${lifetimeSuccessTime.value}` : "");
                 case LifetimeLoadState.Failed:
                   return "Failed";
+                case LifetimeLoadState.FailedTooFast:
+                  return "Failed: Data loaded too quickly after start. Try again.";
               }
             };
             const lifetimeState = Vue.ref(LifetimeLoadState.Idle);
@@ -1550,9 +1664,20 @@
 
               const start = performance.now();
               lifetimeState.value = LifetimeLoadState.FetchingIds;
-              const idsJson = await window.getMissionIds(selectedLifetimeAccount.value);
+              //Fetch mission IDS, put a 2.5 second timeout on the call
+              const idsJson = await (async () => { 
+                try {
+                  const missionIdsPromise = window.getMissionIds(selectedLifetimeAccount.value);
+                  // Set a timeout promise that resolves to null after 2.5 seconds
+                  const timeoutPromise = new Promise((resolve) => {
+                    setTimeout(() => { resolve(null);}, 2500);
+                  });
+                  return await Promise.race([missionIdsPromise, timeoutPromise]);
+                } catch (error) {return null;}
+              })();
+
               if(idsJson == {} || idsJson == null || idsJson.length == 0){
-                lifetimeState.value = LifetimeLoadState.Failed;
+                lifetimeState.value = LifetimeLoadState.FailedTooFast;
                 return;
               }
               const shouldFilter = (lifetimeDataFilter.value != null && lifetimeDataFilter.value.length > 0 && filterLoad);
@@ -1595,7 +1720,7 @@
                   if (firstMatches[3] != missionInfo.targetArtifact) firstMatches[3] = -1;
                   nonMatch = (firstMatches.indexOf(-1) != -1);
                 }
-                mission.artifacts.forEach(artifact => {mergeItems(lifetimeData.value.artifacts, artifact)});
+                mission.artifacts.forEach(artifact => {mergeItems(lifetimeData.value.artifacts, artifact, (artifact.rarity > 2 ? missionInfo : null));});
                 mission.stones.forEach(stone => {mergeItems(lifetimeData.value.stones, stone)});
                 mission.stoneFragments.forEach(stoneFragment => {mergeItems(lifetimeData.value.stoneFragments, stoneFragment)});
                 mission.ingredients.forEach(ingredient => {mergeItems(lifetimeData.value.ingredients, ingredient)});
@@ -1636,12 +1761,19 @@
                 (lifetimeHasExactlyOneTarget.value || firstMatches[3] != -1) &&
                 canUseMennoData.value;
             }
-            const mergeItems = (targetArray, item) => {
+            const mergeItems = (targetArray, item, missionInfo = null) => {
               const existingItem = targetArray[`${item.id}_${item.level}_${item.rarity}`];
-              if (existingItem) existingItem.count += item.count;
+              if (existingItem) {
+                existingItem.count += item.count;
+                if(missionInfo != null) existingItem.missionInfos.push(missionInfo);
+              }
               else {
                 targetArray[`${item.id}_${item.level}_${item.rarity}`] = item;
                 targetArray.push(item);
+                if(missionInfo != null) {
+                  item.missionInfos = [missionInfo];
+                  item.digShipInfo = false;
+                }
               }
             };
 
@@ -2509,7 +2641,7 @@
 
             const missionBeingViewed = Vue.ref(null);
             const defaultViewMode = Vue.ref('default');
-            const lifetimeViewMethod = Vue.ref('visual');
+            const lifetimeViewMethod = Vue.ref('table');
             const viewMissionSortMethod = Vue.ref('default');
             Vue.watch(defaultViewMode, async () => {
               await window.setDefaultViewMode(defaultViewMode.value);
@@ -2824,6 +2956,9 @@
               lifetimeAccountInputRef,
               lifetimeAccountDropdownOpen,
               lifetimeViewMethod,
+              lifetimeDataLegExpanded,
+              lifetimeDataEpicExpanded,
+              lifetimeDataRareExpanded,
               openLifetimeAccountDropdown,
               closeLifetimeAccountDropdown,
               viewLifetimeDataOfEid,

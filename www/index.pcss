@@ -487,3 +487,15 @@ input[type=number] {
   border-top: 2px solid;
   border-bottom: 2px solid;
 }
+
+.ledger-tbody {
+  @apply text-base;
+
+  tr {
+    @apply odd:bg-dark even:bg-darkerthandark border-y border-gray-300;
+  };
+}
+
+.ledger-tbody:last-child {
+  @apply border-b-0;
+}
