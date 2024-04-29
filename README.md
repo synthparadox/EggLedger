@@ -1,3 +1,5 @@
+### I no longer have interest in maintaining this project. If anyone would like to take it up, feel free.
+
 <h1 align="center">
   <img width="384" src="assets/icon-1024.png" alt="EggLedger">
 </h1>
