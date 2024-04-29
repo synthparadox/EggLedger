@@ -232,6 +232,10 @@ input[type=number] {
   @apply flex flex-wrap justify-center mx-auto max-w-70vw
 }
 
+.ledger-af-repeat-lifetime-alt {
+  @apply flex flex-wrap
+}
+
 .toggle-link {
   @apply text-duration-0 mr-5 font-bold bg-transparent;
 
@@ -486,16 +490,4 @@ input[type=number] {
   height: calc(100%);
   border-top: 2px solid;
   border-bottom: 2px solid;
-}
-
-.ledger-tbody {
-  @apply text-base;
-
-  tr {
-    @apply odd:bg-dark even:bg-darkerthandark border-y border-gray-300;
-  };
-}
-
-.ledger-tbody:last-child {
-  @apply border-b-0;
 }

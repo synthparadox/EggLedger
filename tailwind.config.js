@@ -74,6 +74,7 @@ module.exports = {
         '70vw': '70vw',
       },
       maxWidth: {
+        '1/3': '33.333333%',
         'half': '50%',
         '6': '1.5rem',
         '5rem': '5rem',
@@ -98,6 +99,9 @@ module.exports = {
         '2rem': '2rem',
         '3rem': '3rem',
         '7rem': '7rem',
+        '70vw': '70vw',
+        '1/4': '25%',
+        '1/3': '33.333333%',
       },
       margin: {
         '0i': '0 !important',

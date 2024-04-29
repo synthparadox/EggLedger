@@ -11,50 +11,6 @@
   </head>
   <body>
     <div id="app" class="h-stretch">
-      <script>
-        //This will be done better in the future, but for now, this is the best way to get this function in place.
-        Array.prototype.any = function(predicate) {
-            // Loop through each element in the array
-            for (let i = 0; i < this.length; i++) {
-                // Apply the predicate function to the current element
-                if (predicate(this[i], i, this)) {
-                    return true; // If the condition is met, return true
-                }
-            }
-            return false; // If no element satisfies the condition, return false
-        };
-        Array.prototype.count = function(predicate) {
-            let count = 0;
-            // Loop through each element in the array
-            for (let i = 0; i < this.length; i++) {
-                // Apply the predicate function to the current element
-                if (predicate(this[i], i, this)) {
-                    count++; // If the condition is met, increment the count
-                }
-            }
-            return count; // Return the count
-        };
-        Array.prototype.where = function(predicate) {
-            const result = [];
-            // Loop through each element in the array
-            for (let i = 0; i < this.length; i++) {
-                // Apply the predicate function to the current element
-                if (predicate(this[i], i, this)) {
-                    result.push(this[i]); // If the condition is met, add the element to the result
-                }
-            }
-            return result; // Return the result
-        };
-        Array.prototype.sumBy = function(selector) {
-            let sum = 0;
-            // Loop through each element in the array
-            for (let i = 0; i < this.length; i++) {
-                // Apply the selector function to the current element
-                sum += selector(this[i], i, this); // Add the result to the sum
-            }
-            return sum; // Return the sum
-        };
-      </script>
       <!-- Set display to none initially and reset it once mounted to avoid flash of unrendered template. -->
       <div v-unhide class="h-stretch flex flex-col space-y-3 pb-3 bg-darker" style="display: none">
         <div class="h-11 flex-shrink-0 bg-dark">
@@ -915,7 +871,7 @@
               event.preventDefault();
               clearLifetimeFilter();
               viewLifetimeDataOfEid();
-          }">
+            }">
             <div ref="lifetimeAccountSelectRef" class="relative flex-grow focus-within:z-10">
               <!-- Overlay to tag input with number of missions -->
               <div v-if="selectedLifetimeAccount != null && objectedExistingData.find(acc => acc.id == selectedLifetimeAccount) != null" class="ledger-input-overlay">
@@ -1081,72 +1037,29 @@
                   <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
                 </div>
               </div>
-              <div v-else class="shadow overflow-hidden grid">
-                <div class="min-w-full max-w-full grid rounded-md">
-                  <table>
-                    <caption v-if="false">Lifetime Data</caption>
-                    <thead class="bg-darker text-xl">
-                      <tr>
-                        <th class="w-1/4 py-3 px-5 text-left">Rarity</th>
-                        <th class="w-1/4 py-3 px-5 text-left">Artifact</th>
-                        <th class="w-1/2 py-3 px-5 text-left">Ship(s)</th>
-                      </tr>
-                    </thead>
-                    <tbody class="ledger-tbody">
-                      <tr v-if="lifetimeData.artifacts.any(a => a.rarity == 3)">
-                        <td colspan="3" class="text-left py-4 px-5 font-bold text-rarity-3">
-                          Legendary <parened-item inner-class="text-rarity-3" :inner-text="lifetimeData.artifacts.where(a => a.rarity == 3).sumBy(a => a.count)"></parened-item>
-                          <button
-                            type="button"
-                            class="toggle-link ml-1rem"
-                            v-on:click="lifetimeDataLegExpanded = !lifetimeDataLegExpanded"
-                          >
-                            {{ lifetimeDataLegExpanded ? 'Collapse' : 'Expand' }}
-                          </button>
-                        </td>
-                      </tr>
-                      <tr v-if="lifetimeDataLegExpanded" v-for="(item, _) in lifetimeData.artifacts.where(a => a.rarity == 3)">
-                        <td></td>
-                        <td class="text-left py-2 px-5 font-bold text-rarity-3">
-                          {{ item.gameName }}<span class="text-gray-400">{{ (item.count > 1) ? ' x ' + item.count : '' }}</span>
-                        </td>
-                        <td class="py-2 px-5 font-bold">
-                          <button
-                            type="button" class="toggle-link"
-                            v-on:click="item.digShipInfo = !item.digShipInfo"
-                          >
-                            {{ item.digShipInfo ? 'Hide' : 'Show' }}
-                          </button>
-                          <br v-if="item.digShipInfo">
-                          <div class="text-left">
-                            <span v-if="item.digShipInfo" v-for="(missionInfo, _) in item.missionInfos ?? []" class="text-gray-400">
-                              {{ missionInfo.missionId }} <br />
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr v-if="lifetimeData.artifacts.any(a => a.rarity == 2)">
-                        <td colspan="3" class="text-left py-4 px-5 font-bold text-rarity-2">
-                          Epic <parened-item inner-class="text-rarity-2" :inner-text="lifetimeData.artifacts.where(a => a.rarity == 2).sumBy(a => a.count)"></parened-item>
-                        </td>
-                      </tr>
-                      <tr v-if="lifetimeData.artifacts.any(a => a.rarity == 1)">
-                        <td colspan="3" class="text-left py-4 px-5 font-bold text-rarity-1">
-                          Rare <parened-item inner-class="text-rarity-1" :inner-text="lifetimeData.artifacts.where(a => a.rarity == 1).sumBy(a => a.count)"></parened-item>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>              
+              <div v-else class="grid justify-center text-left shadow overflow-hidden ml-10 mr-10">
+                <drop-table
+                  :data="lifetimeData" rarity="3" :items-expanded="lifetimeDataLegExpanded"
+                ></drop-table>
+
+                <drop-table
+                  :data="lifetimeData" rarity="2" :items-expanded="lifetimeDataEpicExpanded"
+                ></drop-table>
+
+                <drop-table
+                  :data="lifetimeData" rarity="1" :items-expanded="lifetimeDataRareExpanded"
+                ></drop-table>
+
+                <drop-table
+                  :data="lifetimeData" rarity="0" :items-expanded="lifetimeDataCommonExpanded"
+                ></drop-table>            
+              </div>
+            </div>
+            <!-- Data does not exist -->
+            <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
+              <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
             </div>
           </div>
-
-          <!-- Data does not exist -->
-          <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
-            <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
-          </div>
-        </div>
 
         <footer class="text-center text-sm text-gray-500">
           <a
@@ -1341,6 +1254,7 @@
             'ship-display': Vue.defineAsyncComponent(() => loadModule('./templates/ShipDisplay.vue', options)),
             'target-display': Vue.defineAsyncComponent(() => loadModule('./templates/TargetDisplay.vue', options)),
             'parened-item': Vue.defineAsyncComponent(() => loadModule('./templates/ParenedItem.vue', options)),
+            'drop-table': Vue.defineAsyncComponent(() => loadModule('./templates/DropTable.vue', options)),
           },
           setup() {
             // ===== Tab =====
@@ -1630,6 +1544,7 @@
               switch(lifetimeState.value){
                 case LifetimeLoadState.Success: return "text-green-500";
                 case LifetimeLoadState.Failed: return "text-red-700";
+                case LifetimeLoadState.FailedTooFast: return "text-red-700";
                 default: return "text-gray-300";
               }
             };
@@ -1720,10 +1635,10 @@
                   if (firstMatches[3] != missionInfo.targetArtifact) firstMatches[3] = -1;
                   nonMatch = (firstMatches.indexOf(-1) != -1);
                 }
-                mission.artifacts.forEach(artifact => {mergeItems(lifetimeData.value.artifacts, artifact, (artifact.rarity > 2 ? missionInfo : null));});
-                mission.stones.forEach(stone => {mergeItems(lifetimeData.value.stones, stone)});
-                mission.stoneFragments.forEach(stoneFragment => {mergeItems(lifetimeData.value.stoneFragments, stoneFragment)});
-                mission.ingredients.forEach(ingredient => {mergeItems(lifetimeData.value.ingredients, ingredient)});
+                mission.artifacts.forEach(artifact => {mergeItems(lifetimeData.value.artifacts, artifact, missionInfo ?? null);});
+                mission.stones.forEach(stone => {mergeItems(lifetimeData.value.stones, stone, missionInfo ?? null)});
+                mission.stoneFragments.forEach(stoneFragment => {mergeItems(lifetimeData.value.stoneFragments, stoneFragment, missionInfo ?? null)});
+                mission.ingredients.forEach(ingredient => {mergeItems(lifetimeData.value.ingredients, ingredient, missionInfo ?? null)});
                 lifetimeDataLoadedProgress.value.percentageDone = `${((ids.indexOf(id) + 1) / ids.length) * 100}%`;
                 lifetimeDataLoadedProgress.value.loadedCount++;
               }

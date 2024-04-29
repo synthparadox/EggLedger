@@ -292,6 +292,11 @@ func (a *ArtifactSpec) DropEffectString() string {
 		replString = "???" // should never happen
 	}
 
+	//If string starts with "!!", it is a custom parsing case.
+	if strings.HasPrefix(replString, "!!") {
+		return replString
+	}
+
 	return strings.ReplaceAll(a.GenericBenefitString(), "^b", replString)
 }
 
