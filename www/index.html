@@ -979,18 +979,6 @@
               <span v-if="!lifetimeDataBeingFiltered && lifetimeData != null" class="ledger-underline text-base text-gray-400">
                 Data compiled from {{ lifetimeData.missionCount }} Missions <span v-if="lifetimeDataExcludedCount != 0">({{lifetimeDataExcludedCount}} Filtered Out)</span>
               </span>
-              <div>
-                <span>View Method</span>
-                <br/>
-                <span class="mr-5">
-                  <label for="lifetimeVisualView" class="ext-opt-label">Visual</label>
-                  <input id="lifetimeVisualView" type="radio" v-model="lifetimeViewMethod" value="visual" class="ext-opt-check"/>
-                </span>
-                <span class="mr-5">
-                  <label for="lifetimeTableView" class="ext-opt-label">Table</label>
-                  <input id="lifetimeTableView" type="radio" v-model="lifetimeViewMethod" value="table" class="ext-opt-check"/>
-                </span>
-              </div>
               <div class="mb-0_5rem">
                 <span>Sort method</span>
                 <br/>
@@ -1011,7 +999,7 @@
                   <input id="lifetimeSortRandom" type="radio" v-model="lifetimeSortMethod" value="random" class="ext-opt-check"/>
                 </span>
               </div>
-              <div v-if="lifetimeViewMethod== 'visual'">
+              <div>
                 <div class="mb-0_5rem">
                   <span>Options</span>
                   <br/>
@@ -1037,30 +1025,13 @@
                   <img src="images/loading.gif" alt="Loading..." class="xl-ico" />
                 </div>
               </div>
-              <div v-else class="grid justify-center text-left shadow overflow-hidden ml-10 mr-10">
-                <drop-table
-                  :data="lifetimeData" rarity="3" :items-expanded="lifetimeDataLegExpanded"
-                ></drop-table>
-
-                <drop-table
-                  :data="lifetimeData" rarity="2" :items-expanded="lifetimeDataEpicExpanded"
-                ></drop-table>
-
-                <drop-table
-                  :data="lifetimeData" rarity="1" :items-expanded="lifetimeDataRareExpanded"
-                ></drop-table>
-
-                <drop-table
-                  :data="lifetimeData" rarity="0" :items-expanded="lifetimeDataCommonExpanded"
-                ></drop-table>            
-              </div>
             </div>
             <!-- Data does not exist -->
             <div v-if="!doesDataExist" class="text-center mt-3rem rounded-md border border-red-700 py-2" ref="noDataToView">
               <span class="text-red-700"> No mission data has been loaded yet.<br>Please <b>Fetch</b> from the </span><button type="button" class="btn-link" v-on:click="activeTab = UITab.Ledger" ><span class="text-blue-500 ledger-underline font-bold">Ledger tab</span></button><span class="text-red-700"> and then come back here.</span>
             </div>
           </div>
-
+        </div>
         <footer class="text-center text-sm text-gray-500">
           <a
             v-external-link
@@ -2556,7 +2527,6 @@
 
             const missionBeingViewed = Vue.ref(null);
             const defaultViewMode = Vue.ref('default');
-            const lifetimeViewMethod = Vue.ref('table');
             const viewMissionSortMethod = Vue.ref('default');
             Vue.watch(defaultViewMode, async () => {
               await window.setDefaultViewMode(defaultViewMode.value);
@@ -2870,7 +2840,6 @@
               lifetimeAccountSelectRef,
               lifetimeAccountInputRef,
               lifetimeAccountDropdownOpen,
-              lifetimeViewMethod,
               lifetimeDataLegExpanded,
               lifetimeDataEpicExpanded,
               lifetimeDataRareExpanded,
