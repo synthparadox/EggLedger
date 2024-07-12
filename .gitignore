@@ -11,3 +11,4 @@ node_modules/
 # Ignore custom-tailored files
 daveedbuild.sh
 daveedbuild.sh~
+.vscode/
