@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -58,7 +57,6 @@ var (
 	_latestMennoData       = MennoData{}
 	_possibleTargets       = []PossibleTarget{}
 	_possibleArtifacts     = []PossibleArtifact{}
-	_topLevelMaps          = map[string][]FilterValueOption{}
 )
 
 const (
@@ -438,28 +436,6 @@ func initPossibleArtifacts() {
 	_possibleArtifacts = possibleArtifacts
 }
 
-func artifactDisplayText(drop PossibleArtifact) string {
-	displayName := drop.DisplayName
-	lDisplayName := strings.ToLower(displayName)
-	level := drop.Level
-	levelInc := int32(1)
-	if strings.Contains(lDisplayName, "stone") && !strings.Contains(lDisplayName, "fragment") {
-		levelInc = 2
-	}
-	return displayName + " (T" + strconv.FormatInt(int64(level+levelInc), 10) + ")"
-}
-
-func dropPath(drop PossibleArtifact) string {
-	addendum := int32(0)
-	if strings.Contains(drop.ProtoName, "_STONE") {
-		addendum = 1
-	}
-	fixedName := strings.ReplaceAll(drop.ProtoName, "_FRAGMENT", "")
-	fixedName = strings.ReplaceAll(fixedName, "ORNATE_GUSSET", "GUSSET")
-	fixedName = strings.ReplaceAll(fixedName, "VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST")
-	return "artifacts/" + fixedName + "/" + fixedName + "_" + strconv.FormatInt(int64(drop.Level+1+addendum), 10) + ".png"
-}
-
 func main() {
 	if _devMode {
 		log.Info("starting app in dev mode")
@@ -631,106 +607,33 @@ func main() {
 		_storage.SetFilterWarningRead(flag)
 	})
 
-	ui.MustBind("getFilterValueOptions", func(topLevel string) []FilterValueOption {
+	ui.MustBind("getMaxQuality", func() float32 {
+		maxQuality := float32(0)
+		for _, mission := range _eiAfxConfigMissions {
+			for _, duration := range mission.GetDurations() {
+				compedMaxQuality := float32(duration.GetMaxQuality()) + (duration.GetLevelQualityBump() * float32(len(mission.LevelMissionRequirements)))
+				if compedMaxQuality > maxQuality {
+					maxQuality = compedMaxQuality
+				}
+			}
+		}
+		return maxQuality
+	})
 
-		if _topLevelMaps[topLevel] != nil {
-			return _topLevelMaps[topLevel]
+	ui.MustBind("getAfxConfigs", func() []PossibleArtifact {
+		if len(_possibleArtifacts) == 0 {
+			initPossibleArtifacts()
 		}
 
-		options := []FilterValueOption{}
-		switch strings.ToLower(topLevel) {
-		case "ship":
-			{
-				shipNames := []string{
-					"Chicken One", "Chicken Nine", "Chicken Heavy",
-					"BCR", "Quintillion Chicken", "Cornish-Hen Corvette",
-					"Galeggtica", "Defihent", "Voyegger", "Henerprise", "Atreggies Henliner",
-				}
-				for index := 0; index < len(shipNames); index++ {
-					options = append(options, FilterValueOption{
-						Text:  shipNames[index],
-						Value: strconv.FormatInt(int64(index), 10),
-					})
-				}
-			}
-		case "duration":
-			{
-				durationNames := []string{
-					"Short", "Standard", "Extended", "Tutorial",
-				}
-				for index := 0; index < len(durationNames); index++ {
-					options = append(options, FilterValueOption{
-						Text:       durationNames[index],
-						StyleClass: "text-duration-" + strconv.FormatInt(int64(index), 10),
-						Value:      strconv.FormatInt(int64(index), 10),
-					})
-				}
-			}
-		case "level":
-			{
-				for index := 0; index < 10; index++ {
-					options = append(options, FilterValueOption{
-						Text:  strconv.FormatInt(int64(index), 10) + "★",
-						Value: strconv.FormatInt(int64(index), 10),
-					})
-				}
-			}
-		case "target":
-			{
-				for _, target := range _possibleTargets {
-					options = append(options, FilterValueOption{
-						Text:      target.DisplayName,
-						Value:     strconv.FormatInt(int64(target.Id), 10),
-						ImagePath: target.ImageString,
-					})
-				}
-			}
-		case "drops":
-			{
-				options = append(options, FilterValueOption{
-					Text:      "Any Legendary",
-					Value:     "%_%_3_%",
-					Rarity:    3,
-					ImagePath: "icon_help.webp",
-				})
-				options = append(options, FilterValueOption{
-					Text:      "Any Epic",
-					Value:     "%_%_2_%",
-					Rarity:    2,
-					ImagePath: "icon_help.webp",
-				})
-				options = append(options, FilterValueOption{
-					Text:      "Any Rare",
-					Value:     "%_%_1_%",
-					Rarity:    1,
-					ImagePath: "icon_help.webp",
-				})
-				for _, drop := range _possibleArtifacts {
-					options = append(options, FilterValueOption{
-						Text:      artifactDisplayText(drop),
-						Value:     strconv.FormatInt(int64(drop.Name), 10) + "_" + strconv.FormatInt(int64(drop.Level), 10) + "_" + strconv.FormatInt(int64(drop.Rarity), 10) + "_" + strconv.FormatFloat(drop.BaseQuality, 'f', -1, 64),
-						Rarity:    drop.Rarity,
-						ImagePath: dropPath(drop),
-					})
-				}
-			}
-		case "dubcap":
-			fallthrough
-		case "buggedcap":
-			{
-				options = append(options, FilterValueOption{
-					Text:  "True",
-					Value: "true",
-				})
-				options = append(options, FilterValueOption{
-					Text:  "False",
-					Value: "false",
-				})
-			}
-		default:
+		return _possibleArtifacts
+	})
+
+	ui.MustBind("getPossibleTargets", func() []PossibleTarget {
+		if len(_possibleTargets) == 0 {
+			initPossibleArtifacts()
 		}
-		_topLevelMaps[topLevel] = options
-		return options
+
+		return _possibleTargets
 	})
 
 	w := &worker{

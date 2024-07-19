@@ -16,7 +16,7 @@
                     @handle-filter-change="handleFilterChange"></filter-select>
                 <!-- Value options (Base) -->
                 <filter-select v-if="filterLevelIf(index, null, 'value', 'base')"
-                    :internal-id="getIdHeader() + 'value-' + index" :option-list="window.getFilterValueOptions(modVals.top[index])"
+                    :internal-id="getIdHeader() + 'value-' + index" :option-list="getFilterValueOptions(modVals.top[index])"
                     level="value" :index="index" :model-value="modVals.value[index]"
                     @change-filter-value="changeFilterValue" @handle-filter-change="handleFilterChange"></filter-select>
                 <!-- Target Selectors - opens a custom modal -->
@@ -69,7 +69,7 @@
                 <!-- Value options -->
                 <filter-select v-if="filterLevelIf(index, orIndex, 'value', 'base')"
                     :internal-id="getIdHeader() + 'value-' + index + '-' + orIndex"
-                    :option-list="window.getFilterValueOptions(modVals.orTop[index][orIndex])" level="value" :index="index"
+                    :option-list="getFilterValueOptions(modVals.orTop[index][orIndex])" level="value" :index="index"
                     :or-index="orIndex" :model-value="modVals.orValue[index][orIndex]"
                     @change-filter-value="changeFilterValue" @handle-filter-change="handleOrFilterChange"></filter-select>
 
@@ -129,8 +129,72 @@
             filterArray: Array,
             modVals: Object,
             isLifetime: Boolean,
+            getFilterValueOptions: Function
         },
         methods: {
+            artifactDisplayText(artifact) {
+              const displayName = artifact.displayName;
+              const level = artifact.level;
+              let displayText = displayName;
+              if(level != '%') displayText += " (T" + (level + ((displayName.toLowerCase().indexOf('stone') > -1 && displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ")";
+              return displayText;
+            },
+            dropPath(drop) {
+              const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
+              const fixedName = drop.protoName.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
+              return "artifacts/" + fixedName + "/" + fixedName + "_" + (drop.level + 1 + addendum) + ".png";
+            },
+            dropRarityPath(drop) {
+              switch(drop.rarity){
+                case 0: return "";
+                case 1: return "images/rare.gif";
+                case 2: return "images/epic.gif";
+                case 3: return "images/legendary.gif";
+                default: return "";
+              }
+            },
+            getFilterValueOptions(topLevel) {
+              switch(topLevel){
+                case 'ship': return Array.from({ length: 11 }, (_, index) => ({
+                    text: Array.of(
+                        'Chicken One', 'Chicken Nine', 'Chicken Heavy',
+                        'BCR', 'Quintillion Chicken', 'Cornish-Hen Corvette',
+                        'Galeggtica', 'Defihent', 'Voyegger', 'Henerprise', 'Atreggies Henliner'
+                      )[index],
+                    value: index,
+                  }));
+                case 'duration': return Array.from({ length: 4 }, (_, index) => ({
+                    text: Array.of('Short', 'Standard', 'Extended', 'Tutorial')[index],
+                    value: index,
+                    styleClass: 'text-duration-' + index
+                  }));
+                case 'level': return Array.from({ length: 9 }, (_, index) => ({
+                    text: index + '★',
+                    value: index
+                  }));
+                case 'target': return possibleTargets.value.map(target => ({
+                    text: target.displayName,
+                    value: target.id,
+                    imagePath: target.imageString
+                  }));
+                case 'drops': {
+                  const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
+                    text: this.artifactDisplayText(artifact),
+                    value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
+                    rarity: artifact.rarity,
+                    imagePath: this.dropPath(artifact),
+                    rarityGif: this.dropRarityPath(artifact),
+                  }))
+                  filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', rarity: 3, styleClass: 'text-legendary', imagePath: 'icon_help.webp'});
+                  filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', rarity: 2, styleClass: 'text-epic', imagePath: 'icon_help.webp'});
+                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', rarity: 1, styleClass: 'text-rare', imagePath: 'icon_help.webp'});
+                  return filteredConfigs;
+                }
+                case 'buggedcap':
+                case 'dubcap': return [{ text: 'True', value: 'true' },{ text: 'False', value: 'false' }];
+                default: return [];
+              }
+            },
             removeAndShift(index) {
                 this.$emit('removeAndShift', index);
             },

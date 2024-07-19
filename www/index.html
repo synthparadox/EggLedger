@@ -659,7 +659,7 @@
                 @handle-filter-change="handleFilterChange" @handle-or-filter-change="handleOrFilterChange"
                 @remove-and-shift="removeAndShift" @remove-or-and-shift="removeOrAndShift"
                 @open-target-filter-menu="openTargetFilterMenu" @open-drop-filter-menu="openDropFilterMenu"
-                @add-or="addOr" @change-filter-value="changeFilterValue" 
+                @add-or="addOr" @change-filter-value="changeFilterValue"
               ></full-filter>
               
               <!-- Create a 2 px visible gray line that goes across the entire div-->
@@ -958,7 +958,7 @@
                 @handle-filter-change="handleFilterChange" @handle-or-filter-change="handleOrFilterChange"
                 @remove-and-shift="removeAndShift" @remove-or-and-shift="removeOrAndShift"
                 @open-target-filter-menu="openTargetFilterMenu" @open-drop-filter-menu="openDropFilterMenu"
-                @add-or="addOr" @change-filter-value="changeFilterValue" 
+                @add-or="addOr" @change-filter-value="changeFilterValue"
               ></full-filter>
 
               <!-- Create a 2 px visible gray line that goes across the entire div-->
@@ -1017,7 +1017,7 @@
                   :lifetime-show-per-ship="lifetimeShowDropsPerShip" :data="lifetimeData"
                   :show-expected-drops="lifetimeShowExpectedTotals"
                 ></drop-display-container>
-                <div v-else class="max-w-half items-center">
+                <div v-else class="max-w-full items-center">
                   <hr class="mt-1rem mb-1rem w-full">
                   <span class="mt-0_5rem p-0_5rem text-lg">
                     Lifetime data is being compiled, please wait...
@@ -1275,9 +1275,9 @@
             const targetFilterSelectedIndex = Vue.ref(null);
             const targetFilterSelectedOrIndex = Vue.ref(null);
             const targetFilterMenuOpen = Vue.ref(false);
-            const openTargetFilterMenu = async (index, orIndex) => {
+            const openTargetFilterMenu = (index, orIndex) => {
               window.removeEventListener('focus', handleFocus, true);
-              tSelectListRef().value = await window.getFilterValueOptions('target');
+              tSelectListRef().value = getFilterValueOptions('target');
               tSelectedIndexRef().value = index;
               tSelectedOrIndexRef().value = orIndex ?? null;
               tFilterMenuOpenRef().value = true;
@@ -1297,8 +1297,8 @@
               el.classList.add('hidden');
             };
             const targetSearchTerm = Vue.ref("");
-            Vue.watch(targetSearchTerm, async () => {
-              targetSelectList.value = (await window.getFilterValueOptions('target')).filter(target => target.text.toLowerCase().includes(targetSearchTerm.value.toLowerCase()));
+            Vue.watch(targetSearchTerm, () => {
+              targetSelectList.value = getFilterValueOptions('target').filter(target => target.text.toLowerCase().includes(targetSearchTerm.value.toLowerCase()));
             });
             const selectTargetFilter = (target) => {
               const newValue = target.value.toString().split('.')[0];
@@ -1322,9 +1322,9 @@
             const dropFilterSelectedIndex = Vue.ref(null);
             const dropFilterSelectedOrIndex = Vue.ref(null);
             const dropFilterMenuOpen = Vue.ref(false);
-            const openDropFilterMenu = async (index, orIndex) => {
+            const openDropFilterMenu = (index, orIndex) => {
               window.removeEventListener('focus', handleFocus, true);
-              dropSelectList.value = await window.getFilterValueOptions('drops');
+              dropSelectList.value = getFilterValueOptions('drops');
               dropFilterSelectedIndex.value = index;
               dropFilterSelectedOrIndex.value = orIndex ?? null;
               dropFilterMenuOpen.value = true;
@@ -1346,8 +1346,8 @@
               el.classList.add('hidden');
             };
             const dropSearchTerm = Vue.ref("");
-            Vue.watch(dropSearchTerm, async () => {
-              dropSelectList.value = (await window.getFilterValueOptions('drops')).filter(drop => drop.text.toLowerCase().includes(dropSearchTerm.value.toLowerCase()));
+            Vue.watch(dropSearchTerm, () => {
+              dropSelectList.value = getFilterValueOptions('drops').filter(drop => drop.text.toLowerCase().includes(dropSearchTerm.value.toLowerCase()));
             });
             const selectDropFilter = (drop) => {
               const newValue = drop.value.toString().split('.')[0];
@@ -1487,7 +1487,7 @@
             const lifetimeTargetFilterMenuOpen = Vue.ref(false);
             const lifetimeTargetSearchTerm = Vue.ref("");
             Vue.watch(lifetimeTargetSearchTerm, async () => {
-              lifetimeTargetSelectList.value = (await window.getFilterValueOptions('target')).filter(target => target.text.toLowerCase().includes(lifetimeTargetSearchTerm.value.toLowerCase()));
+              lifetimeTargetSelectList.value = getFilterValueOptions('target').filter(target => target.text.toLowerCase().includes(lifetimeTargetSearchTerm.value.toLowerCase()));
             });
 
             const lifetimeSortMethod = Vue.ref('default');
@@ -2130,6 +2130,9 @@
               filterHasChanged.value = true;
             });
 
+            const possibleTargets = Vue.ref(null);
+            const maxQuality = Vue.ref("");
+            const artifactConfigs = Vue.ref(null);
             const durationConfigs = Vue.ref(null);
             const mennoDataAutoRefresh = Vue.ref(false);
             const mennoProgress = Vue.ref("");
@@ -2263,7 +2266,7 @@
               orDataFilterRef().value = newOrDataFilter;
             };
 
-            const handleFilterChange = async (event) => {
+            const handleFilterChange = (event) => {
               const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
               if(targetEl.oldValue == null || targetEl.type == 'date') { 
@@ -2273,15 +2276,15 @@
               updateValueStyling(targetEl, false);
               if(targetId.indexOf(filterTopSelector.value) > -1) {
                 const index = parseInt(targetId.split("-").pop());
-                if((await window.getFilterValueOptions(targetEl.value)).indexOf(opRef().value[index]) == -1) opRef().value[index] = null;
-                if((await window.getFilterValueOptions(targetEl.value)).indexOf(valRef().value[index]) == -1) {
+                if(getFilterValueOptions(targetEl.value).indexOf(opRef().value[index]) == -1) opRef().value[index] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(valRef().value[index]) == -1) {
                   valRef().value[index] = null;
                   dValRef().value[index] = null;
                 }
               }
             };
 
-            const handleOrFilterChange = async (event) => {
+            const handleOrFilterChange = (event) => {
               const targetEl = event.target ?? document.getElementById(event);
               const targetId = targetEl.id;
               const index = parseInt(targetId.split("-")[isLifetime.value ? 3 : 2]);
@@ -2289,8 +2292,8 @@
               updateFilterNoReCount();
               updateValueStyling(targetEl, true);
               if(targetId.indexOf(filterTopSelector.value) > -1) {
-                if((await window.getFilterValueOptions(targetEl.value)).indexOf(ofOpRef().value[index][orIndex]) == -1) ofOpRef().value[index][orIndex] = null;
-                if((await window.getFilterValueOptions(targetEl.value)).indexOf(ofValRef().value[index][orIndex]) == -1) {
+                if(getFilterValueOptions(targetEl.value).indexOf(ofOpRef().value[index][orIndex]) == -1) ofOpRef().value[index][orIndex] = null;
+                if(getFilterValueOptions(targetEl.value).indexOf(ofValRef().value[index][orIndex]) == -1) {
                   ofValRef().value[index][orIndex] = null;
                   ofDValRef().value[index][orIndex] = null;
                 }
@@ -2397,6 +2400,71 @@
                 default: return currentState;
               }
               return currentState;
+            }
+
+            function artifactDisplayText(artifact){
+              const displayName = artifact.displayName;
+              const level = artifact.level;
+              var displayText = displayName;
+              if(level != '%') displayText += " (T" + (level + ((displayName.toLowerCase().indexOf('stone') > -1 && displayName.toLowerCase().indexOf('fragment') == -1) ? 2 : 1)) + ")";
+              return displayText;
+            }
+            const dropPath = (drop) => {
+              const addendum = (drop.protoName.indexOf('_STONE') > -1 ? 1 : 0);
+              const fixedName = drop.protoName.replaceAll("_FRAGMENT", "").replaceAll("ORNATE_GUSSET", "GUSSET").replaceAll("VIAL_MARTIAN_DUST", "VIAL_OF_MARTIAN_DUST");
+              return "artifacts/" + fixedName + "/" + fixedName + "_" + (drop.level + 1 + addendum) + ".png";
+            };
+            const dropRarityPath = (drop) => {
+              switch(drop.rarity){
+                case 0: return "";
+                case 1: return "images/rare.gif";
+                case 2: return "images/epic.gif";
+                case 3: return "images/legendary.gif";
+                default: return "";
+              }
+            }
+
+            const getFilterValueOptions = (topLevel) => {
+              switch(topLevel){
+                case 'ship': return Array.from({ length: 11 }, (_, index) => ({
+                    text: Array.of(
+                        'Chicken One', 'Chicken Nine', 'Chicken Heavy',
+                        'BCR', 'Quintillion Chicken', 'Cornish-Hen Corvette',
+                        'Galeggtica', 'Defihent', 'Voyegger', 'Henerprise', 'Atreggies Henliner'
+                      )[index],
+                    value: index,
+                  }));
+                case 'duration': return Array.from({ length: 4 }, (_, index) => ({
+                    text: Array.of('Short', 'Standard', 'Extended', 'Tutorial')[index],
+                    value: index,
+                    styleClass: 'text-duration-' + index
+                  }));
+                case 'level': return Array.from({ length: 9 }, (_, index) => ({
+                    text: index + '★',
+                    value: index
+                  }));
+                case 'target': return possibleTargets.value.map(target => ({
+                    text: target.displayName,
+                    value: target.id,
+                    imagePath: target.imageString
+                  }));
+                case 'drops': {
+                  const filteredConfigs = artifactConfigs.value.filter(a => a.baseQuality <= maxQuality.value).map(artifact => ({
+                    text: artifactDisplayText(artifact),
+                    value: artifact.name + "_" + artifact.level + "_" + artifact.rarity + "_" + artifact.baseQuality,
+                    rarity: artifact.rarity,
+                    imagePath: dropPath(artifact),
+                    rarityGif: dropRarityPath(artifact),
+                  }))
+                  filteredConfigs.unshift({text: 'Any Legendary', value: '%_%_3_%', rarity: 3, styleClass: 'text-legendary', imagePath: 'icon_help.webp'});
+                  filteredConfigs.unshift({text: 'Any Epic', value: '%_%_2_%', rarity: 2, styleClass: 'text-epic', imagePath: 'icon_help.webp'});
+                  filteredConfigs.unshift({text: 'Any Rare', value: '%_%_1_%', rarity: 1, styleClass: 'text-rare', imagePath: 'icon_help.webp'});
+                  return filteredConfigs;
+                }
+                case 'buggedcap':
+                case 'dubcap': return [{ text: 'True', value: 'true' },{ text: 'False', value: 'false' }];
+                default: return [];
+              }
             }
 
             const testMissionAgainstFilter = async(mission, filter) => {
@@ -2715,7 +2783,10 @@
               startInFullscreen.value = await window.getStartInFullscreen();
 
               //Load configs
+              artifactConfigs.value = await window.getAfxConfigs();
+              maxQuality.value = await window.getMaxQuality();
               durationConfigs.value = await window.getDurationConfigs();
+              possibleTargets.value = await window.getPossibleTargets();
 
               //Load Menno data
               if (await window.isMennoRefreshNeeded()) {
@@ -2727,7 +2798,7 @@
               secondsSinceLastMennoUpdate.value = await window.secondsSinceLastMennoUpdate();
 
               //Cache the filter value options ahead of time
-              ['ship', 'duration', 'level', 'target', 'drops'].forEach(async (i) => _ = await window.window.getFilterValueOptions(i));
+              ['ship', 'duration', 'level', 'target', 'drops'].forEach((i) => _ = getFilterValueOptions(i));
             });
 
             const isLifetime = Vue.computed(() => activeTab.value == UITab.LifetimeData);
@@ -2975,6 +3046,7 @@
               generateFilterConditionsArr,
               changeFilterValue,
               filterModVals,
+              getFilterValueOptions,
 
               //Self-update
               appReleaseNotes,
